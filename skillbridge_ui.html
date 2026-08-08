@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SkillBridge — App UI Mockup</title>
+<style>
+  :root{
+    --navy:#16233F;
+    --navy-2:#1F3358;
+    --amber:#F0A93A;
+    --amber-2:#D98C1E;
+    --cream:#FAF7F1;
+    --card:#FFFFFF;
+    --ink:#16233F;
+    --muted:#7C8494;
+    --line:#EAE6DD;
+    --green:#2E9E5B;
+    --radius:22px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Inter,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, #23324f 0%, transparent 45%),
+      var(--navy);
+    padding:48px 24px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:36px;
+    justify-content:center;
+  }
+  h1.page-title{
+    width:100%;
+    text-align:center;
+    color:var(--cream);
+    font-weight:800;
+    font-size:28px;
+    letter-spacing:.3px;
+    margin:0 0 4px;
+  }
+  p.page-sub{
+    width:100%;
+    text-align:center;
+    color:#9BA7C4;
+    margin:0 0 12px;
+    font-size:14px;
+  }
+
+  /* ---- phone frame ---- */
+  .phone{
+    width:330px;
+    height:690px;
+    background:#0b1220;
+    border-radius:46px;
+    padding:14px;
+    box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 2px #2a3550;
+    position:relative;
+  }
+  .screen{
+    width:100%;
+    height:100%;
+    background:var(--cream);
+    border-radius:32px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute;
+    top:14px;left:50%;transform:translateX(-50%);
+    width:90px;height:20px;background:#0b1220;border-radius:12px;z-index:5;
+  }
+  .caption{
+    text-align:center;color:#9BA7C4;font-size:13px;margin-top:10px;font-weight:600;
+  }
+
+  /* ---- status/topbar ---- */
+  .statusbar{height:34px;flex:0 0 auto;}
+  .topbar{
+    padding:14px 20px 10px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .greet .hello{font-size:12px;color:var(--muted);font-weight:600;}
+  .greet .name{font-size:19px;font-weight:800;color:var(--ink);}
+  .avatar{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,var(--amber),var(--amber-2));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:14px;
+  }
+
+  /* ---- search ---- */
+  .search{
+    margin:2px 20px 14px;
+    background:#fff;border:1px solid var(--line);
+    border-radius:16px;padding:12px 14px;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 2px 10px rgba(22,35,63,.05);
+  }
+  .search input{border:none;outline:none;font-size:13.5px;flex:1;background:transparent;color:var(--ink);}
+  .search svg{flex:0 0 auto;}
+
+  /* ---- category chips ---- */
+  .chips{display:flex;gap:8px;padding:0 20px 14px;overflow:hidden;}
+  .chip{
+    flex:0 0 auto;background:#fff;border:1px solid var(--line);
+    padding:8px 13px;border-radius:20px;font-size:12px;font-weight:700;color:var(--navy-2);
+  }
+  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  /* ---- hero card ---- */
+  .hero{
+    margin:0 20px 16px;border-radius:20px;overflow:hidden;position:relative;height:118px;
+    background-size:cover;background-position:center;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(22,35,63,.05) 20%,rgba(22,35,63,.85) 100%);
+  }
+  .hero-text{position:absolute;left:16px;bottom:12px;z-index:2;color:#fff;}
+  .hero-text .tag{
+    display:inline-block;background:var(--amber);color:#1B2A4A;font-size:10px;font-weight:800;
+    padding:3px 9px;border-radius:20px;margin-bottom:6px;letter-spacing:.3px;
+  }
+  .hero-text .title{font-size:15px;font-weight:800;}
+
+  .section-label{
+    padding:2px 20px 8px;display:flex;justify-content:space-between;align-items:center;
+  }
+  .section-label span:first-child{font-size:15px;font-weight:800;color:var(--ink);}
+  .section-label span:last-child{font-size:11.5px;font-weight:700;color:var(--amber-2);}
+
+  .list{flex:1;overflow-y:auto;padding-bottom:12px;}
+  .worker-card{
+    margin:0 20px 12px;background:#fff;border:1px solid var(--line);border-radius:18px;
+    padding:10px;display:flex;gap:12px;box-shadow:0 2px 10px rgba(22,35,63,.04);
+  }
+  .worker-photo{
+    width:62px;height:62px;border-radius:14px;background-size:cover;background-position:center;flex:0 0 auto;
+  }
+  .worker-info{flex:1;min-width:0;}
+  .worker-info .name-row{display:flex;justify-content:space-between;align-items:center;}
+  .worker-info .wname{font-size:13.5px;font-weight:800;color:var(--ink);}
+  .badge-verified{
+    display:inline-flex;align-items:center;gap:3px;background:#E7F6ED;color:var(--green);
+    font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px;
+  }
+  .worker-info .role{font-size:11.5px;color:var(--muted);margin:2px 0 6px;}
+  .worker-info .meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--navy-2);font-weight:700;}
+  .rate{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--amber-2);}
+
+  /* ---- bottom nav ---- */
+  .bottomnav{
+    flex:0 0 auto;display:flex;justify-content:space-around;align-items:center;
+    padding:10px 8px 16px;background:#fff;border-top:1px solid var(--line);
+  }
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);}
+  .navitem.active{color:var(--amber-2);}
+  .navitem span{font-size:9.5px;font-weight:700;}
+  .fab{
+    width:46px;height:46px;border-radius:50%;background:var(--navy);
+    display:flex;align-items:center;justify-content:center;margin-top:-30px;
+    box-shadow:0 8px 18px rgba(22,35,63,.4);
+  }
+
+  /* ---- profile screen ---- */
+  .profile-cover{height:190px;background-size:cover;background-position:center;position:relative;}
+  .profile-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,35,63,.15),rgba(22,35,63,.9) 92%);}
+  .back-btn{
+    position:absolute;top:16px;left:16px;z-index:3;width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,.2);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;
+  }
+  .profile-id{position:absolute;left:20px;bottom:14px;z-index:2;color:#fff;display:flex;gap:12px;align-items:center;}
+  .profile-photo{width:64px;height:64px;border-radius:16px;border:3px solid #fff;background-size:cover;background-position:center;}
+  .profile-id .pname{font-size:17px;font-weight:800;}
+  .profile-id .prole{font-size:11.5px;color:#D9DFEC;font-weight:600;}
+  .stat-row{display:flex;padding:14px 20px 6px;gap:10px;}
+  .stat{
+    flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;
+  }
+  .stat b{display:block;font-size:15px;color:var(--ink);}
+  .stat span{font-size:10px;color:var(--muted);font-weight:700;}
+  .about{margin:10px 20px;font-size:12px;line-height:1.5;color:#4A5063;}
+  .skills-wrap{display:flex;flex-wrap:wrap;gap:7px;margin:0 20px 12px;}
+  .skill-pill{background:#EFEAE0;color:var(--navy-2);font-size:10.5px;font-weight:700;padding:6px 11px;border-radius:20px;}
+  .portfolio{display:flex;gap:8px;margin:0 20px;overflow:hidden;}
+  .portfolio div{flex:1;height:64px;border-radius:12px;background-size:cover;background-position:center;}
+  .cta-row{margin:16px 20px 0;display:flex;gap:10px;}
+  .btn-outline{
+    flex:1;text-align:center;padding:13px;border-radius:14px;border:1.6px solid var(--navy);
+    color:var(--navy);font-weight:800;font-size:12.5px;
+  }
+  .btn-solid{
+    flex:1.4;text-align:center;padding:13px;border-radius:14px;background:var(--amber);
+    color:#1B2A4A;font-weight:800;font-size:12.5px;box-shadow:0 8px 16px rgba(240,169,58,.35);
+  }
+
+  /* ---- post job screen ---- */
+  .form-wrap{padding:6px 20px;flex:1;overflow-y:auto;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:11.5px;font-weight:800;color:var(--navy-2);display:block;margin-bottom:6px;}
+  .field .box{
+    background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px;font-size:12.5px;color:var(--ink);
+  }
+  .type-toggle{display:flex;gap:8px;}
+  .type-toggle .opt{
+    flex:1;text-align:center;padding:12px;border-radius:13px;border:1.6px solid var(--line);font-size:12px;font-weight:800;color:var(--muted);
+  }
+  .type-toggle .opt.sel{border-color:var(--amber-2);background:#FFF6E7;color:var(--amber-2);}
+  textarea.box{width:100%;resize:none;height:56px;font-family:inherit;}
+  .submit-btn{
+    margin:6px 20px 18px;background:var(--navy);color:#fff;text-align:center;padding:15px;
+    border-radius:15px;font-weight:800;font-size:13.5px;box-shadow:0 10px 20px rgba(22,35,63,.35);
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">SkillBridge — UI Mockup</h1>
+<p class="page-sub">Home discovery · Worker profile · Post a job — Figma-ready reference screens</p>
+
+<!-- SCREEN 1: HOME / DISCOVERY -->
+<div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="statusbar"></div>
+      <div class="topbar">
+        <div class="greet">
+          <div class="hello">Assalam-o-Alaikum 👋</div>
+          <div class="name">Ahmed Raza</div>
+        </div>
+        <div class="avatar">AR</div>
+      </div>
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#7C8494" stroke-width="2"/><path d="M21 21l-4-4" stroke="#7C8494" stroke-width="2" stroke-linecap="round"/></svg>
+        <input placeholder="Search electrician, plumber..." />
+      </div>
+      <div class="chips">
+        <div class="chip active">All</div>
+        <div class="chip">Electrician</div>
+        <div class="chip">Plumber</div>
+        <div class="chip">Carpenter</div>
+      </div>
+      <div class="hero" style="background-image:url('https://images.unsplash.com/photo-1621905251189-08b45d6a269e?fm=jpg&q=70&w=900&auto=format&fit=crop');">
+        <div class="hero-text">
+          <span class="tag">URGENT · TEMPORARY</span>
+          <div class="title">Need help today? Book in minutes.</div>
+        </div>
+      </div>
+      <div class="section-label"><span>Top rated near you</span><span>See all</span></div>
+      <div class="list">
+        <div class="worker-card">
+          <div class="worker-photo" style="background-image:url('https://images.unsplash.com/photo-1621905251189-08b45d6a269e?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+          <div class="worker-info">
+            <div class="name-row">
+              <span class="wname">Imran Sheikh<span class="badge-verified">✓ Verified</span></span>
+            </div>
+            <div class="role">Electrician · 8 yrs experience</div>
+            <div class="meta">★ 4.9 (112) <span class="rate">Rs 800/hr</span></div>
+          </div>
+        </div>
+        <div class="worker-card">
+          <div class="worker-photo" style="background-image:url('https://images.unsplash.com/photo-1676210134190-3f2c0d5cf58d?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+          <div class="worker-info">
+            <div class="name-row">
+              <span class="wname">Bilal Hussain<span class="badge-verified">✓ Verified</span></span>
+            </div>
+            <div class="role">Plumber · 5 yrs experience</div>
+            <div class="meta">★ 4.7 (64) <span class="rate">Rs 600/hr</span></div>
+          </div>
+        </div>
+        <div class="worker-card">
+          <div class="worker-photo" style="background-image:url('https://images.unsplash.com/photo-1587582423116-ec07293f0395?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+          <div class="worker-info">
+            <div class="name-row">
+              <span class="wname">Waseem Akram</span>
+            </div>
+            <div class="role">Carpenter · 6 yrs experience</div>
+            <div class="meta">★ 4.8 (89) <span class="rate">Rs 1,200/day</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="navitem active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9z" fill="currentColor"/></svg><span>Home</span></div>
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Search</span></div>
+        <div class="fab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#F0A93A" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2"/></svg><span>Chats</span></div>
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Home — Worker Discovery</div>
+</div>
+
+<!-- SCREEN 2: WORKER PROFILE -->
+<div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="profile-cover" style="background-image:url('https://images.unsplash.com/photo-1561297331-a9c00b9c2c44?fm=jpg&q=70&w=900&auto=format&fit=crop');">
+        <div class="back-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="profile-id">
+          <div class="profile-photo" style="background-image:url('https://images.unsplash.com/photo-1587582423116-ec07293f0395?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+          <div>
+            <div class="pname">Waseem Akram <span class="badge-verified">✓</span></div>
+            <div class="prole">Carpenter · Rawalpindi</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>4.8★</b><span>112 REVIEWS</span></div>
+        <div class="stat"><b>96%</b><span>JOBS DONE</span></div>
+        <div class="stat"><b>6 yrs</b><span>EXPERIENCE</span></div>
+      </div>
+      <div class="about">Custom furniture, door &amp; window framing, and on-site repairs. Own tools, available for same-day urgent jobs across Rawalpindi &amp; Islamabad.</div>
+      <div class="skills-wrap">
+        <span class="skill-pill">Furniture Making</span>
+        <span class="skill-pill">Door Fitting</span>
+        <span class="skill-pill">Wood Polishing</span>
+        <span class="skill-pill">Repairs</span>
+      </div>
+      <div class="section-label"><span>Portfolio</span><span>View all</span></div>
+      <div class="portfolio">
+        <div style="background-image:url('https://images.unsplash.com/photo-1611021061285-16c871740efa?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+        <div style="background-image:url('https://images.unsplash.com/photo-1590880795696-20c7dfadacde?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+        <div style="background-image:url('https://images.unsplash.com/photo-1608613304899-ea8098577e38?fm=jpg&q=70&w=300&auto=format&fit=crop');"></div>
+      </div>
+      <div class="cta-row">
+        <div class="btn-outline">Message</div>
+        <div class="btn-solid">Hire for a Job</div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="bottomnav">
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9z" fill="currentColor"/></svg><span>Home</span></div>
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Search</span></div>
+        <div class="fab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#F0A93A" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+        <div class="navitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2"/></svg><span>Chats</span></div>
+        <div class="navitem active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2"/></svg><span>Profile</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Worker Profile</div>
+</div>
+
+<!-- SCREEN 3: POST A JOB -->
+<div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="statusbar"></div>
+      <div class="topbar">
+        <div class="back-btn" style="position:static;background:#fff;border:1px solid var(--line);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#16233F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="greet" style="text-align:center;"><div class="name" style="font-size:16px;">Post a Job</div></div>
+        <div style="width:32px;"></div>
+      </div>
+      <div class="form-wrap">
+        <div class="field">
+          <label>JOB TYPE</label>
+          <div class="type-toggle">
+            <div class="opt sel">Temporary</div>
+            <div class="opt">Permanent</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>JOB TITLE</label>
+          <div class="box">Fix kitchen sink leakage</div>
+        </div>
+        <div class="field">
+          <label>CATEGORY</label>
+          <div class="box">Plumber</div>
+        </div>
+        <div class="field">
+          <label>DESCRIPTION</label>
+          <textarea class="box">Leaking pipe under the kitchen sink, needs urgent repair. Own tools preferred.</textarea>
+        </div>
+        <div class="field">
+          <label>LOCATION</label>
+          <div class="box">📍 Bahria Town, Rawalpindi</div>
+        </div>
+        <div class="field">
+          <label>BUDGET (PKR)</label>
+          <div class="box">1,500 – 2,500</div>
+        </div>
+      </div>
+      <div class="submit-btn">Post Job</div>
+    </div>
+  </div>
+  <div class="caption">Post a Job — Client Flow</div>
+</div>
+
+</body>
+</html>

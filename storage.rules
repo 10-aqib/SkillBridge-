@@ -1,0 +1,39 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ── Helper Functions ──────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    function isPdf() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    function isValidSize() {
+      // Limit file uploads to 5MB maximum
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // ── User Profile & Assets Storage ─────────────────────────────────────
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && (isImage() || isPdf()) && isValidSize();
+    }
+
+    // ── Job Attachments ───────────────────────────────────────────────────
+    match /jobs/{jobId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (isImage() || isPdf()) && isValidSize();
+    }
+
+    // ── Default Deny All ──────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
