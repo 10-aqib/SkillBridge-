@@ -1,1 +1,0 @@
- F:\\SkillBridge_FYP\\lib\\generated\\l10n\\app_localizations_en.dart F:\\SkillBridge_FYP\\lib\\generated\\l10n\\app_localizations_ur.dart F:\\SkillBridge_FYP\\lib\\generated\\l10n\\app_localizations.dart:  F:\\SkillBridge_FYP\\l10n.yaml F:\\SkillBridge_FYP\\lib\\l10n\\app_en.arb F:\\SkillBridge_FYP\\lib\\l10n\\app_ur.arb
