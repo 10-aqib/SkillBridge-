@@ -5,6 +5,7 @@ import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Splash Screen (a1_splash_screen)
 /// Features Navy mesh gradient, white 24px logo box with "S" lettermark, Sora wordmark
@@ -54,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
+                  color: context.surfaceColor,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                   boxShadow: const [
                     BoxShadow(
@@ -107,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'Skill Bridge',
                 style: AppTextStyles.headlineLg.copyWith(
-                  color: AppColors.surfaceWhite,
+                  color: context.surfaceColor,
                   letterSpacing: 0.5,
                 ),
               ).animate().fade(delay: 250.ms, duration: 600.ms).slideY(

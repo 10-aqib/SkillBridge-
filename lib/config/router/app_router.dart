@@ -39,6 +39,7 @@ import 'package:skill_bridge/features/notifications/presentation/screens/notific
 import 'package:skill_bridge/features/client/presentation/screens/nearby_workers_screen.dart';
 import 'package:skill_bridge/features/payments/presentation/screens/easypaisa_checkout_screen.dart';
 import 'package:skill_bridge/features/client/presentation/screens/worker_profile_detail_screen.dart';
+import 'package:skill_bridge/shared/screens/terms_and_conditions_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -200,7 +201,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: RouteNames.clientSettingsName,
         path: RouteNames.clientSettingsPath,
-        builder: (context, state) => const ClientSettingsScreen(),
+        builder: (context, state) => ClientSettingsScreen(),
       ),
       GoRoute(
         name: RouteNames.clientPostJobName,
@@ -235,7 +236,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.workerProposalsName,
                 path: RouteNames.workerProposalsPath,
-                builder: (context, state) => const MyProposalsScreen(),
+                builder: (context, state) => MyProposalsScreen(),
               ),
             ],
           ),
@@ -262,7 +263,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.workerProfileName,
                 path: RouteNames.workerProfilePath,
-                builder: (context, state) => const WorkerProfileScreen(),
+                builder: (context, state) => WorkerProfileScreen(),
               ),
             ],
           ),
@@ -276,7 +277,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: RouteNames.workerSettingsName,
         path: RouteNames.workerSettingsPath,
-        builder: (context, state) => const WorkerSettingsScreen(),
+        builder: (context, state) => WorkerSettingsScreen(),
       ),
       GoRoute(
         name: RouteNames.proposalDetailsName,
@@ -285,6 +286,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final proposal = state.extra as ProposalEntity?;
           return ProposalDetailsScreen(proposal: proposal);
         },
+      ),
+      GoRoute(
+        name: RouteNames.termsAndConditionsName,
+        path: RouteNames.termsAndConditionsPath,
+        builder: (context, state) => const TermsAndConditionsScreen(),
       ),
       GoRoute(
         name: RouteNames.chatRoomName,
@@ -322,7 +328,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: RouteNames.clientNotificationsName,
         path: RouteNames.clientNotificationsPath,
-        builder: (context, state) => const NotificationScreen(),
+        builder: (context, state) => NotificationScreen(),
       ),
       GoRoute(
         name: RouteNames.easyPaisaCheckoutName,
@@ -339,12 +345,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: RouteNames.workerNotificationsName,
         path: RouteNames.workerNotificationsPath,
-        builder: (context, state) => const NotificationScreen(),
+        builder: (context, state) => NotificationScreen(),
       ),
       GoRoute(
         name: RouteNames.clientNearbyWorkersName,
         path: RouteNames.clientNearbyWorkersPath,
-        builder: (context, state) => const NearbyWorkersScreen(),
+        builder: (context, state) => NearbyWorkersScreen(),
       ),
       GoRoute(
         name: RouteNames.publicWorkerProfileName,

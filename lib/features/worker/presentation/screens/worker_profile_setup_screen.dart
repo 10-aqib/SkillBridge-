@@ -11,6 +11,7 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
 import 'package:skill_bridge/shared/widgets/app_text_field.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Worker Profile Setup Screen
 class WorkerProfileSetupScreen extends ConsumerStatefulWidget {
@@ -155,14 +156,14 @@ class _WorkerProfileSetupScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Setup Worker Profile • کاریگر پروفائل',
           style: AppTextStyles.heading3.copyWith(
-            color: AppColors.onSurface,
+            color: context.textColor,
           ),
         ),
         automaticallyImplyLeading: false,
@@ -175,14 +176,14 @@ class _WorkerProfileSetupScreenState
             Text(
               'Complete your Profile • پروفائل مکمل کریں',
               style: AppTextStyles.headlineLg.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ).animate().fade(duration: 400.ms),
             const SizedBox(height: 8),
             Text(
               'Tell clients about your expertise so you can get hired faster.',
               style: AppTextStyles.bodyPrimary.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
               ),
             ).animate().fade(delay: 100.ms, duration: 400.ms),
             const SizedBox(height: AppDimensions.xl),
@@ -199,7 +200,7 @@ class _WorkerProfileSetupScreenState
             Text(
               'Primary Category • زمرہ',
               style: AppTextStyles.bodyStrong.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -208,8 +209,8 @@ class _WorkerProfileSetupScreenState
                 horizontal: AppDimensions.md,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
-                border: Border.all(color: AppColors.outlineVariant),
+                color: context.surfaceColor,
+                border: Border.all(color: context.borderColor),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               ),
               child: DropdownButtonHideUnderline(
@@ -219,7 +220,7 @@ class _WorkerProfileSetupScreenState
                   icon: const Icon(Icons.arrow_drop_down_rounded,
                       color: AppColors.primary),
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                   items: _availableCategories
                       .map((cat) => DropdownMenuItem(
@@ -254,7 +255,7 @@ class _WorkerProfileSetupScreenState
                 prefixIcon: const Icon(Icons.location_on_outlined,
                     color: AppColors.primary),
                 filled: true,
-                fillColor: AppColors.surfaceWhite,
+                fillColor: context.surfaceColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   borderSide: const BorderSide(color: AppColors.borderGray),
@@ -299,7 +300,7 @@ class _WorkerProfileSetupScreenState
             Text(
               'Select Skills • مہارتیں منتخب کریں',
               style: AppTextStyles.bodyStrong.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
             const SizedBox(height: AppDimensions.sm),
@@ -329,7 +330,7 @@ class _WorkerProfileSetupScreenState
             Text(
               'Languages • زبانیں',
               style: AppTextStyles.bodyStrong.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
             const SizedBox(height: AppDimensions.sm),
@@ -359,7 +360,7 @@ class _WorkerProfileSetupScreenState
             Text(
               'Average Response Time • جواب دینے کا وقت',
               style: AppTextStyles.bodyStrong.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -368,8 +369,8 @@ class _WorkerProfileSetupScreenState
                 horizontal: AppDimensions.md,
               ),
               decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
-                border: Border.all(color: AppColors.outlineVariant),
+                color: context.surfaceColor,
+                border: Border.all(color: context.borderColor),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               ),
               child: DropdownButtonHideUnderline(
@@ -379,7 +380,7 @@ class _WorkerProfileSetupScreenState
                   icon: const Icon(Icons.access_time_rounded,
                       color: AppColors.primary),
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                   items: _availableResponseTimes
                       .map((rt) => DropdownMenuItem(

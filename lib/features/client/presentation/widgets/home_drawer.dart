@@ -9,6 +9,8 @@ import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/core/providers/language_provider.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
+import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'package:skill_bridge/core/utils/support_utils.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -245,23 +247,18 @@ class HomeDrawer extends ConsumerWidget {
                   const Divider(indent: 16, endIndent: 16),
                   _DrawerTile(
                     icon: Icons.support_agent_rounded,
-                    title: 'Customer Support',
-                    onTap: () async {
+                    title: context.l10n.customerSupport,
+                    onTap: () {
                       context.pop();
-                      final uri = Uri.parse('tel:+923000000000');
-                      if (await canLaunchUrl(uri)) await launchUrl(uri);
+                      SupportUtils.showSupportOptions(context);
                     },
                   ),
                   _DrawerTile(
                     icon: Icons.description_outlined,
-                    title: 'Terms & Conditions',
-                    onTap: () async {
+                    title: context.l10n.termsAndConditions,
+                    onTap: () {
                       context.pop();
-                      final uri = Uri.parse('https://skillbridge.pk/terms');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
+                      context.push(RouteNames.termsAndConditionsPath);
                     },
                   ),
                   _DrawerTile(

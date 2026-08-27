@@ -119,8 +119,8 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
     return Scaffold(
       backgroundColor: context.scaffoldBg,
       body: user == null
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+          ? Center(
+              child: CircularProgressIndicator(color: context.accentColor),
             )
           : CustomScrollView(
               slivers: [
@@ -140,10 +140,10 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLowest,
+                        color: context.surfaceColor,
                         border: Border(
                           bottom: BorderSide(
-                            color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                            color: context.borderColor.withValues(alpha: 0.5),
                           )
                         )
                       ),
@@ -166,7 +166,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                       : Container(
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: AppColors.surfaceContainerHigh, width: 4),
+                                              border: Border.all(color: context.borderColor, width: 4),
                                               boxShadow: AppShadows.level2,
                                             ),
                                             child: AppAvatar(
@@ -183,14 +183,14 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: context.surfaceColor,
                                         shape: BoxShape.circle,
                                         boxShadow: AppShadows.level1,
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.camera_alt_rounded,
                                         size: 18,
-                                        color: AppColors.primary,
+                                        color: context.accentColor,
                                       ),
                                     ),
                                   ),
@@ -208,7 +208,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                             Text(
                               user.email,
                               style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.onSurfaceVariant,
+                                color: context.mutedColor,
                               ),
                             ).animate().fade(delay: 150.ms, duration: 400.ms),
                             const SizedBox(height: 16),
@@ -254,9 +254,9 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                               title: isUrdu ? 'پورا نام' : 'Full Name',
                               value: user.displayName,
                             ),
-                            const Divider(
+                            Divider(
                                 height: 24,
-                                color: AppColors.outlineVariant),
+                                color: context.borderColor),
                             _ProfileDetailRow(
                               icon: Icons.phone_outlined,
                               title:
@@ -265,9 +265,9 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                   ? (isUrdu ? 'شامل نہیں' : 'Not added')
                                   : user.phoneNumber,
                             ),
-                            const Divider(
+                            Divider(
                                 height: 24,
-                                color: AppColors.outlineVariant),
+                                color: context.borderColor),
                             _ProfileDetailRow(
                               icon: Icons.location_on_outlined,
                               title: isUrdu ? 'شہر / پتہ' : 'Address',
@@ -275,9 +275,9 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                   ? '${user.city}, Pakistan'
                                   : (isUrdu ? 'شامل نہیں' : 'Not added'),
                             ),
-                            const Divider(
+                            Divider(
                                 height: 24,
-                                color: AppColors.outlineVariant),
+                                color: context.borderColor),
                             _ProfileDetailRow(
                               icon: Icons.email_outlined,
                               title: isUrdu ? 'ای میل' : 'Email',
@@ -359,8 +359,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                                 : 'No reviews yet',
                                             style: AppTextStyles.bodyMedium
                                                 .copyWith(
-                                              color: AppColors
-                                                  .onSurfaceVariant,
+                                              color: context.mutedColor,
                                             ),
                                           ),
                                         ),
@@ -424,7 +423,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                               style: AppTextStyles.bodyMedium
                                                   .copyWith(
                                                 color:
-                                                    AppColors.onSurfaceVariant,
+                                                    context.mutedColor,
                                               ),
                                             ),
                                           ],
@@ -460,7 +459,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
         width: 1,
         height: 28,
         margin: const EdgeInsets.symmetric(horizontal: 20),
-        color: AppColors.outlineVariant.withValues(alpha: 0.5),
+        color: context.borderColor.withValues(alpha: 0.5),
       );
 }
 
@@ -484,7 +483,7 @@ class _HeroStat extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.labelCaption.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.mutedColor,
             fontSize: 11,
           ),
         ),
@@ -552,7 +551,7 @@ class _ProfileDetailRow extends StatelessWidget {
               Text(
                 title,
                 style: AppTextStyles.labelCaption.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -587,7 +586,7 @@ class _ImageSourceSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.outlineVariant,
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -625,7 +624,7 @@ class _ImageSourceSheet extends StatelessWidget {
             child: Text(
               'Cancel',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
               ),
             ),
           ),
@@ -754,7 +753,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.outlineVariant,
+                      color: context.borderColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -770,7 +769,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       ? 'اپنی معلومات درج کریں'
                       : 'Update your personal information',
                   style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.onSurfaceVariant),
+                      .copyWith(color: context.mutedColor),
                 ),
                 const SizedBox(height: 24),
 
@@ -888,7 +887,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     return InputDecoration(
       hintText: hint,
       hintStyle:
-          AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+          AppTextStyles.bodyMedium.copyWith(color: context.mutedColor),
       prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
       filled: true,
       fillColor: AppColors.primary.withValues(alpha: 0.04),
@@ -897,12 +896,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide:
-            BorderSide(color: AppColors.outlineVariant, width: 1.2),
+            BorderSide(color: context.borderColor, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide:
-            BorderSide(color: AppColors.outlineVariant, width: 1.2),
+            BorderSide(color: context.borderColor, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

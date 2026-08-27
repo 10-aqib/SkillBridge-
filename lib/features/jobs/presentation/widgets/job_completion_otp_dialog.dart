@@ -5,6 +5,7 @@ import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/utils/privacy_helpers.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist 4-Digit Job Completion Digital Sign-off Dialog
 /// Provides secure in-person escrow sign-off between Client and Worker without requiring SMS fees.
@@ -78,7 +79,7 @@ class _JobCompletionOtpDialogState extends State<JobCompletionOtpDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: context.surfaceColor,
       title: Row(
         children: [
           Icon(
@@ -92,7 +93,7 @@ class _JobCompletionOtpDialogState extends State<JobCompletionOtpDialog> {
                   ? 'Job Sign-off Code • تصدیق کوڈ'
                   : 'Enter Completion Code • تصدیق درج کریں',
               style: AppTextStyles.heading3.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
           ),
@@ -108,7 +109,7 @@ class _JobCompletionOtpDialogState extends State<JobCompletionOtpDialog> {
                   ? 'Share this 4-digit security code with the worker after you have inspected and approved the completed work:'
                   : 'Ask the client for their 4-digit security code to finalize this job and release escrow funds:',
               style: AppTextStyles.bodyPrimary.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
               ),
             ),
             const SizedBox(height: AppDimensions.lg),

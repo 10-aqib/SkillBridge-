@@ -103,9 +103,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final otherName = widget.chat.participantNames[otherUserId] ?? 'Chat';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +113,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             Text(
               otherName,
               style:
-                  AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+                  AppTextStyles.heading3.copyWith(color: context.textColor),
             ),
             if (widget.chat.relatedJobTitle != null)
               Text(
@@ -147,7 +147,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     child: Text(
                       'Say hello! 👋 • السلام علیکم',
                       style: AppTextStyles.bodyStrong.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.mutedColor,
                       ),
                     ),
                   );
@@ -177,11 +177,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 horizontal: AppDimensions.lg,
                 vertical: AppDimensions.sm,
               ),
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceWhite,
+              decoration: BoxDecoration(
+                color: context.surfaceColor,
                 border: Border(
                   top: BorderSide(
-                    color: AppColors.outlineVariant,
+                    color: context.borderColor,
                     width: 1,
                   ),
                 ),
@@ -192,12 +192,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     child: TextField(
                       controller: _messageController,
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Type a message • پیغام لکھیں...',
                         hintStyle: AppTextStyles.bodyPrimary.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(
@@ -206,7 +206,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: AppColors.backgroundGray,
+                        fillColor: context.scaffoldBg,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: AppDimensions.lg,
                           vertical: 12,
@@ -283,10 +283,10 @@ class _MessageBubble extends StatelessWidget {
           maxWidth: context.screenWidth * 0.72,
         ),
         decoration: BoxDecoration(
-          color: isOwn ? AppColors.primary : AppColors.surfaceWhite,
+          color: isOwn ? AppColors.primary : context.surfaceColor,
           border: isOwn
               ? null
-              : Border.all(color: AppColors.outlineVariant),
+              : Border.all(color: context.borderColor),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(AppDimensions.radiusLg),
             topRight: const Radius.circular(AppDimensions.radiusLg),
@@ -315,7 +315,7 @@ class _MessageBubble extends StatelessWidget {
                         Text(
                           'Voice Note • آواز کا پیغام',
                           style: AppTextStyles.labelSmall.copyWith(
-                            color: isOwn ? AppColors.onPrimary : AppColors.onSurface,
+                            color: isOwn ? AppColors.onPrimary : context.textColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -338,7 +338,7 @@ class _MessageBubble extends StatelessWidget {
                               '0:24',
                               style: AppTextStyles.dataNumeric.copyWith(
                                 fontSize: 11,
-                                color: isOwn ? AppColors.onPrimary : AppColors.onSurfaceVariant,
+                                color: isOwn ? AppColors.onPrimary : context.mutedColor,
                               ),
                             ),
                           ],
@@ -352,7 +352,7 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 message.content,
                 style: AppTextStyles.bodyPrimary.copyWith(
-                  color: isOwn ? AppColors.onPrimary : AppColors.onSurface,
+                  color: isOwn ? AppColors.onPrimary : context.textColor,
                 ),
               ),
             const SizedBox(height: 4),
@@ -362,7 +362,7 @@ class _MessageBubble extends StatelessWidget {
                 fontSize: 11,
                 color: isOwn
                     ? AppColors.onPrimary.withValues(alpha: 0.8)
-                    : AppColors.onSurfaceVariant,
+                    : context.mutedColor,
               ),
             ),
           ],

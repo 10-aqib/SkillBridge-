@@ -37,13 +37,13 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
         NumberFormat.currency(symbol: 'Rs. ', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Manage Jobs • کاموں کا انتظام',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: Column(
@@ -51,35 +51,35 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
           // Search & Filter Header
           Container(
             padding: const EdgeInsets.all(AppDimensions.lg),
-            color: AppColors.surfaceWhite,
+            color: context.surfaceColor,
             child: Column(
               children: [
                 TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search jobs by title • کام تلاش کریں...',
                     hintStyle: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: AppColors.onSurfaceVariant),
+                    prefixIcon: Icon(Icons.search_rounded,
+                        color: context.mutedColor),
                     filled: true,
-                    fillColor: AppColors.backgroundGray,
+                    fillColor: context.scaffoldBg,
                     border: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusLg),
                       borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                          BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusLg),
                       borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                          BorderSide(color: context.borderColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius:
@@ -100,14 +100,14 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                     Text(
                       'Filter • فلٹر',
                       style: AppTextStyles.labelLarge.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.mutedColor,
                       ),
                     ),
                     DropdownButton<String>(
                       value: _selectedFilter,
-                      dropdownColor: AppColors.surfaceWhite,
+                      dropdownColor: context.surfaceColor,
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                       underline: const SizedBox(),
                       onChanged: (val) {
@@ -200,7 +200,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                                           job.title,
                                           style:
                                               AppTextStyles.bodyStrong.copyWith(
-                                            color: AppColors.onSurface,
+                                            color: context.textColor,
                                           ),
                                         ),
                                       ),
@@ -234,7 +234,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                                   Text(
                                     'Category • زمرہ: ${job.categoryName}',
                                     style: AppTextStyles.labelCaption.copyWith(
-                                      color: AppColors.onSurfaceVariant,
+                                      color: context.mutedColor,
                                     ),
                                   ),
                                   const SizedBox(height: 6),

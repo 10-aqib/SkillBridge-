@@ -918,7 +918,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'View Received Proposals ({count})'**
-  String viewReceivedProposals(String count);
+  String viewReceivedProposals(int count);
 
   /// No description provided for @receivedProposals.
   ///

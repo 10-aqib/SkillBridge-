@@ -34,13 +34,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     final usersAsync = ref.watch(adminUsersStreamProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Manage Users • صارفین کا انتظام',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: Column(
@@ -54,28 +54,28 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search by name or email • تلاش کریں...',
                     hintStyle: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: AppColors.onSurfaceVariant),
+                    prefixIcon: Icon(Icons.search_rounded,
+                        color: context.mutedColor),
                     filled: true,
-                    fillColor: AppColors.surfaceWhite,
+                    fillColor: context.surfaceColor,
                     border: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusLg),
                       borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                          BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusLg),
                       borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                          BorderSide(color: context.borderColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius:
@@ -95,15 +95,15 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     Text(
                       'Filter Role • کردار: ',
                       style: AppTextStyles.bodyStrong.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                     ),
                     const SizedBox(width: AppDimensions.sm),
                     DropdownButton<String>(
                       value: _selectedRole,
-                      dropdownColor: AppColors.surfaceWhite,
+                      dropdownColor: context.surfaceColor,
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                       underline: const SizedBox(),
                       onChanged: (val) {
@@ -197,7 +197,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                         user.displayName,
                                         style:
                                             AppTextStyles.bodyStrong.copyWith(
-                                          color: AppColors.onSurface,
+                                          color: context.textColor,
                                         ),
                                       ),
                                       if (user.isWorker && isVerified) ...[
@@ -215,7 +215,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                     user.email,
                                     style:
                                         AppTextStyles.labelCaption.copyWith(
-                                      color: AppColors.onSurfaceVariant,
+                                      color: context.mutedColor,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -286,7 +286,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                       : Icons.verified_user_outlined,
                                   color: isVerified
                                       ? AppColors.primary
-                                      : AppColors.onSurfaceVariant,
+                                      : context.mutedColor,
                                 ),
                                 onPressed: () async {
                                   final ds = ref

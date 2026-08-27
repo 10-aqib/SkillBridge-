@@ -426,7 +426,7 @@ class AppLocalizationsUr extends AppLocalizations {
       'سکل برج استعمال کر کے آپ ہماری شرائط سے متفق ہیں۔\n\n1. درست معلومات فراہم کرنا لازمی ہے۔\n2. ادائیگیاں ایپ یا طے شدہ طریقہ کار کے مطابق ہونی چاہئیں۔\n3. سکل برج کلائنٹ اور ورکر کے درمیان تنازعات کا ذمہ دار نہیں ہے۔\n4. احترام اور پیشہ ورانہ رویہ ہر وقت ضروری ہے۔';
 
   @override
-  String viewReceivedProposals(String count) {
+  String viewReceivedProposals(int count) {
     return 'تجاویز دیکھیں ($count)';
   }
 

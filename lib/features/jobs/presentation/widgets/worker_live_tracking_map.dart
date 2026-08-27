@@ -8,6 +8,7 @@ import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:skill_bridge/core/utils/geo_location_util.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Live Worker GPS Tracking widget.
 /// Displays animated tracking status, Pakistani locality geofencing,
@@ -174,26 +175,26 @@ class _WorkerLiveTrackingMapState extends State<WorkerLiveTrackingMap>
                   left: 12,
                   bottom: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite.withValues(alpha: 0.9),
+                      color: context.surfaceColor.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on_rounded,
                           color: AppColors.primary,
                           size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           _locality,
                           style: AppTextStyles.labelCaption.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                             fontSize: 11,
                           ),
                         ),
@@ -223,7 +224,7 @@ class _WorkerLiveTrackingMapState extends State<WorkerLiveTrackingMap>
                         isOnline: true,
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.md),
+                    SizedBox(width: AppDimensions.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +232,7 @@ class _WorkerLiveTrackingMapState extends State<WorkerLiveTrackingMap>
                           Text(
                             widget.workerName,
                             style: AppTextStyles.heading3.copyWith(
-                              color: AppColors.onSurface,
+                              color: context.textColor,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -284,8 +285,8 @@ class _WorkerLiveTrackingMapState extends State<WorkerLiveTrackingMap>
                     ),
                   ],
                 ),
-                const SizedBox(height: AppDimensions.md),
-                const Divider(height: 1, color: AppColors.outlineVariant),
+                SizedBox(height: AppDimensions.md),
+                Divider(height: 1, color: context.borderColor),
                 const SizedBox(height: AppDimensions.md),
 
                 // ── Interactive Action Buttons ─────────────────────────────

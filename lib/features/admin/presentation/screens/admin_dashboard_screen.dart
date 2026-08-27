@@ -12,6 +12,7 @@ import 'package:skill_bridge/features/admin/presentation/providers/admin_provide
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Admin Dashboard Screen
 class AdminDashboardScreen extends ConsumerWidget {
@@ -24,18 +25,18 @@ class AdminDashboardScreen extends ConsumerWidget {
         NumberFormat.currency(symbol: 'Rs. ', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Admin Console • ایڈمن پینل',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded,
-                color: AppColors.onSurfaceVariant),
+            icon: Icon(Icons.logout_rounded,
+                color: context.mutedColor),
             onPressed: () {
               ref.read(signOutUseCaseProvider).call();
             },
@@ -50,7 +51,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             Text(
               'System Overview • سسٹم جائزہ',
               style:
-                  AppTextStyles.heading2.copyWith(color: AppColors.onSurface),
+                  AppTextStyles.heading2.copyWith(color: context.textColor),
             ),
             const SizedBox(height: AppDimensions.lg),
 
@@ -126,7 +127,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             Text(
               'Quick Actions • فوری اقدامات',
               style:
-                  AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+                  AppTextStyles.heading3.copyWith(color: context.textColor),
             ),
             const SizedBox(height: AppDimensions.md),
 
@@ -147,7 +148,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         Text(
                           'Manage Users • صارفین',
                           style: AppTextStyles.bodyStrong.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
@@ -178,7 +179,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         Text(
                           'Manage Jobs • کام',
                           style: AppTextStyles.bodyStrong.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
@@ -233,7 +234,7 @@ class _StatCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: AppTextStyles.labelCaption.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: context.mutedColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -247,7 +248,7 @@ class _StatCard extends StatelessWidget {
             style: AppTextStyles.dataNumeric.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 18,
-              color: AppColors.onSurface,
+              color: context.textColor,
             ),
           ),
         ],

@@ -9,6 +9,7 @@ import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/utils/validators.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Login Screen adapted to match Karsaaz layout
 class LoginScreen extends ConsumerStatefulWidget {
@@ -85,13 +86,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Text(
                         'Welcome to',
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                       ),
                       Text(
                         'SKILL BRIDGE',
                         style: AppTextStyles.heading2.copyWith(
-                          color: AppColors.onSurface,
+                          color: context.textColor,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -189,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Text(
                           'Remember Me',
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                       ],
@@ -220,7 +221,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Text(
                     'OR',
                     style: AppTextStyles.labelCaption.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ),
                 ).animate().fade(delay: 350.ms, duration: 500.ms),
@@ -255,7 +256,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Text(
                         'Login using social account',
                         style: AppTextStyles.labelCaption.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                       ),
                     ),

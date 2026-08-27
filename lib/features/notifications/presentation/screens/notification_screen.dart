@@ -12,29 +12,30 @@ import 'package:skill_bridge/features/notifications/data/models/notification_mod
 import 'package:skill_bridge/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Notification Screen
 class NotificationScreen extends ConsumerWidget {
-  const NotificationScreen({super.key});
+  NotificationScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text(
           'Notifications • اطلاعات',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         leading: context.canPop()
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.onSurface),
+                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: context.textColor),
                 onPressed: () => context.pop(),
               )
             : null,
@@ -44,7 +45,7 @@ class NotificationScreen extends ConsumerWidget {
               child: Text(
                 'Please log in to see notifications.',
                 style: AppTextStyles.bodyStrong.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                 ),
               ),
             )
@@ -136,7 +137,7 @@ class _NotificationTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isUnread
                     ? AppColors.primary.withValues(alpha: 0.12)
-                    : AppColors.backgroundGray,
+                    : context.scaffoldBg,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -144,7 +145,7 @@ class _NotificationTile extends StatelessWidget {
                 size: 20,
                 color: isUnread
                     ? AppColors.primary
-                    : AppColors.onSurfaceVariant,
+                    : context.mutedColor,
               ),
             ),
             const SizedBox(width: AppDimensions.md),
@@ -160,10 +161,10 @@ class _NotificationTile extends StatelessWidget {
                           notification.title,
                           style: isUnread
                               ? AppTextStyles.bodyStrong.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 )
                               : AppTextStyles.bodyPrimary.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                         ),
                       ),
@@ -180,22 +181,22 @@ class _NotificationTile extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     notification.body,
                     style: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                       height: 1.4,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
                     timeStr,
                     style: AppTextStyles.dataNumeric.copyWith(
                       fontSize: 11,
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ),
                 ],

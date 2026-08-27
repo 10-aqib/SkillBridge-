@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 
@@ -96,7 +96,7 @@ class _EasyPaisaCheckoutScreenState
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: easyPaisaGreen,
         iconTheme: const IconThemeData(color: Colors.white),

@@ -3,6 +3,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Shimmer Loading Skeleton for Worker Cards
 class WorkerShimmerCard extends StatelessWidget {
@@ -12,10 +13,10 @@ class WorkerShimmerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.md),
-      leftAccentColor: AppColors.outlineVariant,
+      leftAccentColor: context.borderColor,
       child: Shimmer.fromColors(
-        baseColor: AppColors.outlineVariant.withValues(alpha: 0.3),
-        highlightColor: AppColors.surfaceWhite,
+        baseColor: context.borderColor.withValues(alpha: 0.3),
+        highlightColor: context.surfaceColor,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -89,10 +90,10 @@ class JobShimmerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(AppDimensions.md),
-      leftAccentColor: AppColors.outlineVariant,
+      leftAccentColor: context.borderColor,
       child: Shimmer.fromColors(
-        baseColor: AppColors.outlineVariant.withValues(alpha: 0.3),
-        highlightColor: AppColors.surfaceWhite,
+        baseColor: context.borderColor.withValues(alpha: 0.3),
+        highlightColor: context.surfaceColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

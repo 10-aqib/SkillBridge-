@@ -12,6 +12,7 @@ import 'package:skill_bridge/features/proposals/presentation/providers/proposal_
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Proposal Details Screen
 class ProposalDetailsScreen extends ConsumerWidget {
@@ -24,13 +25,13 @@ class ProposalDetailsScreen extends ConsumerWidget {
     final p = proposal;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Proposal Details • تجویز کی تفصیلات',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: p == null
@@ -38,7 +39,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
               child: Text(
                 'Proposal not found • تجویز نہیں ملی',
                 style: AppTextStyles.bodyStrong.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                 ),
               ),
             )
@@ -66,7 +67,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                               Text(
                                 p.workerName,
                                 style: AppTextStyles.heading3.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -81,7 +82,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                                   Text(
                                     p.workerRating.toStringAsFixed(1),
                                     style: AppTextStyles.dataNumeric.copyWith(
-                                      color: AppColors.onSurfaceVariant,
+                                      color: context.mutedColor,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -155,7 +156,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                         Text(
                           'Cover Letter • تعارفی پیغام',
                           style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
@@ -163,7 +164,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                           p.coverLetter,
                           style: AppTextStyles.bodyPrimary.copyWith(
                             height: 1.7,
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                       ],
@@ -227,7 +228,7 @@ class _StatusChip extends StatelessWidget {
       ProposalStatus.pending => ('Pending • زیر التوا', AppColors.warningOrange),
       ProposalStatus.accepted => ('Accepted • منظور', AppColors.successGreen),
       ProposalStatus.rejected => ('Rejected • مسترد', AppColors.errorRed),
-      ProposalStatus.withdrawn => ('Withdrawn • واپس', AppColors.onSurfaceVariant),
+      ProposalStatus.withdrawn => ('Withdrawn • واپس', context.mutedColor),
     };
 
     return Container(

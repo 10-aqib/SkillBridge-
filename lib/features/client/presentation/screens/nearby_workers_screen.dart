@@ -162,23 +162,23 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           // ── Content ────────────────────────────────────────────────────────
           Expanded(
             child: nearbyWorkersAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
               ),
               error: (err, _) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.wifi_off_rounded,
-                        size: 64, color: AppColors.outlineVariant),
-                    const SizedBox(height: 12),
+                    Icon(Icons.wifi_off_rounded,
+                        size: 64, color: context.borderColor),
+                    SizedBox(height: 12),
                     Text('Could not load workers',
                         style: AppTextStyles.bodyStrong.copyWith(
-                            color: AppColors.onSurfaceVariant)),
-                    const SizedBox(height: 4),
+                            color: context.mutedColor)),
+                    SizedBox(height: 4),
                     Text('Check your internet connection',
                         style: AppTextStyles.labelCaption.copyWith(
-                            color: AppColors.onSurfaceVariant)),
+                            color: context.mutedColor)),
                   ],
                 ),
               ),
@@ -242,16 +242,16 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           // Distance slider
           Row(
             children: [
-              const Icon(Icons.near_me_rounded, size: 16, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Icon(Icons.near_me_rounded, size: 16, color: AppColors.primary),
+              SizedBox(width: 8),
               Text(
                 'Within',
                 style: AppTextStyles.labelCaption.copyWith(
-                    color: AppColors.onSurface),
+                    color: context.textColor),
               ),
               const Spacer(),
               Container(
@@ -273,7 +273,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               trackHeight: 3,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8),
             ),
             child: Slider(
               value: _maxDistanceRadiusKm,
@@ -281,7 +281,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
               max: 5.0,
               divisions: 9,
               activeColor: AppColors.primary,
-              inactiveColor: AppColors.outlineVariant,
+              inactiveColor: context.borderColor,
               onChanged: (val) => setState(() => _maxDistanceRadiusKm = val),
             ),
           ),
@@ -332,9 +332,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.outlineVariant),
+        border: Border.all(color: context.borderColor),
         borderRadius: BorderRadius.circular(8),
         color: context.surfaceColor,
       ),
@@ -454,14 +454,14 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                           },
                           child: AnimatedContainer(
                             duration: 200.ms,
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(
+                            margin: EdgeInsets.only(right: 8),
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               color: isSelected ? AppColors.primary : context.scaffoldBg,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                                color: isSelected ? AppColors.primary : context.borderColor,
                               ),
                             ),
                             child: Text(
@@ -487,7 +487,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                           imageUrl: selectedWorker.profilePicture,
                           size: 48,
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
@@ -505,7 +505,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                                 Text(
                                   '${selectedWorker.category} • ★ ${selectedWorker.rating}',
                                   style: AppTextStyles.labelCaption.copyWith(
-                                      color: AppColors.onSurfaceVariant),
+                                      color: context.mutedColor),
                                 ),
                                 const SizedBox(height: 4),
                                 _buildDistanceChip(
@@ -662,14 +662,14 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                                     color: context.textColor),
                               ),
                             ),
-                            const Icon(Icons.verified_rounded,
+                            Icon(Icons.verified_rounded,
                                 size: 16, color: AppColors.primary),
                           ],
                         ),
                         Text(
                           worker.category,
                           style: AppTextStyles.labelCaption.copyWith(
-                              color: AppColors.onSurfaceVariant),
+                              color: context.mutedColor),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -685,9 +685,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: AppColors.outlineVariant),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
+            Divider(height: 1, color: context.borderColor),
+            SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -696,7 +696,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                   children: [
                     Text('Rate',
                         style: AppTextStyles.labelCaption.copyWith(
-                            color: AppColors.onSurfaceVariant)),
+                            color: context.mutedColor)),
                     Text(
                       '${Formatters.formatPkr(worker.hourlyRate)} / hr',
                       style: AppTextStyles.bodyStrong.copyWith(
@@ -808,20 +808,20 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
               color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_search_rounded,
+            child: Icon(Icons.person_search_rounded,
                 size: 50, color: AppColors.primary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No workers found',
             style: AppTextStyles.heading3.copyWith(
                 color: context.textColor),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Try increasing the distance or\nchanging the category',
             style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant),
+                color: context.mutedColor),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),

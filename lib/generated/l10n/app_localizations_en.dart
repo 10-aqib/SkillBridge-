@@ -424,7 +424,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'By using SkillBridge, you agree to our terms of service.\n\n1. Users must provide accurate information.\n2. Payments must be processed through the app or directly as agreed.\n3. SkillBridge is not liable for disputes between workers and clients.\n4. Respect and professionalism are required at all times.';
 
   @override
-  String viewReceivedProposals(String count) {
+  String viewReceivedProposals(int count) {
     return 'View Received Proposals ($count)';
   }
 

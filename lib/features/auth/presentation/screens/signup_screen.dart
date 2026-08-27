@@ -12,6 +12,7 @@ import 'package:skill_bridge/core/utils/validators.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_text_field.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Registration Step 1 (a3_registration_step_1)
 class SignupScreen extends ConsumerStatefulWidget {
@@ -85,7 +86,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final state = ref.watch(registerViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -100,17 +101,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // ── Back Button ─────────────────────────────────────────────
                 IconButton(
                   onPressed: () => context.pop(),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.surfaceWhite,
+                    backgroundColor: context.surfaceColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                       side: BorderSide(
-                        color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                        color: context.borderColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -121,7 +122,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Create Account • اکاؤنٹ بنائیں',
                   style: AppTextStyles.headlineLg.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                 ).animate().fade(duration: 500.ms).slideY(
                       begin: 0.2,
@@ -132,7 +133,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Join Skill Bridge — verified Pakistani trades & clients',
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: context.mutedColor,
                   ),
                 ).animate().fade(delay: 100.ms, duration: 500.ms),
                 const SizedBox(height: AppDimensions.lg),
@@ -141,7 +142,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'I am joining as:',
                   style: AppTextStyles.labelCaption.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -215,7 +216,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     prefixIcon: const Icon(Icons.location_on_outlined,
                         color: AppColors.primary),
                     filled: true,
-                    fillColor: AppColors.surfaceWhite,
+                    fillColor: context.surfaceColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                       borderSide: const BorderSide(color: AppColors.borderGray),
@@ -280,7 +281,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       text: TextSpan(
                         text: 'Already have an account? ',
                         style: AppTextStyles.bodyPrimary.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                         children: [
                           TextSpan(
@@ -330,13 +331,13 @@ class _RoleCard extends StatelessWidget {
           horizontal: AppDimensions.sm,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.surfaceWhite,
+          color: isSelected ? AppColors.primary : context.surfaceColor,
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           boxShadow: isSelected ? AppShadows.level2 : const [],
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : AppColors.outlineVariant.withValues(alpha: 0.5),
+                : context.borderColor.withValues(alpha: 0.5),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -345,13 +346,13 @@ class _RoleCard extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              color: isSelected ? AppColors.surfaceWhite : AppColors.onSurfaceVariant,
+              color: isSelected ? context.surfaceColor : context.mutedColor,
             ),
             const SizedBox(height: 6),
             Text(
               label,
               style: AppTextStyles.labelCaption.copyWith(
-                color: isSelected ? AppColors.surfaceWhite : AppColors.onSurface,
+                color: isSelected ? context.surfaceColor : context.textColor,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
               textAlign: TextAlign.center,

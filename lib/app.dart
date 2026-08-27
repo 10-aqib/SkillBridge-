@@ -23,16 +23,20 @@ class App extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ref.watch(themeModeProvider),
       locale: locale,
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('ur', ''),
-      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Fixed-height layouts (e.g. the home banner carousel) must not be
+      // broken by very large OS font sizes.
+      builder: (context, child) => MediaQuery.withClampedTextScaling(
+        minScaleFactor: 1.0,
+        maxScaleFactor: 1.2,
+        child: child!,
+      ),
     );
   }
 }

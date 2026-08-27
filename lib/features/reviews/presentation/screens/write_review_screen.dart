@@ -103,13 +103,13 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         isClient ? widget.contract.workerName : widget.contract.clientName;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Write a Review • رائے لکھیں',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: SingleChildScrollView(
@@ -118,7 +118,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppCard(
-              padding: const EdgeInsets.all(AppDimensions.xl),
+              padding: EdgeInsets.all(AppDimensions.xl),
               shadow: AppShadows.level1,
               child: Column(
                 children: [
@@ -126,15 +126,15 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     'How was your experience with • آپ کا تجربہ کیسا رہا',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
                     revieweeName,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.heading2.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.textColor,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.xl),
@@ -253,17 +253,17 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceWhite,
+                        color: context.surfaceColor,
                         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                         border: Border.all(
                           color: AppColors.borderGray,
                           width: 1,
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.add_a_photo_outlined,
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                       ),
                     ),

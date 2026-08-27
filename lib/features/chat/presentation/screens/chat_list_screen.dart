@@ -82,7 +82,7 @@ class ChatListScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline_rounded, size: 64, color: AppColors.outlineVariant),
+                    Icon(Icons.error_outline_rounded, size: 64, color: context.borderColor),
                     const SizedBox(height: 12),
                     Text(
                       isUrdu ? 'پیغامات لوڈ نہیں ہو سکے' : 'Could not load messages',
@@ -120,7 +120,7 @@ class ChatListScreen extends ConsumerWidget {
                           child: Text(
                             isUrdu ? 'کسی ورکر یا کلائنٹ سے رابطہ شروع کریں' : 'Start a conversation by reaching out to someone.',
                             style: AppTextStyles.bodyMedium
-                                .copyWith(color: AppColors.onSurfaceVariant),
+                                .copyWith(color: context.mutedColor),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -194,7 +194,7 @@ class ChatListScreen extends ConsumerWidget {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTextStyles.bodyMedium.copyWith(
-                                          color: unread > 0 ? context.textColor : AppColors.onSurfaceVariant,
+                                          color: unread > 0 ? context.textColor : context.mutedColor,
                                           fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
                                         ),
                                       ),
@@ -207,7 +207,7 @@ class ChatListScreen extends ConsumerWidget {
                                     Text(
                                       _formatTime(chat.lastMessageAt, isUrdu),
                                       style: AppTextStyles.labelCaption.copyWith(
-                                        color: unread > 0 ? AppColors.primary : AppColors.onSurfaceVariant,
+                                        color: unread > 0 ? AppColors.primary : context.mutedColor,
                                         fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal,
                                       ),
                                     ),

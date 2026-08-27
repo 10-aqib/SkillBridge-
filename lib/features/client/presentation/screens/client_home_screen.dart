@@ -190,6 +190,25 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
             ),
           ),
 
+          const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.xl)),
+          SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.copyright, size: 16, color: context.mutedColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      'All rights reserved 2026',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
@@ -311,17 +330,22 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2)),
+                      GestureDetector(
+                        onTap: () {
+                          context.push(RouteNames.clientNotificationsPath);
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: const Icon(Icons.notifications_outlined,
+                              color: Colors.white, size: 22),
                         ),
-                        child: const Icon(Icons.notifications_outlined,
-                            color: Colors.white, size: 22),
                       ),
                     ],
                   ),
@@ -373,7 +397,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
+              color: context.surfaceColor,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -385,8 +409,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded,
-                    color: AppColors.primary, size: 22),
+                Icon(Icons.search_rounded,
+                    color: context.accentColor, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -395,8 +419,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                         : controller.text,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: controller.text.isEmpty
-                          ? AppColors.onSurfaceVariant
-                          : AppColors.onSurface,
+                          ? context.mutedColor
+                          : context.textColor,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -404,11 +428,11 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
+                    color: context.borderColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.tune_rounded,
-                      color: AppColors.onSurfaceVariant, size: 16),
+                  child: Icon(Icons.tune_rounded,
+                      color: context.mutedColor, size: 16),
                 ),
               ],
             ),
@@ -426,7 +450,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
             child: Text(
               query.isEmpty ? '🔥 Popular Services' : '🔍 Results for "$query"',
               style: AppTextStyles.labelCaption.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
               ),
@@ -448,11 +472,11 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
               subtitle: Text(
                 '$_selectedCity • Skilled workers available',
                 style: AppTextStyles.labelCaption.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                 ),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14, color: AppColors.onSurfaceVariant),
+              trailing: Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: context.mutedColor),
               onTap: () {
                 controller.closeView(service);
                 context.push(RouteNames.clientNearbyWorkersPath);
@@ -464,13 +488,13 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Icon(Icons.search_off_rounded,
-                      size: 48, color: AppColors.outlineVariant),
+                  Icon(Icons.search_off_rounded,
+                      size: 48, color: context.borderColor),
                   const SizedBox(height: 12),
                   Text(
                     'No services found for "$query"',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ),
                 ],
@@ -574,7 +598,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
     return Column(
       children: [
         SizedBox(
-          height: 178,
+          height: 192,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (i) => setState(() => _currentBanner = i),
@@ -625,12 +649,10 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                     ),
                     // Text content on left side
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(16),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          child: Column(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
@@ -672,7 +694,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 if (b['rating'] != null) ...[
                                   const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
@@ -744,7 +767,6 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                             ),
                           ],
                         ),
-                        ),
                       ),
                     ),
                   ],
@@ -767,7 +789,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
               decoration: BoxDecoration(
                 color: _currentBanner == i
                     ? AppColors.primary
-                    : AppColors.outlineVariant,
+                    : context.borderColor,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),

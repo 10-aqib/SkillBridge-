@@ -9,6 +9,7 @@ import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist OTP Verification Screen (a4_otp_verification)
 class OtpVerificationScreen extends ConsumerStatefulWidget {
@@ -121,7 +122,7 @@ class _OtpVerificationScreenState
     final state = ref.watch(otpViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -134,17 +135,17 @@ class _OtpVerificationScreenState
               // ── Back Button ─────────────────────────────────────────────
               IconButton(
                 onPressed: () => context.pop(),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                   size: 20,
                 ),
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceWhite,
+                  backgroundColor: context.surfaceColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     side: BorderSide(
-                      color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                      color: context.borderColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -155,7 +156,7 @@ class _OtpVerificationScreenState
               Text(
                 'Verify Phone • فون نمبر کی تصدیق',
                 style: AppTextStyles.headlineLg.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                 ),
               ).animate().fade(duration: 500.ms).slideY(
                     begin: 0.2,
@@ -166,7 +167,7 @@ class _OtpVerificationScreenState
               Text(
                 'We sent a 6-digit verification code to:\n${widget.phoneNumber}',
                 style: AppTextStyles.bodyPrimary.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                 ),
               ).animate().fade(delay: 100.ms, duration: 500.ms),
               const SizedBox(height: AppDimensions.xl),
@@ -219,7 +220,7 @@ class _OtpVerificationScreenState
                       Text(
                         'Sending OTP code...',
                         style: AppTextStyles.bodyPrimary.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                       ),
                     ],
@@ -233,7 +234,7 @@ class _OtpVerificationScreenState
                       Text(
                         "Didn't receive the code? ",
                         style: AppTextStyles.bodyPrimary.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.mutedColor,
                         ),
                       ),
                       GestureDetector(
@@ -244,7 +245,7 @@ class _OtpVerificationScreenState
                               : 'Resend Now',
                           style: AppTextStyles.bodyStrong.copyWith(
                             color: _resendSeconds > 0
-                                ? AppColors.onSurfaceVariant
+                                ? context.mutedColor
                                 : AppColors.primary,
                             fontWeight: FontWeight.w700,
                           ),
@@ -297,18 +298,18 @@ class _OtpDigitField extends StatelessWidget {
         decoration: InputDecoration(
           counterText: '',
           filled: true,
-          fillColor: hasValue ? AppColors.blueTint : AppColors.surfaceWhite,
+          fillColor: hasValue ? AppColors.blueTint : context.surfaceColor,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             borderSide: BorderSide(
-              color: hasValue ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+              color: hasValue ? AppColors.primary : context.borderColor.withValues(alpha: 0.5),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             borderSide: BorderSide(
-              color: hasValue ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+              color: hasValue ? AppColors.primary : context.borderColor.withValues(alpha: 0.5),
             ),
           ),
           focusedBorder: OutlineInputBorder(

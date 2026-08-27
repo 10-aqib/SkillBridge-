@@ -9,13 +9,15 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/core/providers/language_provider.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
+import 'package:skill_bridge/core/utils/support_utils.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Guild Modernist Client Settings Screen
 class ClientSettingsScreen extends ConsumerWidget {
-  const ClientSettingsScreen({super.key});
+  ClientSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +50,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.language_rounded,
                       color: AppColors.primary,
                     ),
@@ -93,7 +95,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                     ref.read(languageProvider.notifier).toggleLanguage();
                   },
                 ),
-                const Divider(height: 1, color: AppColors.outlineVariant),
+                Divider(height: 1, color: context.borderColor),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -102,7 +104,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.dark_mode_outlined,
                       color: AppColors.primary,
                     ),
@@ -143,7 +145,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                       color: AppColors.successGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.support_agent_rounded,
                       color: AppColors.successGreen,
                     ),
@@ -156,23 +158,11 @@ class ClientSettingsScreen extends ConsumerWidget {
                     context.l10n.chatOnWhatsApp,
                     style: AppTextStyles.bodyPrimary.copyWith(fontSize: 13),
                   ),
-                  onTap: () async {
-                    // Open WhatsApp
-                    final Uri whatsappUrl = Uri.parse("whatsapp://send?phone=+923000000000");
-                    if (await canLaunchUrl(whatsappUrl)) {
-                      await launchUrl(whatsappUrl);
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(context.l10n.whatsappNotInstalled),
-                          ),
-                        );
-                      }
-                    }
+                  onTap: () {
+                    SupportUtils.showSupportOptions(context);
                   },
                 ),
-                const Divider(height: 1, color: AppColors.outlineVariant),
+                Divider(height: 1, color: context.borderColor),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -180,7 +170,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                       color: AppColors.blueTint,
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.description_outlined,
                       color: AppColors.primary,
                     ),
@@ -190,31 +180,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                     style: AppTextStyles.bodyStrong.copyWith(color: context.textColor),
                   ),
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: context.surfaceColor,
-                        title: Text(
-                          context.l10n.termsAndConditions,
-                          style: AppTextStyles.heading3.copyWith(color: context.textColor),
-                        ),
-                        content: SingleChildScrollView(
-                          child: Text(
-                            context.l10n.termsContent,
-                            style: AppTextStyles.bodyPrimary.copyWith(color: context.textColor),
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              context.l10n.close,
-                              style: AppTextStyles.bodyStrong.copyWith(color: AppColors.primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                    context.push(RouteNames.termsAndConditionsPath);
                   },
                 ),
               ],
@@ -234,7 +200,7 @@ class ClientSettingsScreen extends ConsumerWidget {
                   color: AppColors.errorRed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.logout_rounded,
                   color: AppColors.errorRed,
                 ),

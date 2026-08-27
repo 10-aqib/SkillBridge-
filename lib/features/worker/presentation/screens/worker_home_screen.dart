@@ -61,7 +61,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             ur: 'کاریگر ڈیش بورڈ',
                           ),
                           style: AppTextStyles.labelCaption.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.mutedColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -73,7 +73,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             ur: 'خوش آمدید، $displayName!',
                           ),
                           style: AppTextStyles.headlineLg.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                       ],
@@ -133,7 +133,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                               Text(
                                 'Status: $_availability',
                                 style: AppTextStyles.heading3.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -150,7 +150,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                         ur: 'سرچ سے پوشیدہ',
                                       ),
                                 style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: AppColors.onSurfaceVariant,
+                                  color: context.mutedColor,
                                   fontSize: 12,
                                 ),
                               ),
@@ -222,7 +222,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                 ur: 'ریٹنگ',
                               ),
                               style: AppTextStyles.labelCaption.copyWith(
-                                color: AppColors.onSurfaceVariant,
+                                color: context.mutedColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -237,7 +237,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                 Text(
                                   rating.toStringAsFixed(1),
                                   style: AppTextStyles.heading2.copyWith(
-                                    color: AppColors.onSurface,
+                                    color: context.textColor,
                                   ),
                                 ),
                               ],
@@ -261,14 +261,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                 ur: 'مکمل کام',
                               ),
                               style: AppTextStyles.labelCaption.copyWith(
-                                color: AppColors.onSurfaceVariant,
+                                color: context.mutedColor,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '$totalCompleted',
                               style: AppTextStyles.heading2.copyWith(
-                                color: AppColors.onSurface,
+                                color: context.textColor,
                               ),
                             ),
                           ],
@@ -290,7 +290,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                 ur: 'اجرت',
                               ),
                               style: AppTextStyles.labelCaption.copyWith(
-                                color: AppColors.onSurfaceVariant,
+                                color: context.mutedColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -339,7 +339,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         ur: 'قریبی کام',
                       ),
                       style: AppTextStyles.heading2.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                     ),
                     TextButton(
@@ -380,7 +380,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         child: Text(
                           'No jobs available nearby.',
                           style: AppTextStyles.bodyPrimary.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.mutedColor,
                           ),
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_shadows.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Level 2 Surface Card
 /// Features 16px radius, white surface, Level 2 (2dp) shadow, and optional 4px left accent bar
@@ -57,7 +58,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = widget.color ?? (isDark ? AppColors.darkCard : AppColors.surfaceWhite);
+    final cardColor = widget.color ?? (isDark ? AppColors.darkCard : context.surfaceColor);
     final cardRadius = widget.radius ?? AppDimensions.radiusLg;
 
     final content = Container(
@@ -75,7 +76,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
             : Border.all(
                 color: isDark
                     ? AppColors.darkLine
-                    : AppColors.outlineVariant.withValues(alpha: 0.5),
+                    : context.borderColor.withValues(alpha: 0.5),
                 width: 1,
               ),
         boxShadow: widget.shadow ?? AppShadows.level2,

@@ -16,6 +16,7 @@ import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 class WorkerProfileDetailScreen extends ConsumerWidget {
   final String workerId;
@@ -30,7 +31,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
     final workerAsync = ref.watch(workerProfileProvider(workerId));
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       body: workerAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -55,11 +56,11 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Basic Info
-                      _buildHeaderInfo(worker, profile),
+                      _buildHeaderInfo(context, worker, profile),
                       const SizedBox(height: AppDimensions.xl),
 
                       // Quick Stats
-                      _buildQuickStats(worker, profile),
+                      _buildQuickStats(context, worker, profile),
                       const SizedBox(height: AppDimensions.xl),
 
                       // Tabs (About, Gallery, Reviews) using DefaultTabController
@@ -68,9 +69,9 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const TabBar(
+                            TabBar(
                               labelColor: AppColors.primary,
-                              unselectedLabelColor: AppColors.onSurfaceVariant,
+                              unselectedLabelColor: context.mutedColor,
                               indicatorColor: AppColors.primary,
                               tabs: [
                                 Tab(text: 'About'),
@@ -83,7 +84,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
                               height: 600, // Fixed height for tab content for now to avoid scrolling issues
                               child: TabBarView(
                                 children: [
-                                  _buildAboutTab(worker, profile),
+                                  _buildAboutTab(context, worker, profile),
                                   _buildGalleryTab(profile),
                                   _ReviewsTabWidget(workerId: worker.uid, profile: profile),
                                 ],
@@ -167,7 +168,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderInfo(UserEntity worker, WorkerProfileEntity profile) {
+  Widget _buildHeaderInfo(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,7 +182,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
                 children: [
                   Text(
                     worker.displayName,
-                    style: AppTextStyles.heading2.copyWith(color: AppColors.onSurface),
+                    style: AppTextStyles.heading2.copyWith(color: context.textColor),
                   ).animate().fade(delay: 100.ms),
                   const SizedBox(height: 4),
                   Text(
@@ -215,14 +216,14 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
               ).animate().fade(delay: 200.ms),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 16, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 4),
+            Icon(Icons.location_on_outlined, size: 16, color: context.mutedColor),
+            SizedBox(width: 4),
             Text(
               '${profile.city} (Serves up to ${profile.serviceRadius} km)',
-              style: AppTextStyles.bodyPrimary.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTextStyles.bodyPrimary.copyWith(color: context.mutedColor),
             ),
           ],
         ).animate().fade(delay: 250.ms),
@@ -230,32 +231,32 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickStats(UserEntity worker, WorkerProfileEntity profile) {
+  Widget _buildQuickStats(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStatItem('★ ${profile.averageRating.toStringAsFixed(1)}', '${profile.totalReviews} Reviews'),
-        _buildStatItem('${profile.totalJobsCompleted}', 'Jobs Done'),
-        _buildStatItem('${profile.experience} Yrs', 'Experience'),
-        _buildStatItem('Rs. ${profile.hourlyRate}', 'Starting Price'),
+        _buildStatItem(context, '★ ${profile.averageRating.toStringAsFixed(1)}', '${profile.totalReviews} Reviews'),
+        _buildStatItem(context, '${profile.totalJobsCompleted}', 'Jobs Done'),
+        _buildStatItem(context, '${profile.experience} Yrs', 'Experience'),
+        _buildStatItem(context, 'Rs. ${profile.hourlyRate}', 'Starting Price'),
       ],
     ).animate().fade(delay: 300.ms).slideY(begin: 0.1);
   }
 
-  Widget _buildStatItem(String value, String label) {
+  Widget _buildStatItem(BuildContext context, String value, String label) {
     return AppCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       shadow: AppShadows.level1,
       child: Column(
         children: [
           Text(
             value,
-            style: AppTextStyles.bodyStrong.copyWith(color: AppColors.onSurface, fontSize: 16),
+            style: AppTextStyles.bodyStrong.copyWith(color: context.textColor, fontSize: 16),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             label,
-            style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+            style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
             textAlign: TextAlign.center,
           ),
         ],
@@ -263,7 +264,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAboutTab(UserEntity worker, WorkerProfileEntity profile) {
+  Widget _buildAboutTab(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,9 +340,9 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
 
   Widget _buildBottomActionBar(BuildContext context, UserEntity worker) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.lg),
+      padding: EdgeInsets.all(AppDimensions.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
+        color: context.surfaceColor,
         boxShadow: AppShadows.level2,
       ),
       child: SafeArea(
@@ -576,7 +577,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
             ),
             Text(
               '${r.createdAt.day}/${r.createdAt.month}/${r.createdAt.year}',
-              style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
             ),
           ],
         ),
@@ -621,9 +622,9 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
               },
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: hasUpvoted ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceWhite,
+                  color: hasUpvoted ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceColor,
                   border: Border.all(color: hasUpvoted ? AppColors.primary : AppColors.borderGray),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -632,13 +633,13 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
                     Icon(
                       hasUpvoted ? Icons.thumb_up_alt_rounded : Icons.thumb_up_alt_outlined, 
                       size: 16, 
-                      color: hasUpvoted ? AppColors.primary : AppColors.onSurfaceVariant
+                      color: hasUpvoted ? AppColors.primary : context.mutedColor
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       'Helpful (${r.helpfulVotes})',
                       style: AppTextStyles.labelCaption.copyWith(
-                        color: hasUpvoted ? AppColors.primary : AppColors.onSurfaceVariant,
+                        color: hasUpvoted ? AppColors.primary : context.mutedColor,
                       ),
                     ),
                   ],
@@ -649,11 +650,11 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
         ),
 
         if (r.workerReply != null && r.workerReply!.isNotEmpty) ...[
-          const SizedBox(height: AppDimensions.md),
+          SizedBox(height: AppDimensions.md),
           Container(
-            padding: const EdgeInsets.all(AppDimensions.md),
+            padding: EdgeInsets.all(AppDimensions.md),
             decoration: BoxDecoration(
-              color: AppColors.backgroundGray,
+              color: context.scaffoldBg,
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               border: Border.all(color: AppColors.borderGray),
             ),
@@ -665,15 +666,15 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.reply_rounded, size: 16, color: AppColors.primary),
-                        const SizedBox(width: 4),
+                        Icon(Icons.reply_rounded, size: 16, color: AppColors.primary),
+                        SizedBox(width: 4),
                         Text('Reply from ${r.revieweeName}', style: AppTextStyles.bodyStrong),
                       ],
                     ),
                     if (r.workerReplyAt != null)
                       Text(
                         '${r.workerReplyAt!.day}/${r.workerReplyAt!.month}/${r.workerReplyAt!.year}',
-                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
+                        style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
                       ),
                   ],
                 ),

@@ -37,25 +37,29 @@ class ClientMainScreen extends ConsumerWidget {
           backgroundColor: context.surfaceColor,
           indicatorColor: AppColors.primaryContainer,
           elevation: 4,
-          shadowColor: AppColors.onSurface.withValues(alpha: 0.08),
+          shadowColor: context.textColor.withValues(alpha: 0.08),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
             _buildNavDestination(
+              context,
               icon: Icons.home_outlined,
               selectedIcon: Icons.home_rounded,
               label: isUrdu ? 'ہوم' : 'Home',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.work_outline_rounded,
               selectedIcon: Icons.work_rounded,
               label: isUrdu ? 'میرے کام' : 'My Jobs',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.chat_bubble_outline_rounded,
               selectedIcon: Icons.chat_bubble_rounded,
               label: isUrdu ? 'چیٹ' : 'Chats',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.person_outline_rounded,
               selectedIcon: Icons.person_rounded,
               label: isUrdu ? 'پروفائل' : 'Profile',
@@ -66,13 +70,14 @@ class ClientMainScreen extends ConsumerWidget {
     );
   }
 
-  NavigationDestination _buildNavDestination({
+  NavigationDestination _buildNavDestination(
+    BuildContext context, {
     required IconData icon,
     required IconData selectedIcon,
     required String label,
   }) {
     return NavigationDestination(
-      icon: Icon(icon, color: AppColors.onSurfaceVariant),
+      icon: Icon(icon, color: context.mutedColor),
       selectedIcon: Icon(selectedIcon, color: AppColors.primary),
       label: label,
     );

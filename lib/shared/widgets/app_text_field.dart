@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Form Field Component (12px radius, Inter typography)
 class AppTextField extends StatefulWidget {
@@ -56,7 +57,7 @@ class _AppTextFieldState extends State<AppTextField> {
           Text(
             widget.labelText,
             style: AppTextStyles.labelCaption.copyWith(
-              color: AppColors.onSurface,
+              color: context.textColor,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -76,7 +77,7 @@ class _AppTextFieldState extends State<AppTextField> {
           readOnly: widget.readOnly,
           onTap: widget.onTap,
           style: AppTextStyles.bodyPrimary.copyWith(
-            color: AppColors.onSurface,
+            color: context.textColor,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
@@ -84,7 +85,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 ? Icon(
                     widget.prefixIcon,
                     size: 20,
-                    color: AppColors.onSurfaceVariant,
+                    color: context.mutedColor,
                   )
                 : null,
             suffixIcon: widget.isPassword
@@ -92,7 +93,7 @@ class _AppTextFieldState extends State<AppTextField> {
                     icon: Icon(
                     _obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                     size: 20,
-                    color: AppColors.onSurfaceVariant,
+                    color: context.mutedColor,
                   ),
                     onPressed: () {
                       setState(() {

@@ -5,6 +5,7 @@ import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_shadows.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Worker 7-Day Earnings & Escrow Performance Chart
 class WorkerEarningsChart extends StatelessWidget {
@@ -31,7 +32,7 @@ class WorkerEarningsChart extends StatelessWidget {
                   Text(
                     '7-Day Earnings • ہفتہ وار آمدنی',
                     style: AppTextStyles.bodyStrong.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -92,7 +93,7 @@ class WorkerEarningsChart extends StatelessWidget {
                       '${(amount / 1000).toStringAsFixed(1)}k',
                       style: AppTextStyles.labelCaption.copyWith(
                         fontSize: 10,
-                        color: AppColors.onSurfaceVariant,
+                        color: context.mutedColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -111,13 +112,13 @@ class WorkerEarningsChart extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       days[index],
                       style: AppTextStyles.labelSmall.copyWith(
                         color: index == 6
-                            ? const Color(0xFF005438)
-                            : AppColors.onSurfaceVariant,
+                            ? Color(0xFF005438)
+                            : context.mutedColor,
                         fontWeight:
                             index == 6 ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -127,8 +128,8 @@ class WorkerEarningsChart extends StatelessWidget {
               }),
             ),
           ).animate().fade(duration: 500.ms).slideY(begin: 0.1, end: 0),
-          const SizedBox(height: AppDimensions.lg),
-          const Divider(height: 1, color: AppColors.outlineVariant),
+          SizedBox(height: AppDimensions.lg),
+          Divider(height: 1, color: context.borderColor),
           const SizedBox(height: AppDimensions.md),
 
           // Stats summary row
@@ -136,6 +137,7 @@ class WorkerEarningsChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatItem(
+                context,
                 label: 'Avg Job Ticket',
                 value: 'Rs. 2,450',
                 icon: Icons.receipt_long_rounded,
@@ -143,9 +145,10 @@ class WorkerEarningsChart extends StatelessWidget {
               Container(
                 width: 1,
                 height: 32,
-                color: AppColors.outlineVariant,
+                color: context.borderColor,
               ),
               _buildStatItem(
+                context,
                 label: 'On-Time Signoff',
                 value: '98.4%',
                 icon: Icons.timer_rounded,
@@ -157,28 +160,29 @@ class WorkerEarningsChart extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem({
+  Widget _buildStatItem(
+    BuildContext context, {
     required String label,
     required String value,
     required IconData icon,
   }) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF005438)),
-        const SizedBox(width: 8),
+        Icon(icon, size: 20, color: Color(0xFF005438)),
+        SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               value,
               style: AppTextStyles.bodyStrong.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
             Text(
               label,
               style: AppTextStyles.labelCaption.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
               ),
             ),
           ],

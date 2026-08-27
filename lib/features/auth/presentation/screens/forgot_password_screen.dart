@@ -9,6 +9,7 @@ import 'package:skill_bridge/core/utils/validators.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_text_field.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Forgot Password Screen
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -67,15 +68,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final state = ref.watch(forgotPasswordViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.onSurface,
+            color: context.textColor,
             size: 20,
           ),
         ),
@@ -96,7 +97,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceWhite,
+                    color: context.surfaceColor,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                     boxShadow: const [
                       BoxShadow(
@@ -121,14 +122,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 Text(
                   'Reset Password • پاس ورڈ ری سیٹ کریں',
                   style: AppTextStyles.headlineLg.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                 ).animate().fade(delay: 100.ms, duration: 500.ms),
                 const SizedBox(height: 8),
                 Text(
                   'Enter your email address and we will send you a secure link to reset your password.',
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: context.mutedColor,
                     height: 1.5,
                   ),
                 ).animate().fade(delay: 150.ms, duration: 500.ms),

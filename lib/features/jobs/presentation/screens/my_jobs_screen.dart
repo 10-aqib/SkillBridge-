@@ -72,7 +72,7 @@ class MyJobsScreen extends ConsumerWidget {
                 ),
               ),
               bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(48),
+                preferredSize: Size.fromHeight(48),
                 child: Container(
                   color: context.surfaceColor,
                   child: jobsAsync.when(
@@ -84,7 +84,7 @@ class MyJobsScreen extends ConsumerWidget {
                         indicatorColor: AppColors.primary,
                         indicatorWeight: 3,
                         labelColor: AppColors.primary,
-                        unselectedLabelColor: AppColors.onSurfaceVariant,
+                        unselectedLabelColor: context.mutedColor,
                         labelStyle: AppTextStyles.bodyStrong.copyWith(fontSize: 13),
                         unselectedLabelStyle: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
                         tabs: [
@@ -147,19 +147,19 @@ class MyJobsScreen extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.wifi_off_rounded,
-              size: 64, color: AppColors.outlineVariant),
-          const SizedBox(height: 12),
+          Icon(Icons.wifi_off_rounded,
+              size: 64, color: context.borderColor),
+          SizedBox(height: 12),
           Text(
             isUrdu ? 'لوڈ نہیں ہو سکا' : 'Could not load jobs',
             style:
-                AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+                AppTextStyles.heading3.copyWith(color: context.textColor),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             isUrdu ? 'انٹرنیٹ کنکشن چیک کریں' : 'Check your internet connection',
             style: AppTextStyles.bodyMedium
-                .copyWith(color: AppColors.onSurfaceVariant),
+                .copyWith(color: context.mutedColor),
           ),
         ],
       ),
@@ -180,21 +180,21 @@ class MyJobsScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Container(width: 10, height: 10, decoration: const BoxDecoration(color: AppColors.surfaceContainerHigh, shape: BoxShape.circle)),
+                    Container(width: 10, height: 10, decoration: BoxDecoration(color: context.borderColor, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
-                    Container(width: 150, height: 16, color: AppColors.surfaceContainerHigh),
+                    Container(width: 150, height: 16, color: context.borderColor),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Container(width: double.infinity, height: 12, color: AppColors.surfaceContainerHigh),
+                Container(width: double.infinity, height: 12, color: context.borderColor),
                 const SizedBox(height: 6),
-                Container(width: 200, height: 12, color: AppColors.surfaceContainerHigh),
+                Container(width: 200, height: 12, color: context.borderColor),
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Container(width: 80, height: 24, decoration: BoxDecoration(color: AppColors.surfaceContainerHigh, borderRadius: BorderRadius.circular(6))),
+                    Container(width: 80, height: 24, decoration: BoxDecoration(color: context.borderColor, borderRadius: BorderRadius.circular(6))),
                     const SizedBox(width: 8),
-                    Container(width: 80, height: 24, decoration: BoxDecoration(color: AppColors.surfaceContainerHigh, borderRadius: BorderRadius.circular(6))),
+                    Container(width: 80, height: 24, decoration: BoxDecoration(color: context.borderColor, borderRadius: BorderRadius.circular(6))),
                   ],
                 ),
               ],
@@ -234,24 +234,24 @@ class _JobList extends ConsumerWidget {
                 color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.work_off_outlined,
+              child: Icon(Icons.work_off_outlined,
                   size: 44, color: AppColors.primary),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(emptyTitle,
                 style: AppTextStyles.heading3
                     .copyWith(color: context.textColor)),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
                 emptySubtitle,
                 style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.onSurfaceVariant),
+                    .copyWith(color: context.mutedColor),
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => context.push(RouteNames.clientPostJobPath),
               icon: const Icon(Icons.add_rounded),
@@ -271,7 +271,7 @@ class _JobList extends ConsumerWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppDimensions.md),
+      padding: EdgeInsets.all(AppDimensions.md),
       itemCount: jobs.length,
       itemBuilder: (context, index) {
         final job = jobs[index];
@@ -280,10 +280,10 @@ class _JobList extends ConsumerWidget {
             ? AppColors.successGreen
             : job.status == JobStatus.inProgress
                 ? AppColors.primaryLight
-                : AppColors.onSurfaceVariant;
+                : context.mutedColor;
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.only(bottom: 12),
           child: GestureDetector(
             onTap: () =>
                 context.push(RouteNames.clientJobDetailsPath, extra: job),
@@ -304,7 +304,7 @@ class _JobList extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           job.title,
@@ -317,13 +317,13 @@ class _JobList extends ConsumerWidget {
                       if (isUrgent) AppBadge.urgent(context),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     job.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                       fontSize: 13,
                     ),
                   ),
@@ -342,17 +342,17 @@ class _JobList extends ConsumerWidget {
                         label: '${job.totalProposals} ${isUrdu ? 'تجاویز' : 'Proposals'}',
                         color: AppColors.secondary,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _StatChip(
                         icon: Icons.location_on_outlined,
                         label: job.city.isEmpty ? 'Lahore' : job.city,
-                        color: AppColors.onSurfaceVariant,
+                        color: context.mutedColor,
                       ),
                     ],
                   ),
                   if (job.status == JobStatus.open) ...[
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: AppColors.outlineVariant),
+                    SizedBox(height: 12),
+                    Divider(height: 1, color: context.borderColor),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [

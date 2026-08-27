@@ -135,17 +135,17 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     final state = ref.watch(postJobNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Post a New Job • نیا کام پوسٹ کریں',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.lg),
+        padding: EdgeInsets.all(AppDimensions.lg),
         child: Form(
           key: _formKey,
           child: Column(
@@ -154,7 +154,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               Text(
                 'Job Details • کام کی تفصیلات',
                 style: AppTextStyles.heading2.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                 ),
               ).animate().fade(duration: 400.ms),
               const SizedBox(height: AppDimensions.md),
@@ -174,22 +174,22 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                           ? 'Enter job title'
                           : null,
                     ),
-                    const SizedBox(height: AppDimensions.md),
+                    SizedBox(height: AppDimensions.md),
 
                     // Category Dropdown
                     Text(
                       'Category • زمرہ',
                       style: AppTextStyles.labelCaption.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.mutedColor,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: AppDimensions.md,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.outlineVariant),
+                        border: Border.all(color: context.borderColor),
                         borderRadius:
                             BorderRadius.circular(AppDimensions.radiusSm),
                       ),
@@ -198,7 +198,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                           value: _selectedCategory,
                           isExpanded: true,
                           style: AppTextStyles.bodyPrimary.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                           items: _availableCategories
                               .map((c) =>
@@ -260,11 +260,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                               color: AppColors.primary,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             'Auto-detect trade or diagnose from photo',
                             style: AppTextStyles.labelCaption.copyWith(
-                              color: AppColors.onSurfaceVariant,
+                              color: context.mutedColor,
                             ),
                           ),
                         ],
@@ -291,13 +291,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   ],
                 ),
               ).animate().fade(delay: 130.ms, duration: 400.ms),
-              const SizedBox(height: AppDimensions.lg),
+              SizedBox(height: AppDimensions.lg),
 
               // Budget Section (PKR)
               Text(
                 'Budget Range (PKR) • بجٹ کی حد',
                 style: AppTextStyles.heading3.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                 ),
               ).animate().fade(delay: 150.ms, duration: 400.ms),
               const SizedBox(height: AppDimensions.sm),
@@ -331,8 +331,8 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppDimensions.md),
-                    const Divider(height: 1, color: AppColors.outlineVariant),
+                    SizedBox(height: AppDimensions.md),
+                    Divider(height: 1, color: context.borderColor),
                     const SizedBox(height: AppDimensions.md),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -344,7 +344,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                       title: Text(
                         'Milestone-Based Escrow • مرحلہ وار ادائیگی',
                         style: AppTextStyles.bodyStrong.copyWith(
-                          color: AppColors.onSurface,
+                          color: context.textColor,
                         ),
                       ),
                       subtitle: Text(
@@ -354,7 +354,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                         style: AppTextStyles.labelCaption.copyWith(
                           color: _isMilestoneEscrow
                               ? AppColors.primary
-                              : AppColors.onSurfaceVariant,
+                              : context.mutedColor,
                           fontWeight: _isMilestoneEscrow
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -370,13 +370,13 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   ],
                 ),
               ).animate().fade(delay: 200.ms, duration: 400.ms),
-              const SizedBox(height: AppDimensions.lg),
+              SizedBox(height: AppDimensions.lg),
 
               // Location
               Text(
                 'Location • مقام',
                 style: AppTextStyles.heading3.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                 ),
               ).animate().fade(delay: 250.ms, duration: 400.ms),
               const SizedBox(height: AppDimensions.sm),
@@ -407,7 +407,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
               // Urgency Selector ('immediate' | 'within_3_days' | 'flexible')
               AppCard(
-                padding: const EdgeInsets.all(AppDimensions.md),
+                padding: EdgeInsets.all(AppDimensions.md),
                 shadow: AppShadows.level1,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,7 +415,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     Text(
                       'Urgency • فوری ضرورت',
                       style: AppTextStyles.bodyStrong.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                       ),
                     ),
                     const SizedBox(height: AppDimensions.sm),

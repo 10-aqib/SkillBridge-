@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Worker Bottom Navigation (5 Tabs)
 class WorkerMainScreen extends StatelessWidget {
@@ -23,38 +24,43 @@ class WorkerMainScreen extends StatelessWidget {
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceWhite,
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
         ),
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: _onTap,
-          backgroundColor: AppColors.surfaceWhite,
+          backgroundColor: context.surfaceColor,
           indicatorColor: AppColors.primaryContainer,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           elevation: 0,
           destinations: [
             _buildNavDestination(
+              context,
               icon: Icons.home_outlined,
               selectedIcon: Icons.home_rounded,
               label: 'Home • ہوم',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.description_outlined,
               selectedIcon: Icons.description_rounded,
               label: 'Proposals',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.assignment_outlined,
               selectedIcon: Icons.assignment_rounded,
               label: 'Contracts',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.chat_bubble_outline_rounded,
               selectedIcon: Icons.chat_bubble_rounded,
               label: 'Chats',
             ),
             _buildNavDestination(
+              context,
               icon: Icons.person_outline_rounded,
               selectedIcon: Icons.person_rounded,
               label: 'Profile',
@@ -65,13 +71,14 @@ class WorkerMainScreen extends StatelessWidget {
     );
   }
 
-  NavigationDestination _buildNavDestination({
+  NavigationDestination _buildNavDestination(
+    BuildContext context, {
     required IconData icon,
     required IconData selectedIcon,
     required String label,
   }) {
     return NavigationDestination(
-      icon: Icon(icon, color: AppColors.onSurfaceVariant, size: 22),
+      icon: Icon(icon, color: context.mutedColor, size: 22),
       selectedIcon: Icon(selectedIcon, color: AppColors.primary, size: 24),
       label: label,
     );

@@ -14,6 +14,18 @@ extension ContextExtensions on BuildContext {
   Color get mutedColor => isDark ? AppColors.darkMuted : AppColors.onSurfaceVariant;
   Color get borderColor => isDark ? AppColors.darkLine : AppColors.outlineVariant;
 
+  /// Accent for icons/indicators sitting on a themed surface. Do NOT use as a
+  /// fill that white text sits on — use [AppColors.primary] directly there.
+  Color get accentColor => isDark ? AppColors.inversePrimary : AppColors.primary;
+
+  // Directionality shortcut, for layout mirroring.
+  bool get isRtl => Directionality.of(this) == TextDirection.rtl;
+
+  /// Whether the active UI language is Urdu, for picking a display label out of
+  /// data that carries its own translations (e.g. [PakistanConstants]).
+  /// For UI copy use [l10n] instead — this is not a substitute for it.
+  bool get isUrdu => Localizations.localeOf(this).languageCode == 'ur';
+
   // Media Query shortcut
   MediaQueryData get mediaQuery => MediaQuery.of(this);
   Size get screenSize => mediaQuery.size;

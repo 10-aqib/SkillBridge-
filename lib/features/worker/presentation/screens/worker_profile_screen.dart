@@ -13,29 +13,30 @@ import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Worker Profile Screen (b2_worker_profile)
 class WorkerProfileScreen extends ConsumerWidget {
-  const WorkerProfileScreen({super.key});
+  WorkerProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Worker Profile • کاریگر پروفائل',
           style: AppTextStyles.heading3.copyWith(
-            color: AppColors.onSurface,
+            color: context.textColor,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.onSurface),
+            icon: Icon(Icons.settings_outlined, color: context.textColor),
             onPressed: () => context.push(RouteNames.workerSettingsPath),
           ),
         ],
@@ -55,11 +56,11 @@ class WorkerProfileScreen extends ConsumerWidget {
                     imageUrl: user.photoUrl,
                     size: 100,
                   ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-                  const SizedBox(height: AppDimensions.md),
+                  SizedBox(height: AppDimensions.md),
                   Text(
                     user.displayName,
                     style: AppTextStyles.heading2.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.textColor,
                     ),
                   ).animate().fade(delay: 100.ms, duration: 400.ms),
                   const SizedBox(height: 4),
@@ -69,11 +70,11 @@ class WorkerProfileScreen extends ConsumerWidget {
                       color: AppColors.primary,
                     ),
                   ).animate().fade(delay: 150.ms, duration: 400.ms),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '${user.city ?? 'Lahore, Pakistan'} • ★ ${user.rating.toStringAsFixed(1)} (${user.totalReviews} Reviews)',
                     style: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.mutedColor,
                     ),
                   ).animate().fade(delay: 200.ms, duration: 400.ms),
                   const SizedBox(height: 10),
@@ -141,7 +142,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                         Text(
                           'Hourly Rate • فی گھنٹہ ریٹ',
                           style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.surfaceWhite,
+                            color: context.surfaceColor,
                           ),
                         ),
                         Text(
@@ -158,7 +159,7 @@ class WorkerProfileScreen extends ConsumerWidget {
 
                   // ── Skills Card ───────────────────────────────────────────
                   AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
+                    padding: EdgeInsets.all(AppDimensions.md),
                     shadow: AppShadows.level2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +167,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                         Text(
                           'Skills & Expertise • مہارتیں',
                           style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
@@ -187,7 +188,7 @@ class WorkerProfileScreen extends ConsumerWidget {
 
                   // ── Details Card (Languages & Response Time) ───────────────
                   AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
+                    padding: EdgeInsets.all(AppDimensions.md),
                     shadow: AppShadows.level2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +196,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                         Text(
                           'Additional Details • اضافی تفصیلات',
                           style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
@@ -204,14 +205,14 @@ class WorkerProfileScreen extends ConsumerWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.language_rounded,
+                              Icon(Icons.language_rounded,
                                   color: AppColors.primary, size: 20),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Languages: ${user.workerProfile!.languages.join(', ')}',
                                   style: AppTextStyles.bodyPrimary.copyWith(
-                                    color: AppColors.onSurface,
+                                    color: context.textColor,
                                   ),
                                 ),
                               ),
@@ -221,14 +222,14 @@ class WorkerProfileScreen extends ConsumerWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.timer_outlined,
+                            Icon(Icons.timer_outlined,
                                 color: AppColors.primary, size: 20),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Response Time: ${user.workerProfile?.responseTime ?? 'Unknown'}',
                                 style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                               ),
                             ),
@@ -241,7 +242,7 @@ class WorkerProfileScreen extends ConsumerWidget {
 
                   // ── Reviews Card ──────────────────────────────────────────
                   AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
+                    padding: EdgeInsets.all(AppDimensions.md),
                     shadow: AppShadows.level2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,17 +250,17 @@ class WorkerProfileScreen extends ConsumerWidget {
                         Text(
                           'Recent Reviews • حالیہ جائزے',
                           style: AppTextStyles.heading3.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.md),
+                        SizedBox(height: AppDimensions.md),
                         ref.watch(userReviewsStreamProvider(user.uid)).when(
                               data: (reviews) {
                                 if (reviews.isEmpty) {
                                   return Text(
                                     'No reviews yet • ابھی تک کوئی جائزہ نہیں',
                                     style: AppTextStyles.bodyPrimary.copyWith(
-                                      color: AppColors.onSurfaceVariant,
+                                      color: context.mutedColor,
                                     ),
                                   );
                                 }
@@ -283,7 +284,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                                               r.reviewerName,
                                               style: AppTextStyles.bodyStrong
                                                   .copyWith(
-                                                color: AppColors.onSurface,
+                                                color: context.textColor,
                                               ),
                                             ),
                                             Text(
@@ -295,12 +296,12 @@ class WorkerProfileScreen extends ConsumerWidget {
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
+                                        SizedBox(height: 4),
                                         Text(
                                           r.comment,
                                           style: AppTextStyles.bodyPrimary
                                               .copyWith(
-                                            color: AppColors.onSurfaceVariant,
+                                            color: context.mutedColor,
                                           ),
                                         ),
                                       ],
@@ -320,7 +321,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ).animate().fade(delay: 325.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                  const SizedBox(height: AppDimensions.space48),
+                  SizedBox(height: AppDimensions.space48),
 
                   // ── Edit Profile Button ───────────────────────────────────
                   AppButton(

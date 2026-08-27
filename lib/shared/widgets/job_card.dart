@@ -4,6 +4,7 @@ import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/utils/formatters.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Signature Component — Job Card (Job Listing Card)
 /// Features:
@@ -50,7 +51,7 @@ class JobCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.sm),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         boxShadow: const [
           BoxShadow(
@@ -65,7 +66,7 @@ class JobCard extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+          color: context.borderColor.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -144,7 +145,7 @@ class JobCard extends StatelessWidget {
                           Text(
                             title,
                             style: AppTextStyles.bodyStrong.copyWith(
-                              color: AppColors.onSurface,
+                              color: context.textColor,
                               fontSize: 16,
                             ),
                             maxLines: 2,
@@ -179,7 +180,7 @@ class JobCard extends StatelessWidget {
                           Divider(
                             height: 1,
                             thickness: 1,
-                            color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                            color: context.borderColor.withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: AppDimensions.sm),
                           // Client Info + Budget Row
@@ -204,7 +205,7 @@ class JobCard extends StatelessWidget {
                                             clientName,
                                             style: AppTextStyles.bodyStrong.copyWith(
                                               fontSize: 12,
-                                              color: AppColors.onSurface,
+                                              color: context.textColor,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -222,7 +223,7 @@ class JobCard extends StatelessWidget {
                                                   clientRating!.toStringAsFixed(1),
                                                   style: AppTextStyles.dataNumeric.copyWith(
                                                     fontSize: 11,
-                                                    color: AppColors.onSurfaceVariant,
+                                                    color: context.mutedColor,
                                                   ),
                                                 ),
                                               ],

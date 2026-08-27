@@ -43,13 +43,13 @@ class JobDetailsScreen extends ConsumerWidget {
         user.uid == jobData.selectedWorkerId;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'Job Details • کام کی تفصیلات',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: jobData == null
@@ -57,7 +57,7 @@ class JobDetailsScreen extends ConsumerWidget {
               child: Text(
                 'Job details not found.',
                 style: AppTextStyles.bodyStrong
-                    .copyWith(color: AppColors.onSurfaceVariant),
+                    .copyWith(color: context.mutedColor),
               ),
             )
           : SingleChildScrollView(
@@ -74,7 +74,7 @@ class JobDetailsScreen extends ConsumerWidget {
                         child: Text(
                           jobData.title,
                           style: AppTextStyles.heading2.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                       ),
@@ -133,7 +133,7 @@ class JobDetailsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceWhite,
+                            color: context.surfaceColor,
                             borderRadius:
                                 BorderRadius.circular(AppDimensions.radiusSm),
                           ),
@@ -168,13 +168,13 @@ class JobDetailsScreen extends ConsumerWidget {
                               Text(
                                 jobData.clientName,
                                 style: AppTextStyles.heading3.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                               ),
                               Text(
                                 'Posted in ${jobData.city}',
                                 style: AppTextStyles.labelCaption.copyWith(
-                                  color: AppColors.onSurfaceVariant,
+                                  color: context.mutedColor,
                                 ),
                               ),
                             ],
@@ -189,7 +189,7 @@ class JobDetailsScreen extends ConsumerWidget {
                   Text(
                     'Description • تفصیل',
                     style: AppTextStyles.heading3.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.textColor,
                     ),
                   ).animate().fade(delay: 250.ms, duration: 400.ms),
                   const SizedBox(height: AppDimensions.sm),
@@ -197,7 +197,7 @@ class JobDetailsScreen extends ConsumerWidget {
                     jobData.description,
                     style: AppTextStyles.bodyPrimary.copyWith(
                       height: 1.6,
-                      color: AppColors.onSurface,
+                      color: context.textColor,
                     ),
                   ).animate().fade(delay: 300.ms, duration: 400.ms),
                   const SizedBox(height: AppDimensions.space32),
@@ -214,7 +214,7 @@ class JobDetailsScreen extends ConsumerWidget {
                     if (isOwner)
                       AppButton(
                         text:
-                            context.l10n.viewReceivedProposals(jobData.totalProposals.toString()),
+                            context.l10n.viewReceivedProposals(jobData.totalProposals),
                         onPressed: () =>
                             _showReceivedProposalsSheet(context, jobData, ref),
                         width: double.infinity,
@@ -401,7 +401,7 @@ class JobDetailsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: context.surfaceColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppDimensions.radiusLg)),
@@ -419,7 +419,7 @@ class JobDetailsScreen extends ConsumerWidget {
           children: [
             Text(
               'Submit Proposal • تجویز ارسال کریں',
-              style: AppTextStyles.heading2.copyWith(color: AppColors.onSurface),
+              style: AppTextStyles.heading2.copyWith(color: context.textColor),
             ),
             const SizedBox(height: AppDimensions.md),
             TextField(
@@ -520,7 +520,7 @@ class JobDetailsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: context.surfaceColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppDimensions.radiusLg)),
@@ -545,7 +545,7 @@ class JobDetailsScreen extends ConsumerWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.heading3
-                              .copyWith(color: AppColors.onSurface),
+                              .copyWith(color: context.textColor),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -598,7 +598,7 @@ class JobDetailsScreen extends ConsumerWidget {
                                       Text(
                                         p.workerName,
                                         style: AppTextStyles.heading3.copyWith(
-                                            color: AppColors.onSurface),
+                                            color: context.textColor),
                                       ),
                                       Text(
                                         'Rs. ${p.proposedRate.toInt()}/hr',
@@ -611,7 +611,7 @@ class JobDetailsScreen extends ConsumerWidget {
                                   Text(
                                     'Duration: ${p.estimatedDuration} • Status: ${p.status.value.toUpperCase()}',
                                     style: AppTextStyles.labelCaption.copyWith(
-                                        color: AppColors.onSurfaceVariant),
+                                        color: context.mutedColor),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -619,7 +619,7 @@ class JobDetailsScreen extends ConsumerWidget {
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTextStyles.bodyPrimary.copyWith(
-                                        color: AppColors.onSurface),
+                                        color: context.textColor),
                                   ),
                                   const SizedBox(height: 12),
                                   Row(

@@ -89,6 +89,9 @@ class RouteNames {
   static const String workerNotificationsPath = '/worker/notifications';
 
   // Shared Screens
+  static const String termsAndConditionsName = 'termsAndConditions';
+  static const String termsAndConditionsPath = '/terms-and-conditions';
+
   static const String chatRoomName = 'chatRoom';
   static const String chatRoomPath = '/chat/:chatId';
 

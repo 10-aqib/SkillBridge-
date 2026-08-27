@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
 import 'package:skill_bridge/shared/widgets/app_error_widget.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist My Contracts Screen
 class MyContractsScreen extends ConsumerWidget {
@@ -30,18 +31,18 @@ class MyContractsScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundGray,
+        backgroundColor: context.scaffoldBg,
         appBar: AppBar(
-          backgroundColor: AppColors.surfaceWhite,
+          backgroundColor: context.surfaceColor,
           elevation: 0,
           title: Text(
             'My Contracts • میرے معاہدے',
-            style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+            style: AppTextStyles.heading3.copyWith(color: context.textColor),
           ),
           bottom: TabBar(
             indicatorColor: AppColors.primary,
             labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.onSurfaceVariant,
+            unselectedLabelColor: context.mutedColor,
             labelStyle: AppTextStyles.bodyStrong,
             unselectedLabelStyle: AppTextStyles.bodyPrimary,
             tabs: const [
@@ -141,7 +142,7 @@ class _ContractList extends StatelessWidget {
                 Text(
                   contract.jobTitle,
                   style: AppTextStyles.heading3.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.textColor,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.md),
@@ -164,7 +165,7 @@ class _ContractList extends StatelessWidget {
                         Text(
                           isClient ? 'Worker • کاریگر' : 'Client • کلائنٹ',
                           style: AppTextStyles.labelCaption.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.mutedColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -173,7 +174,7 @@ class _ContractList extends StatelessWidget {
                               ? contract.workerName
                               : contract.clientName,
                           style: AppTextStyles.bodyStrong.copyWith(
-                            color: AppColors.onSurface,
+                            color: context.textColor,
                           ),
                         ),
                       ],
@@ -188,8 +189,8 @@ class _ContractList extends StatelessWidget {
                     padding: const EdgeInsets.all(AppDimensions.md),
                     margin: const EdgeInsets.only(bottom: AppDimensions.md),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      border: Border.all(color: AppColors.outlineVariant),
+                      color: context.surfaceColor,
+                      border: Border.all(color: context.borderColor),
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
                     child: Column(
@@ -348,7 +349,7 @@ class _AmountCell extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.labelCaption.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.mutedColor,
           ),
         ),
         const SizedBox(height: 4),
@@ -358,7 +359,7 @@ class _AmountCell extends StatelessWidget {
             fontWeight: FontWeight.w700,
             fontSize: 14,
             color:
-                isPrimary ? AppColors.primary : AppColors.onSurface,
+                isPrimary ? AppColors.primary : context.textColor,
           ),
         ),
       ],

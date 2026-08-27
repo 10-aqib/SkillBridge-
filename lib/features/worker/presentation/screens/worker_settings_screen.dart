@@ -9,13 +9,16 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/core/providers/language_provider.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'package:skill_bridge/core/utils/support_utils.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
 
 /// Guild Modernist Worker Settings Screen
 class WorkerSettingsScreen extends ConsumerWidget {
-  const WorkerSettingsScreen({super.key});
+  WorkerSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,7 +54,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.language_rounded,
                       color: AppColors.primary,
                     ),
@@ -96,7 +99,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                     ref.read(languageProvider.notifier).toggleLanguage();
                   },
                 ),
-                const Divider(height: 1, color: AppColors.outlineVariant),
+                Divider(height: 1, color: context.borderColor),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -105,7 +108,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.dark_mode_outlined,
                       color: AppColors.primary,
                     ),
@@ -146,7 +149,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                       color: AppColors.successGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.support_agent_rounded,
                       color: AppColors.successGreen,
                     ),
@@ -159,25 +162,11 @@ class WorkerSettingsScreen extends ConsumerWidget {
                     AppL10n.select(context, en: 'Chat on WhatsApp', ur: 'واٹس ایپ پر رابطہ کریں'),
                     style: AppTextStyles.bodyPrimary.copyWith(fontSize: 13),
                   ),
-                  onTap: () async {
-                    // Open WhatsApp
-                    final Uri whatsappUrl = Uri.parse("whatsapp://send?phone=+923000000000");
-                    if (await canLaunchUrl(whatsappUrl)) {
-                      await launchUrl(whatsappUrl);
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppL10n.select(context, 
-                                en: 'WhatsApp is not installed.', 
-                                ur: 'واٹس ایپ انسٹال نہیں ہے')),
-                          ),
-                        );
-                      }
-                    }
+                  onTap: () {
+                    SupportUtils.showSupportOptions(context);
                   },
                 ),
-                const Divider(height: 1, color: AppColors.outlineVariant),
+                Divider(height: 1, color: context.borderColor),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -185,7 +174,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                       color: AppColors.blueTint,
                       borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.description_outlined,
                       color: AppColors.primary,
                     ),
@@ -195,35 +184,7 @@ class WorkerSettingsScreen extends ConsumerWidget {
                     style: AppTextStyles.bodyStrong.copyWith(color: context.textColor),
                   ),
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: context.surfaceColor,
-                        title: Text(
-                          AppL10n.select(context, en: 'Terms & Conditions', ur: 'شرائط و ضوابط'),
-                          style: AppTextStyles.heading3.copyWith(color: context.textColor),
-                        ),
-                        content: SingleChildScrollView(
-                          child: Text(
-                            AppL10n.select(
-                              context,
-                              en: 'By using SkillBridge, you agree to our terms of service.\n\n1. Users must provide accurate information.\n2. Payments must be processed through the app or directly as agreed.\n3. SkillBridge is not liable for disputes between workers and clients.\n4. Respect and professionalism are required at all times.',
-                              ur: 'سکل برج استعمال کر کے آپ ہماری شرائط سے متفق ہیں۔\n\n1. درست معلومات فراہم کرنا لازمی ہے۔\n2. ادائیگیاں ایپ یا طے شدہ طریقہ کار کے مطابق ہونی چاہئیں۔\n3. سکل برج کلائنٹ اور ورکر کے درمیان تنازعات کا ذمہ دار نہیں ہے۔\n4. احترام اور پیشہ ورانہ رویہ ہر وقت ضروری ہے۔',
-                            ),
-                            style: AppTextStyles.bodyPrimary.copyWith(color: context.textColor),
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              AppL10n.select(context, en: 'Close', ur: 'بند کریں'),
-                              style: AppTextStyles.bodyStrong.copyWith(color: AppColors.primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                    context.push(RouteNames.termsAndConditionsPath);
                   },
                 ),
               ],

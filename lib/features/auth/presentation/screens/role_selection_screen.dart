@@ -7,6 +7,7 @@ import 'package:skill_bridge/config/theme/app_shadows.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Role Selection Screen (a2_role_selection)
 /// Features 16px Level 2 cards with 4px left color-coded accent borders
@@ -57,7 +58,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -71,7 +72,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               Text(
                 'I am a...',
                 style: AppTextStyles.headlineLg.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.textColor,
                 ),
                 textAlign: TextAlign.center,
               ).animate().fade(duration: 500.ms).slideY(
@@ -83,7 +84,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               Text(
                 'Select your role in the Guild marketplace • اپنا کردار منتخب کریں',
                 style: AppTextStyles.bodyPrimary.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.mutedColor,
                 ),
                 textAlign: TextAlign.center,
               ).animate().fade(delay: 100.ms, duration: 500.ms),
@@ -163,11 +164,11 @@ class _RoleSelectionCard extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
+          color: context.surfaceColor,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           boxShadow: isSelected ? AppShadows.level3 : AppShadows.level2,
           border: Border.all(
-            color: isSelected ? accentColor : AppColors.outlineVariant.withValues(alpha: 0.5),
+            color: isSelected ? accentColor : context.borderColor.withValues(alpha: 0.5),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -208,7 +209,7 @@ class _RoleSelectionCard extends StatelessWidget {
                               Text(
                                 title,
                                 style: AppTextStyles.heading3.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -216,7 +217,7 @@ class _RoleSelectionCard extends StatelessWidget {
                               Text(
                                 subtitle,
                                 style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: AppColors.onSurfaceVariant,
+                                  color: context.mutedColor,
                                   fontSize: 13,
                                 ),
                               ),

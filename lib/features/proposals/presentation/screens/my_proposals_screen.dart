@@ -12,23 +12,24 @@ import 'package:skill_bridge/features/proposals/presentation/providers/proposal_
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
 import 'package:skill_bridge/shared/widgets/app_error_widget.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist My Proposals Screen
 class MyProposalsScreen extends ConsumerWidget {
-  const MyProposalsScreen({super.key});
+  MyProposalsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final proposalsAsync = ref.watch(workerProposalsStreamProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
           'My Proposals • میری تجاویز',
-          style: AppTextStyles.heading3.copyWith(color: AppColors.onSurface),
+          style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: proposalsAsync.when(
@@ -50,12 +51,12 @@ class MyProposalsScreen extends ConsumerWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(AppDimensions.lg),
+            padding: EdgeInsets.all(AppDimensions.lg),
             itemCount: proposals.length,
             itemBuilder: (context, index) {
               final p = proposals[index];
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppDimensions.md),
+                padding: EdgeInsets.only(bottom: AppDimensions.md),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   onTap: () => context.push(
@@ -80,7 +81,7 @@ class MyProposalsScreen extends ConsumerWidget {
                               child: Text(
                                 p.jobTitle,
                                 style: AppTextStyles.heading3.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: context.textColor,
                                 ),
                               ),
                             ),
@@ -88,18 +89,18 @@ class MyProposalsScreen extends ConsumerWidget {
                             _ProposalStatusBadge(status: p.status),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           p.coverLetter,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyPrimary.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.mutedColor,
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.md),
-                        const Divider(
-                            height: 1, color: AppColors.outlineVariant),
+                        SizedBox(height: AppDimensions.md),
+                        Divider(
+                            height: 1, color: context.borderColor),
                         const SizedBox(height: AppDimensions.md),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,7 +111,7 @@ class MyProposalsScreen extends ConsumerWidget {
                                 Text(
                                   'Proposed Rate • مجوزہ ریٹ',
                                   style: AppTextStyles.labelCaption.copyWith(
-                                    color: AppColors.onSurfaceVariant,
+                                    color: context.mutedColor,
                                   ),
                                 ),
                                 Text(
@@ -164,7 +165,7 @@ class _ProposalStatusBadge extends StatelessWidget {
       ProposalStatus.pending => ('Pending • زیر التوا', AppColors.warningOrange),
       ProposalStatus.accepted => ('Accepted • منظور', AppColors.successGreen),
       ProposalStatus.rejected => ('Rejected • مسترد', AppColors.errorRed),
-      ProposalStatus.withdrawn => ('Withdrawn • واپس', AppColors.onSurfaceVariant),
+      ProposalStatus.withdrawn => ('Withdrawn • واپس', context.mutedColor),
     };
 
     return Container(

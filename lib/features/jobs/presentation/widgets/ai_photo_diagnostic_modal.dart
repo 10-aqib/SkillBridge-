@@ -5,6 +5,7 @@ import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Structured AI diagnosis returned from photo analysis
 class AiPhotoDiagnosisResult {
@@ -75,7 +76,7 @@ class _AiPhotoDiagnosticModalState extends State<AiPhotoDiagnosticModal> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: context.surfaceColor,
       title: Row(
         children: [
           const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
@@ -84,7 +85,7 @@ class _AiPhotoDiagnosticModalState extends State<AiPhotoDiagnosticModal> {
             child: Text(
               'AI Photo Diagnose • تصویر سے تشخیص',
               style: AppTextStyles.heading3.copyWith(
-                color: AppColors.onSurface,
+                color: context.textColor,
               ),
             ),
           ),
@@ -98,7 +99,7 @@ class _AiPhotoDiagnosticModalState extends State<AiPhotoDiagnosticModal> {
             Text(
               'Snap a photo of the broken AC, plumbing leak, or wiring fault. Our Gemini Vision AI will diagnose the issue and suggest fair Pakistani market rates.',
               style: AppTextStyles.bodyPrimary.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.mutedColor,
               ),
             ),
             const SizedBox(height: AppDimensions.lg),
@@ -172,7 +173,7 @@ class _AiPhotoDiagnosticModalState extends State<AiPhotoDiagnosticModal> {
                       'Parts: ${_diagnosis.suggestedSpareParts}\n'
                       'Fair PKR Estimate: Rs. ${_diagnosis.minPkr} – Rs. ${_diagnosis.maxPkr}',
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.textColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
