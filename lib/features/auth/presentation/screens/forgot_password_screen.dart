@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +121,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
                 // ── Header (Sora + Inter) ───────────────────────────────────
                 Text(
-                  'Reset Password • پاس ورڈ ری سیٹ کریں',
+                  AppL10n.select(context, en: 'Reset Password', ur: 'پاس ورڈ ری سیٹ کریں'),
                   style: AppTextStyles.headlineLg.copyWith(
                     color: context.textColor,
                   ),
@@ -138,7 +139,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 // ── Email Field ─────────────────────────────────────────────
                 AppTextField(
                   controller: _emailController,
-                  labelText: 'Email Address • ای میل',
+                  labelText: AppL10n.select(context, en: 'Email Address', ur: 'ای میل'),
                   hintText: 'you@example.com',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -150,7 +151,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
                 // ── Reset Button (52px Primary) ─────────────────────────────
                 AppButton(
-                  text: 'Send Reset Link • ری سیٹ لنک بھیجیں',
+                  text: AppL10n.select(context, en: 'Send Reset Link', ur: 'ری سیٹ لنک بھیجیں'),
                   onPressed: state.isLoading ? null : _onResetPassword,
                   isLoading: state.isLoading,
                   width: double.infinity,

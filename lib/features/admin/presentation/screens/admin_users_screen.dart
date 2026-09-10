@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Manage Users • صارفین کا انتظام',
+          AppL10n.select(context, en: 'Manage Users', ur: 'صارفین کا انتظام'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -57,7 +58,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     color: context.textColor,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search by name or email • تلاش کریں...',
+                    hintText: AppL10n.select(context, en: 'Search by name or email', ur: 'تلاش کریں...'),
                     hintStyle: AppTextStyles.bodyPrimary.copyWith(
                       color: context.mutedColor,
                     ),
@@ -93,7 +94,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 Row(
                   children: [
                     Text(
-                      'Filter Role • کردار: ',
+                      AppL10n.select(context, en: 'Filter Role', ur: 'کردار: '),
                       style: AppTextStyles.bodyStrong.copyWith(
                         color: context.textColor,
                       ),
@@ -111,15 +112,15 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                           setState(() => _selectedRole = val);
                         }
                       },
-                      items: const [
+                      items: [
                         DropdownMenuItem(
-                            value: 'all', child: Text('All • تمام')),
+                            value: 'all', child: Text(AppL10n.select(context, en: 'All', ur: 'تمام'))),
                         DropdownMenuItem(
                             value: 'worker',
-                            child: Text('Workers • کاریگر')),
+                            child: Text(AppL10n.select(context, en: 'Workers', ur: 'کاریگر'))),
                         DropdownMenuItem(
                             value: 'client',
-                            child: Text('Clients • کلائنٹس')),
+                            child: Text(AppL10n.select(context, en: 'Clients', ur: 'کلائنٹس'))),
                       ],
                     ),
                   ],
@@ -155,8 +156,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 }).toList();
 
                 if (filteredUsers.isEmpty) {
-                  return const AppEmptyState(
-                    title: 'No Users Found • کوئی صارف نہیں ملا',
+                  return AppEmptyState(
+                    title: AppL10n.select(context, en: 'No Users Found', ur: 'کوئی صارف نہیں ملا'),
                     description: 'No users match your criteria.',
                     icon: Icons.person_off_outlined,
                   );

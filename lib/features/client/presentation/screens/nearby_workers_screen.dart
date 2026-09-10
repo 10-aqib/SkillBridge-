@@ -380,7 +380,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
             infoWindow: InfoWindow(
               title: w.name,
               snippet:
-                  '${w.category} • ${GeoLocationUtil.formatInDriveDistance(w.distanceKm)} away',
+                  AppL10n.select(context, en: '${w.category}', ur: '${GeoLocationUtil.formatInDriveDistance(w.distanceKm)} away'),
             ),
             onTap: () => setState(() => _selectedWorkerId = w.workerId),
           )),
@@ -503,7 +503,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                                     style: AppTextStyles.heading3.copyWith(
                                         color: context.textColor)),
                                 Text(
-                                  '${selectedWorker.category} • ★ ${selectedWorker.rating}',
+                                  AppL10n.select(context, en: '${selectedWorker.category}', ur: '★ ${selectedWorker.rating}'),
                                   style: AppTextStyles.labelCaption.copyWith(
                                       color: context.mutedColor),
                                 ),

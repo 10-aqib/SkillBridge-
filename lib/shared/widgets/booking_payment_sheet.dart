@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
@@ -204,7 +205,7 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                           ),
                         ),
                         Text(
-                          '${widget.workerName} • ${widget.categoryName}',
+                          AppL10n.select(context, en: '${widget.workerName}', ur: '${widget.categoryName}'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyMedium.copyWith(
@@ -448,7 +449,7 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                '100% Escrow Protected • محفوظ ادائیگی',
+                                                AppL10n.select(context, en: '100% Escrow Protected', ur: 'محفوظ ادائیگی'),
                                                 style: AppTextStyles.labelSmall.copyWith(
                                                   color: const Color(0xFF006622),
                                                   fontWeight: FontWeight.bold,
@@ -551,7 +552,7 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
 
               // ── Confirm CTA ────────────────────────────────────────────────
               AppButton(
-                text: 'Request Booking • ${Formatters.formatPkr(_totalAmount)}',
+                text: AppL10n.select(context, en: 'Request Booking', ur: '${Formatters.formatPkr(_totalAmount)}'),
                 onPressed: _confirmBooking,
                 isLoading: _isSubmitting,
               ),

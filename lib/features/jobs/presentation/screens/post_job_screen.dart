@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +141,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Post a New Job • نیا کام پوسٹ کریں',
+          AppL10n.select(context, en: 'Post a New Job', ur: 'نیا کام پوسٹ کریں'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -152,7 +153,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Job Details • کام کی تفصیلات',
+                AppL10n.select(context, en: 'Job Details', ur: 'کام کی تفصیلات'),
                 style: AppTextStyles.heading2.copyWith(
                   color: context.textColor,
                 ),
@@ -168,7 +169,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     // Title
                     AppTextField(
                       controller: _titleController,
-                      labelText: 'Job Title • کام کا عنوان',
+                      labelText: AppL10n.select(context, en: 'Job Title', ur: 'کام کا عنوان'),
                       hintText: 'e.g. Need Electrician for House Wiring',
                       validator: (v) => v == null || v.isEmpty
                           ? 'Enter job title'
@@ -178,7 +179,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
                     // Category Dropdown
                     Text(
-                      'Category • زمرہ',
+                      AppL10n.select(context, en: 'Category', ur: 'زمرہ'),
                       style: AppTextStyles.labelCaption.copyWith(
                         color: context.mutedColor,
                       ),
@@ -217,7 +218,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     // Description
                     AppTextField(
                       controller: _descController,
-                      labelText: 'Job Description • کام کی تفصیل',
+                      labelText: AppL10n.select(context, en: 'Job Description', ur: 'کام کی تفصیل'),
                       hintText:
                           'Describe the task, materials needed, requirements...',
                       maxLines: 4,
@@ -230,72 +231,11 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ).animate().fade(delay: 100.ms, duration: 400.ms),
               const SizedBox(height: AppDimensions.lg),
 
-              // AI Smart Estimator Button
-              AppCard(
-                padding: const EdgeInsets.all(AppDimensions.md),
-                color: AppColors.primary.withValues(alpha: 0.06),
-                border: const BorderSide(color: AppColors.primary, width: 1.2),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Smart Estimate • اسمارٹ تخمینہ',
-                            style: AppTextStyles.bodyStrong.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Auto-detect trade or diagnose from photo',
-                            style: AppTextStyles.labelCaption.copyWith(
-                              color: context.mutedColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppButton(
-                          text: 'AI Text',
-                          onPressed: _runAiSmartEstimate,
-                          type: AppButtonType.outline,
-                          isSmall: true,
-                        ),
-                        const SizedBox(width: 8),
-                        AppButton(
-                          text: '📸 Photo',
-                          onPressed: _runAiPhotoDiagnose,
-                          type: AppButtonType.solid,
-                          isSmall: true,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ).animate().fade(delay: 130.ms, duration: 400.ms),
-              SizedBox(height: AppDimensions.lg),
+
 
               // Budget Section (PKR)
               Text(
-                'Budget Range (PKR) • بجٹ کی حد',
+                AppL10n.select(context, en: 'Budget Range (PKR)', ur: 'بجٹ کی حد'),
                 style: AppTextStyles.heading3.copyWith(
                   color: context.textColor,
                 ),
@@ -342,7 +282,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                             : null,
                       ),
                       title: Text(
-                        'Milestone-Based Escrow • مرحلہ وار ادائیگی',
+                        AppL10n.select(context, en: 'Milestone-Based Escrow', ur: 'مرحلہ وار ادائیگی'),
                         style: AppTextStyles.bodyStrong.copyWith(
                           color: context.textColor,
                         ),
@@ -374,7 +314,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
               // Location
               Text(
-                'Location • مقام',
+                AppL10n.select(context, en: 'Location', ur: 'مقام'),
                 style: AppTextStyles.heading3.copyWith(
                   color: context.textColor,
                 ),
@@ -387,7 +327,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   children: [
                     AppTextField(
                       controller: _addressController,
-                      labelText: 'Address • پتہ',
+                      labelText: AppL10n.select(context, en: 'Address', ur: 'پتہ'),
                       hintText: 'Street address / Area',
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Enter address' : null,
@@ -395,7 +335,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     const SizedBox(height: AppDimensions.md),
                     AppTextField(
                       controller: _cityController,
-                      labelText: 'City • شہر',
+                      labelText: AppL10n.select(context, en: 'City', ur: 'شہر'),
                       hintText: 'e.g. Lahore, Karachi, Rawalpindi',
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Enter city' : null,
@@ -413,7 +353,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Urgency • فوری ضرورت',
+                      AppL10n.select(context, en: 'Urgency', ur: 'فوری ضرورت'),
                       style: AppTextStyles.bodyStrong.copyWith(
                         color: context.textColor,
                       ),
@@ -462,7 +402,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
               // Submit Button
               AppButton(
-                text: 'Publish Job Post • کام شائع کریں',
+                text: AppL10n.select(context, en: 'Publish Job Post', ur: 'کام شائع کریں'),
                 isLoading: state.isLoading,
                 onPressed: _onPostJobSubmitted,
                 width: double.infinity,

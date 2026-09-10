@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,7 @@ class MyProposalsScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'My Proposals • میری تجاویز',
+          AppL10n.select(context, en: 'My Proposals', ur: 'میری تجاویز'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -42,8 +43,8 @@ class MyProposalsScreen extends ConsumerWidget {
         ),
         data: (proposals) {
           if (proposals.isEmpty) {
-            return const AppEmptyState(
-              title: 'No Proposals Yet • کوئی تجویز نہیں',
+            return AppEmptyState(
+              title: AppL10n.select(context, en: 'No Proposals Yet', ur: 'کوئی تجویز نہیں'),
               description:
                   'Browse open jobs and submit proposals to get hired.',
               icon: Icons.description_outlined,
@@ -109,7 +110,7 @@ class MyProposalsScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Proposed Rate • مجوزہ ریٹ',
+                                  AppL10n.select(context, en: 'Proposed Rate', ur: 'مجوزہ ریٹ'),
                                   style: AppTextStyles.labelCaption.copyWith(
                                     color: context.mutedColor,
                                   ),
@@ -162,10 +163,10 @@ class _ProposalStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ProposalStatus.pending => ('Pending • زیر التوا', AppColors.warningOrange),
-      ProposalStatus.accepted => ('Accepted • منظور', AppColors.successGreen),
-      ProposalStatus.rejected => ('Rejected • مسترد', AppColors.errorRed),
-      ProposalStatus.withdrawn => ('Withdrawn • واپس', context.mutedColor),
+      ProposalStatus.pending => (AppL10n.select(context, en: 'Pending', ur: 'زیر التوا'), AppColors.warningOrange),
+      ProposalStatus.accepted => (AppL10n.select(context, en: 'Accepted', ur: 'منظور'), AppColors.successGreen),
+      ProposalStatus.rejected => (AppL10n.select(context, en: 'Rejected', ur: 'مسترد'), AppColors.errorRed),
+      ProposalStatus.withdrawn => (AppL10n.select(context, en: 'Withdrawn', ur: 'واپس'), context.mutedColor),
     };
 
     return Container(

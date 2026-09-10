@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +27,7 @@ class NotificationScreen extends ConsumerWidget {
       backgroundColor: context.scaffoldBg,
       appBar: AppBar(
         title: Text(
-          'Notifications • اطلاعات',
+          AppL10n.select(context, en: 'Notifications', ur: 'اطلاعات'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
         centerTitle: false,
@@ -77,8 +78,8 @@ class _NotificationList extends ConsumerWidget {
       ),
       data: (notifications) {
         if (notifications.isEmpty) {
-          return const AppEmptyState(
-            title: 'No Notifications Yet • کوئی اطلاع نہیں',
+          return AppEmptyState(
+            title: AppL10n.select(context, en: 'No Notifications Yet', ur: 'کوئی اطلاع نہیں'),
             description: 'We\'ll notify you when something important happens.',
             icon: Icons.notifications_none_rounded,
           );
@@ -118,7 +119,7 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUnread = !notification.isRead;
-    final timeStr = DateFormat('MMM d • h:mm a').format(notification.createdAt);
+    final timeStr = DateFormat(AppL10n.select(context, en: 'MMM d', ur: 'h:mm a')).format(notification.createdAt);
 
     return InkWell(
       onTap: onTap,

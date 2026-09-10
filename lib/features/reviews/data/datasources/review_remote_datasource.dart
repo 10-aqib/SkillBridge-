@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
@@ -67,7 +68,7 @@ class ReviewRemoteDataSourceImpl implements ReviewRemoteDataSource {
           _firestore.collection(FirestorePaths.notifications).doc();
       batch.set(notifRef, {
         'userId': review.revieweeId,
-        'title': 'New Review Received • نیا جائزہ موصول ہوا',
+        'title': 'New Review Received',
         'body':
             '${review.reviewerName} rated you ${review.rating} stars: "${review.comment}"',
         'type': 'review_received',

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,7 +83,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   ),
               const SizedBox(height: AppDimensions.sm),
               Text(
-                'Select your role in the Guild marketplace • اپنا کردار منتخب کریں',
+                AppL10n.select(context, en: 'Select your role in the Guild marketplace', ur: 'اپنا کردار منتخب کریں'),
                 style: AppTextStyles.bodyPrimary.copyWith(
                   color: context.mutedColor,
                 ),
@@ -95,7 +96,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                 child: Column(
                   children: [
                     _RoleSelectionCard(
-                      title: 'Client • کلائنٹ',
+                      title: AppL10n.select(context, en: 'Client', ur: 'کلائنٹ'),
                       subtitle: 'I want to hire verified skilled pros for projects in Pakistan.',
                       icon: Icons.business_center_rounded,
                       accentColor: AppColors.tertiaryContainer, // Green accent
@@ -106,7 +107,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     ).animate().fade(delay: 150.ms, duration: 500.ms),
                     const SizedBox(height: AppDimensions.md),
                     _RoleSelectionCard(
-                      title: 'Worker • کاریگر',
+                      title: AppL10n.select(context, en: 'Worker', ur: 'کاریگر'),
                       subtitle: 'I want to offer my trade skills, earn PKR, and build trust.',
                       icon: Icons.handyman_rounded,
                       accentColor: AppColors.primary, // Blue accent
@@ -121,7 +122,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
 
               // ── Continue Button (52px Primary) ───────────────────────────
               AppButton(
-                text: 'Continue • آگے بڑھیں',
+                text: AppL10n.select(context, en: 'Continue', ur: 'آگے بڑھیں'),
                 onPressed: _isLoading ? null : _onRoleSelected,
                 isLoading: _isLoading,
                 width: double.infinity,

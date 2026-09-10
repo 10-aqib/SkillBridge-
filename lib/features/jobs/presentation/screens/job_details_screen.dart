@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +49,7 @@ class JobDetailsScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Job Details • کام کی تفصیلات',
+          AppL10n.select(context, en: 'Job Details', ur: 'کام کی تفصیلات'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -93,7 +94,7 @@ class JobDetailsScreen extends ConsumerWidget {
                     children: [
                       AppChip(label: jobData.categoryName),
                       AppChip(label: jobData.city),
-                      _buildStatusBadge(jobData.status),
+                      _buildStatusBadge(context, jobData.status),
                     ],
                   ).animate().fade(delay: 80.ms, duration: 400.ms),
                   const SizedBox(height: AppDimensions.xl),
@@ -112,7 +113,7 @@ class JobDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Budget (PKR) • بجٹ',
+                              AppL10n.select(context, en: 'Budget (PKR)', ur: 'بجٹ'),
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w700,
@@ -187,7 +188,7 @@ class JobDetailsScreen extends ConsumerWidget {
 
                   // Description
                   Text(
-                    'Description • تفصیل',
+                    AppL10n.select(context, en: 'Description', ur: 'تفصیل'),
                     style: AppTextStyles.heading3.copyWith(
                       color: context.textColor,
                     ),
@@ -206,7 +207,7 @@ class JobDetailsScreen extends ConsumerWidget {
                   if (jobData.status == JobStatus.open) ...[
                     if (isWorker)
                       AppButton(
-                        text: 'Apply / Submit Proposal • تجویز ارسال کریں',
+                        text: AppL10n.select(context, en: 'Apply / Submit Proposal', ur: 'تجویز ارسال کریں'),
                         onPressed: () => _showSubmitProposalSheet(
                             context, jobData, ref, user),
                         width: double.infinity,
@@ -222,7 +223,7 @@ class JobDetailsScreen extends ConsumerWidget {
                   ] else if (jobData.status == JobStatus.assigned) ...[
                     if (isOwner || isAssignedWorker)
                       AppButton(
-                        text: 'Start Work • کام شروع کریں',
+                        text: AppL10n.select(context, en: 'Start Work', ur: 'کام شروع کریں'),
                         onPressed: () async {
                           try {
                             await ref
@@ -230,9 +231,9 @@ class JobDetailsScreen extends ConsumerWidget {
                                 .startJob(jobData.id);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                      'Job started! Status is now IN PROGRESS • کام شروع ہو گیا ہے'),
+                                      AppL10n.select(context, en: 'Job started! Status is now IN PROGRESS', ur: 'کام شروع ہو گیا ہے')),
                                 ),
                               );
                             }
@@ -249,7 +250,7 @@ class JobDetailsScreen extends ConsumerWidget {
                   ] else if (jobData.status == JobStatus.inProgress) ...[
                     if (isOwner || isAssignedWorker)
                       AppButton(
-                        text: 'Mark as Complete • کام مکمل کریں',
+                        text: AppL10n.select(context, en: 'Mark as Complete', ur: 'کام مکمل کریں'),
                         onPressed: () async {
                           try {
                             await ref
@@ -257,9 +258,9 @@ class JobDetailsScreen extends ConsumerWidget {
                                 .completeJob(jobData.id);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                      'Job marked as completed! • کام مکمل ہو گیا ہے'),
+                                      AppL10n.select(context, en: 'Job marked as completed!', ur: 'کام مکمل ہو گیا ہے')),
                                 ),
                               );
                             }
@@ -323,8 +324,8 @@ class JobDetailsScreen extends ConsumerWidget {
                             const SizedBox(width: 8),
                             Text(
                               jobData.isPaid 
-                                  ? 'Job Completed & Paid • کام مکمل اور ادا شدہ' 
-                                  : 'Job Completed • کام مکمل ہو گیا ہے',
+                                  ? AppL10n.select(context, en: 'Job Completed & Paid', ur: 'کام مکمل اور ادا شدہ') 
+                                  : AppL10n.select(context, en: 'Job Completed', ur: 'کام مکمل ہو گیا ہے'),
                               style: AppTextStyles.bodyStrong
                                   .copyWith(color: AppColors.successGreen),
                             ),
@@ -339,33 +340,33 @@ class JobDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusBadge(JobStatus status) {
-    String text = 'OPEN • کھلا';
+  Widget _buildStatusBadge(BuildContext context, JobStatus status) {
+    String text = AppL10n.select(context, en: 'OPEN', ur: 'کھلا');
     Color bg = AppColors.successGreen.withValues(alpha: 0.12);
     Color fg = AppColors.successGreen;
     switch (status) {
       case JobStatus.open:
-        text = 'OPEN • کھلا';
+        text = AppL10n.select(context, en: 'OPEN', ur: 'کھلا');
         bg = AppColors.successGreen.withValues(alpha: 0.12);
         fg = AppColors.successGreen;
         break;
       case JobStatus.assigned:
-        text = 'ASSIGNED • منتخب شدہ';
+        text = AppL10n.select(context, en: 'ASSIGNED', ur: 'منتخب شدہ');
         bg = AppColors.primary.withValues(alpha: 0.12);
         fg = AppColors.primary;
         break;
       case JobStatus.inProgress:
-        text = 'IN PROGRESS • کام جاری';
+        text = AppL10n.select(context, en: 'IN PROGRESS', ur: 'کام جاری');
         bg = AppColors.warningOrange.withValues(alpha: 0.15);
         fg = AppColors.warningOrange;
         break;
       case JobStatus.completed:
-        text = 'COMPLETED • مکمل';
+        text = AppL10n.select(context, en: 'COMPLETED', ur: 'مکمل');
         bg = AppColors.successGreen.withValues(alpha: 0.12);
         fg = AppColors.successGreen;
         break;
       case JobStatus.cancelled:
-        text = 'CANCELLED • منسوخ';
+        text = AppL10n.select(context, en: 'CANCELLED', ur: 'منسوخ');
         bg = AppColors.errorRed.withValues(alpha: 0.12);
         fg = AppColors.errorRed;
         break;
@@ -418,7 +419,7 @@ class JobDetailsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Submit Proposal • تجویز ارسال کریں',
+              AppL10n.select(context, en: 'Submit Proposal', ur: 'تجویز ارسال کریں'),
               style: AppTextStyles.heading2.copyWith(color: context.textColor),
             ),
             const SizedBox(height: AppDimensions.md),
@@ -443,15 +444,15 @@ class JobDetailsScreen extends ConsumerWidget {
             TextField(
               controller: coverController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Cover Note / Letter • تعارفی پیغام',
+              decoration: InputDecoration(
+                labelText: AppL10n.select(context, en: 'Cover Note / Letter', ur: 'تعارفی پیغام'),
                 hintText: 'Explain why you are the best fit for this job...',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppDimensions.lg),
             AppButton(
-              text: 'Submit Proposal • جمع کرائیں',
+              text: AppL10n.select(context, en: 'Submit Proposal', ur: 'جمع کرائیں'),
               width: double.infinity,
               onPressed: () async {
                 final rate =
@@ -491,9 +492,9 @@ class JobDetailsScreen extends ConsumerWidget {
                   if (ctx.mounted) {
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                            'Proposal submitted successfully! • تجویز ارسال کر دی گئی'),
+                            AppL10n.select(context, en: 'Proposal submitted successfully!', ur: 'تجویز ارسال کر دی گئی')),
                       ),
                     );
                   }
@@ -571,7 +572,7 @@ class JobDetailsScreen extends ConsumerWidget {
                       if (proposals.isEmpty) {
                         return Center(
                           child: Text(
-                            'No proposals received yet • ابھی کوئی تجویز موصول نہیں ہوئی',
+                            AppL10n.select(context, en: 'No proposals received yet', ur: 'ابھی کوئی تجویز موصول نہیں ہوئی'),
                             style: AppTextStyles.bodyPrimary,
                           ),
                         );
@@ -609,7 +610,7 @@ class JobDetailsScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    'Duration: ${p.estimatedDuration} • Status: ${p.status.value.toUpperCase()}',
+                                    AppL10n.select(context, en: 'Duration: ${p.estimatedDuration}', ur: 'Status: ${p.status.value.toUpperCase()}'),
                                     style: AppTextStyles.labelCaption.copyWith(
                                         color: context.mutedColor),
                                   ),
@@ -641,7 +642,7 @@ class JobDetailsScreen extends ConsumerWidget {
                                           ProposalStatus.pending) ...[
                                         const SizedBox(width: 8),
                                         AppButton(
-                                          text: 'Accept • منظور کریں',
+                                          text: AppL10n.select(context, en: 'Accept', ur: 'منظور کریں'),
                                           isSmall: true,
                                           onPressed: () async {
                                             try {

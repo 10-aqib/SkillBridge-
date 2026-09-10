@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Admin Console • ایڈمن پینل',
+          AppL10n.select(context, en: 'Admin Console', ur: 'ایڈمن پینل'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
         actions: [
@@ -49,7 +50,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'System Overview • سسٹم جائزہ',
+              AppL10n.select(context, en: 'System Overview', ur: 'سسٹم جائزہ'),
               style:
                   AppTextStyles.heading2.copyWith(color: context.textColor),
             ),
@@ -78,31 +79,31 @@ class AdminDashboardScreen extends ConsumerWidget {
                 childAspectRatio: 1.3,
                 children: [
                   _StatCard(
-                    title: 'Total Users • صارفین',
+                    title: AppL10n.select(context, en: 'Total Users', ur: 'صارفین'),
                     value: '${stats.totalUsers}',
                     icon: Icons.people_outline_rounded,
                     color: AppColors.primary,
                   ),
                   _StatCard(
-                    title: 'Workers • کاریگر',
+                    title: AppL10n.select(context, en: 'Workers', ur: 'کاریگر'),
                     value: '${stats.activeWorkers}',
                     icon: Icons.engineering_outlined,
                     color: AppColors.warningOrange,
                   ),
                   _StatCard(
-                    title: 'Clients • کلائنٹس',
+                    title: AppL10n.select(context, en: 'Clients', ur: 'کلائنٹس'),
                     value: '${stats.activeClients}',
                     icon: Icons.business_center_outlined,
                     color: AppColors.successGreen,
                   ),
                   _StatCard(
-                    title: 'Total Jobs • کام',
+                    title: AppL10n.select(context, en: 'Total Jobs', ur: 'کام'),
                     value: '${stats.totalJobs}',
                     icon: Icons.work_outline_rounded,
                     color: AppColors.primaryLight,
                   ),
                   _StatCard(
-                    title: 'Contracts • معاہدے',
+                    title: AppL10n.select(context, en: 'Contracts', ur: 'معاہدے'),
                     value: '${stats.activeContracts}',
                     icon: Icons.assignment_outlined,
                     color: AppColors.primary,
@@ -125,7 +126,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppDimensions.xl),
 
             Text(
-              'Quick Actions • فوری اقدامات',
+              AppL10n.select(context, en: 'Quick Actions', ur: 'فوری اقدامات'),
               style:
                   AppTextStyles.heading3.copyWith(color: context.textColor),
             ),
@@ -146,7 +147,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppDimensions.sm),
                         Text(
-                          'Manage Users • صارفین',
+                          AppL10n.select(context, en: 'Manage Users', ur: 'صارفین'),
                           style: AppTextStyles.bodyStrong.copyWith(
                             color: context.textColor,
                           ),
@@ -177,7 +178,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppDimensions.sm),
                         Text(
-                          'Manage Jobs • کام',
+                          AppL10n.select(context, en: 'Manage Jobs', ur: 'کام'),
                           style: AppTextStyles.bodyStrong.copyWith(
                             color: context.textColor,
                           ),

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
@@ -22,7 +23,7 @@ class AppBadge extends StatelessWidget {
   // Verified Pro Badge (Skill-Green)
   factory AppBadge.verified(BuildContext context) {
     return AppBadge(
-      text: 'Verified • تصدیق شدہ',
+      text: AppL10n.select(context, en: 'Verified', ur: 'تصدیق شدہ'),
       icon: Icons.verified,
       textColor: AppColors.tertiary,
       backgroundColor: AppColors.tertiary.withValues(alpha: 0.12),
@@ -32,7 +33,7 @@ class AppBadge extends StatelessWidget {
   // Urgent Job Badge
   factory AppBadge.urgent(BuildContext context) {
     return AppBadge(
-      text: 'URGENT • فوری',
+      text: AppL10n.select(context, en: 'URGENT', ur: 'فوری'),
       icon: Icons.bolt,
       textColor: AppColors.errorRed,
       backgroundColor: AppColors.errorContainer,
@@ -40,9 +41,9 @@ class AppBadge extends StatelessWidget {
   }
 
   // Available Status Badge
-  factory AppBadge.available() {
+  factory AppBadge.available(BuildContext context) {
     return AppBadge(
-      text: 'Available • دستیاب',
+      text: AppL10n.select(context, en: 'Available', ur: 'دستیاب'),
       icon: Icons.circle,
       textColor: AppColors.tertiary,
       backgroundColor: AppColors.tertiary.withValues(alpha: 0.12),
@@ -50,9 +51,9 @@ class AppBadge extends StatelessWidget {
   }
 
   // Busy Status Badge
-  factory AppBadge.busy() {
+  factory AppBadge.busy(BuildContext context) {
     return AppBadge(
-      text: 'Busy',
+      text: AppL10n.select(context, en: 'Busy', ur: 'مصروف'),
       icon: Icons.circle,
       textColor: AppColors.amberWarm,
       backgroundColor: AppColors.amberWarm.withValues(alpha: 0.15),

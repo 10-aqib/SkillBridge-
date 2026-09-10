@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -470,7 +471,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
               ),
               title: Text(service, style: AppTextStyles.bodyStrong),
               subtitle: Text(
-                '$_selectedCity • Skilled workers available',
+                AppL10n.select(context, en: '$_selectedCity', ur: 'Skilled workers available'),
                 style: AppTextStyles.labelCaption.copyWith(
                   color: context.mutedColor,
                 ),

@@ -94,8 +94,8 @@ class _WorkerLiveTrackingMapState extends State<WorkerLiveTrackingMap>
   Widget build(BuildContext context) {
     final headerText = AppL10n.select(
       context,
-      en: '${widget.workerName} • $_etaMinutes mins',
-      ur: '${widget.workerName} • $_etaMinutes منٹ',
+      en: AppL10n.select(context, en: '${widget.workerName}', ur: '$_etaMinutes mins'),
+      ur: AppL10n.select(context, en: '${widget.workerName}', ur: '$_etaMinutes منٹ'),
     );
     return AppCard(
       padding: EdgeInsets.zero,

@@ -24,6 +24,7 @@ void main() async {
     await FirebaseAppCheck.instance.activate(
       androidProvider: AndroidProvider.playIntegrity,
       appleProvider: AppleProvider.deviceCheck,
+      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     );
     Logger.i('Firebase App Check initialized');
 

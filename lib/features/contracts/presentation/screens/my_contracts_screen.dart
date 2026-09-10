@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +37,7 @@ class MyContractsScreen extends ConsumerWidget {
           backgroundColor: context.surfaceColor,
           elevation: 0,
           title: Text(
-            'My Contracts • میرے معاہدے',
+            AppL10n.select(context, en: 'My Contracts', ur: 'میرے معاہدے'),
             style: AppTextStyles.heading3.copyWith(color: context.textColor),
           ),
           bottom: TabBar(
@@ -45,10 +46,10 @@ class MyContractsScreen extends ConsumerWidget {
             unselectedLabelColor: context.mutedColor,
             labelStyle: AppTextStyles.bodyStrong,
             unselectedLabelStyle: AppTextStyles.bodyPrimary,
-            tabs: const [
-              Tab(text: 'Requests • درخواستیں'),
-              Tab(text: 'Active • فعال'),
-              Tab(text: 'Completed • مکمل'),
+            tabs: [
+              Tab(text: AppL10n.select(context, en: 'Requests', ur: 'درخواستیں')),
+              Tab(text: AppL10n.select(context, en: 'Active', ur: 'فعال')),
+              Tab(text: AppL10n.select(context, en: 'Completed', ur: 'مکمل')),
             ],
           ),
         ),
@@ -76,19 +77,19 @@ class MyContractsScreen extends ConsumerWidget {
                 _ContractList(
                   contracts: pending,
                   isClient: isClient,
-                  emptyMessage: 'No pending requests • کوئی زیر التوا درخواست نہیں',
+                  emptyMessage: AppL10n.select(context, en: 'No pending requests', ur: 'کوئی زیر التوا درخواست نہیں'),
                   ref: ref,
                 ),
                 _ContractList(
                   contracts: active,
                   isClient: isClient,
-                  emptyMessage: 'No active contracts • کوئی فعال معاہدہ نہیں',
+                  emptyMessage: AppL10n.select(context, en: 'No active contracts', ur: 'کوئی فعال معاہدہ نہیں'),
                   ref: ref,
                 ),
                 _ContractList(
                   contracts: completed,
                   isClient: isClient,
-                  emptyMessage: 'No completed contracts yet • کوئی مکمل معاہدہ نہیں',
+                  emptyMessage: AppL10n.select(context, en: 'No completed contracts yet', ur: 'کوئی مکمل معاہدہ نہیں'),
                   ref: ref,
                 ),
               ],
@@ -163,7 +164,7 @@ class _ContractList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isClient ? 'Worker • کاریگر' : 'Client • کلائنٹ',
+                          isClient ? AppL10n.select(context, en: 'Worker', ur: 'کاریگر') : AppL10n.select(context, en: 'Client', ur: 'کلائنٹ'),
                           style: AppTextStyles.labelCaption.copyWith(
                             color: context.mutedColor,
                           ),
@@ -201,7 +202,7 @@ class _ContractList extends StatelessWidget {
                             const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.primary),
                             const SizedBox(width: AppDimensions.sm),
                             Text(
-                              '${contract.serviceDate!.day}/${contract.serviceDate!.month}/${contract.serviceDate!.year} • ${contract.serviceTimeSlot ?? ''}',
+                              '${contract.serviceDate!.day}/${contract.serviceDate!.month}/${contract.serviceDate!.year} (${contract.serviceTimeSlot ?? ''})',
                               style: AppTextStyles.bodyStrong,
                             ),
                           ],
@@ -239,16 +240,16 @@ class _ContractList extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _AmountCell(
-                        label: 'Total • کل رقم',
+                        label: AppL10n.select(context, en: 'Total', ur: 'کل رقم'),
                         value: 'Rs. ${contract.totalAmount.toInt()}',
                         isPrimary: true,
                       ),
                       _AmountCell(
-                        label: 'Fee • فیس (10%)',
+                        label: AppL10n.select(context, en: 'Fee', ur: 'فیس (10%)'),
                         value: 'Rs. ${contract.commissionAmount.toInt()}',
                       ),
                       _AmountCell(
-                        label: isClient ? 'You Pay • ادائیگی' : 'Earn • کمائی',
+                        label: isClient ? AppL10n.select(context, en: 'You Pay', ur: 'ادائیگی') : AppL10n.select(context, en: 'Earn', ur: 'کمائی'),
                         value: 'Rs. ${contract.workerEarnings.toInt()}',
                         isPrimary: true,
                       ),
@@ -260,7 +261,7 @@ class _ContractList extends StatelessWidget {
                     contract.status == ContractStatus.active) ...[
                   const SizedBox(height: AppDimensions.lg),
                   AppButton(
-                    text: 'Mark as Completed • مکمل کے طور پر نشان زد کریں',
+                    text: AppL10n.select(context, en: 'Mark as Completed', ur: 'مکمل کے طور پر نشان زد کریں'),
                     onPressed: () async {
                       await ref
                           .read(contractRemoteDataSourceProvider)
@@ -310,7 +311,7 @@ class _ContractList extends StatelessWidget {
                         (!isClient && !contract.workerReviewed))) ...[
                   const SizedBox(height: AppDimensions.lg),
                   AppButton(
-                    text: 'Write a Review • جائزہ لکھیں',
+                    text: AppL10n.select(context, en: 'Write a Review', ur: 'جائزہ لکھیں'),
                     onPressed: () {
                       context.pushNamed(
                         RouteNames.writeReviewName,

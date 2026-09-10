@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,7 @@ class WorkerProfileScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Worker Profile • کاریگر پروفائل',
+          AppL10n.select(context, en: 'Worker Profile', ur: 'کاریگر پروفائل'),
           style: AppTextStyles.heading3.copyWith(
             color: context.textColor,
           ),
@@ -65,14 +66,14 @@ class WorkerProfileScreen extends ConsumerWidget {
                   ).animate().fade(delay: 100.ms, duration: 400.ms),
                   const SizedBox(height: 4),
                   Text(
-                    'Professional Electrician • الیکٹریشن',
+                    AppL10n.select(context, en: 'Professional Electrician', ur: 'الیکٹریشن'),
                     style: AppTextStyles.bodyStrong.copyWith(
                       color: AppColors.primary,
                     ),
                   ).animate().fade(delay: 150.ms, duration: 400.ms),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    '${user.city ?? 'Lahore, Pakistan'} • ★ ${user.rating.toStringAsFixed(1)} (${user.totalReviews} Reviews)',
+                    '${user.city ?? 'Lahore, Pakistan'} • ★ ${user.rating.toStringAsFixed(1)} (${user.totalReviews} ${AppL10n.select(context, en: 'Reviews', ur: 'جائزے')})',
                     style: AppTextStyles.bodyPrimary.copyWith(
                       color: context.mutedColor,
                     ),
@@ -83,11 +84,11 @@ class WorkerProfileScreen extends ConsumerWidget {
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          title: const Row(
+                          title: Row(
                             children: [
-                              Icon(Icons.verified_rounded, color: Color(0xFF006622)),
-                              SizedBox(width: 8),
-                              Text('NADRA Verified • تصدیق شدہ شناخت'),
+                              const Icon(Icons.verified_rounded, color: Color(0xFF006622)),
+                              const SizedBox(width: 8),
+                              Text(AppL10n.select(context, en: 'NADRA Verified', ur: 'تصدیق شدہ شناخت')),
                             ],
                           ),
                           content: const Text(
@@ -115,7 +116,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                           const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF006622)),
                           const SizedBox(width: 6),
                           Text(
-                            'NADRA CNIC Verified • تصدیق شدہ',
+                            AppL10n.select(context, en: 'NADRA CNIC Verified', ur: 'تصدیق شدہ'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: const Color(0xFF006622),
                               fontWeight: FontWeight.bold,
@@ -140,7 +141,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Hourly Rate • فی گھنٹہ ریٹ',
+                          AppL10n.select(context, en: 'Hourly Rate', ur: 'فی گھنٹہ ریٹ'),
                           style: AppTextStyles.heading3.copyWith(
                             color: context.surfaceColor,
                           ),
@@ -165,7 +166,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Skills & Expertise • مہارتیں',
+                          AppL10n.select(context, en: 'Skills & Expertise', ur: 'مہارتیں'),
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
@@ -194,7 +195,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Additional Details • اضافی تفصیلات',
+                          AppL10n.select(context, en: 'Additional Details', ur: 'اضافی تفصیلات'),
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
@@ -248,7 +249,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Recent Reviews • حالیہ جائزے',
+                          AppL10n.select(context, en: 'Recent Reviews', ur: 'حالیہ جائزے'),
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
@@ -258,7 +259,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                               data: (reviews) {
                                 if (reviews.isEmpty) {
                                   return Text(
-                                    'No reviews yet • ابھی تک کوئی جائزہ نہیں',
+                                    AppL10n.select(context, en: 'No reviews yet', ur: 'ابھی تک کوئی جائزہ نہیں'),
                                     style: AppTextStyles.bodyPrimary.copyWith(
                                       color: context.mutedColor,
                                     ),
@@ -312,7 +313,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                               loading: () => const Center(
                                   child: CircularProgressIndicator()),
                               error: (e, _) => Text(
-                                'Could not load reviews • جائزے لوڈ نہیں ہو سکے',
+                                AppL10n.select(context, en: 'Could not load reviews', ur: 'جائزے لوڈ نہیں ہو سکے'),
                                 style: AppTextStyles.bodyPrimary.copyWith(
                                   color: AppColors.error,
                                 ),
@@ -325,7 +326,7 @@ class WorkerProfileScreen extends ConsumerWidget {
 
                   // ── Edit Profile Button ───────────────────────────────────
                   AppButton(
-                    text: 'Edit Worker Profile • پروفائل میں ترمیم کریں',
+                    text: AppL10n.select(context, en: 'Edit Worker Profile', ur: 'پروفائل میں ترمیم کریں'),
                     onPressed: () {
                       context.push(RouteNames.workerProfileSetupPath);
                     },

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -119,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen> {
               const SizedBox(height: AppDimensions.sm),
               // Bilingual Tagline (Inter)
               Text(
-                'Connecting Skills. Building Trust. • ہنر کا اعتماد',
+                AppL10n.select(context, en: 'Connecting Skills. Building Trust.', ur: 'ہنر کا اعتماد'),
                 style: AppTextStyles.bodyPrimary.copyWith(
                   color: AppColors.onPrimaryContainer,
                   fontSize: 14,

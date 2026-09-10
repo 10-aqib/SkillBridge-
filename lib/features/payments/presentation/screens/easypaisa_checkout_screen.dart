@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -189,7 +190,7 @@ class _EasyPaisaCheckoutScreenState
                 obscureText: true,
                 maxLength: 5,
                 decoration: InputDecoration(
-                  hintText: '• • • • •',
+                  hintText: AppL10n.select(context, en: '• • •', ur: '•'),
                   prefixIcon: const Icon(Icons.lock_outline, color: easyPaisaGreen),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

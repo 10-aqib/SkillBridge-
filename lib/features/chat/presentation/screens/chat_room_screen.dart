@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,7 +84,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       senderId: user.uid,
       senderName: user.displayName,
       senderPhotoUrl: user.photoUrl,
-      content: '[Voice Note — 0:24 • آواز کا پیغام]',
+      content: AppL10n.select(context, en: '[Voice Note — 0:24', ur: 'آواز کا پیغام]'),
       type: MessageType.text,
       isRead: false,
       createdAt: DateTime.now(),
@@ -145,7 +146,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 if (messages.isEmpty) {
                   return Center(
                     child: Text(
-                      'Say hello! 👋 • السلام علیکم',
+                      AppL10n.select(context, en: 'Say hello! 👋', ur: 'السلام علیکم'),
                       style: AppTextStyles.bodyStrong.copyWith(
                         color: context.mutedColor,
                       ),
@@ -195,7 +196,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                         color: context.textColor,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Type a message • پیغام لکھیں...',
+                        hintText: AppL10n.select(context, en: 'Type a message', ur: 'پیغام لکھیں...'),
                         hintStyle: AppTextStyles.bodyPrimary.copyWith(
                           color: context.mutedColor,
                         ),
@@ -313,7 +314,7 @@ class _MessageBubble extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Voice Note • آواز کا پیغام',
+                          AppL10n.select(context, en: 'Voice Note', ur: 'آواز کا پیغام'),
                           style: AppTextStyles.labelSmall.copyWith(
                             color: isOwn ? AppColors.onPrimary : context.textColor,
                             fontWeight: FontWeight.bold,

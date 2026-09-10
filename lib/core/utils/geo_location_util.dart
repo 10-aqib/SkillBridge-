@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'dart:math' as math;
 
 /// Represents a geofenced Pakistani locality with coordinates and city.
@@ -114,7 +115,7 @@ class GeoLocationUtil {
   }
 
   /// Detects the closest Pakistani locality from GPS coordinates.
-  /// Returns standard formatted string `"Locality, City • اردو نام"`.
+  /// Returns standard formatted string `"Locality, City', ur: 'اردو نام"`.
   static String detectLocality(double lat, double lon) {
     PakistaniLocality? closest;
     double minDistance = double.infinity;
@@ -128,10 +129,10 @@ class GeoLocationUtil {
     }
 
     if (closest != null && minDistance <= 15.0) {
-      return '${closest.name}, ${closest.city} • ${closest.urduName}';
+      return ')${closest.name}, ${closest.city} • ${closest.urduName}';
     }
 
-    return 'Lahore City • لاہور شہر';
+    return 'Lahore City';
   }
 
   /// Formats distance in inDrive style (meters if < 1 km, e.g. "800 m", km otherwise e.g. "1.4 km").
@@ -145,7 +146,7 @@ class GeoLocationUtil {
     }
   }
 
-  /// Formats inDrive-style Distance & ETA string (e.g., "800 m • ~3 min away" or Urdu equivalent).
+  /// Formats inDrive-style Distance & ETA string (e.g., "800 m', ur: '~3 min away" or Urdu equivalent).
   static String formatInDriveDistanceEta(double distanceKm, {bool isUrdu = false}) {
     final distStr = formatInDriveDistance(distanceKm, isUrdu: isUrdu);
     final eta = calculateEtaMinutes(distanceKm);
@@ -154,4 +155,3 @@ class GeoLocationUtil {
 
   static double _degToRad(double deg) => deg * (math.pi / 180.0);
 }
-

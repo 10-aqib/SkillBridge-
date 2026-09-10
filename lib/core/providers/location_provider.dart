@@ -25,6 +25,7 @@ final locationProvider = FutureProvider<Position>((ref) async {
   return await Geolocator.getCurrentPosition(
     locationSettings: const LocationSettings(
       accuracy: LocationAccuracy.high,
+      timeLimit: Duration(seconds: 5),
     ),
   );
 });

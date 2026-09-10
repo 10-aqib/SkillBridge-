@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,14 +31,14 @@ class ProposalDetailsScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Proposal Details • تجویز کی تفصیلات',
+          AppL10n.select(context, en: 'Proposal Details', ur: 'تجویز کی تفصیلات'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
       body: p == null
           ? Center(
               child: Text(
-                'Proposal not found • تجویز نہیں ملی',
+                AppL10n.select(context, en: 'Proposal not found', ur: 'تجویز نہیں ملی'),
                 style: AppTextStyles.bodyStrong.copyWith(
                   color: context.mutedColor,
                 ),
@@ -109,7 +110,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Proposed Rate • مجوزہ ریٹ (PKR)',
+                              AppL10n.select(context, en: 'Proposed Rate', ur: 'مجوزہ ریٹ (PKR)'),
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -127,7 +128,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'Duration • دورانیہ',
+                              AppL10n.select(context, en: 'Duration', ur: 'دورانیہ'),
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -154,7 +155,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Cover Letter • تعارفی پیغام',
+                          AppL10n.select(context, en: 'Cover Letter', ur: 'تعارفی پیغام'),
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
@@ -175,7 +176,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                   // Action Buttons (only visible if pending)
                   if (p.status == ProposalStatus.pending) ...[
                     AppButton(
-                      text: 'Accept Proposal • تجویز منظور کریں',
+                      text: AppL10n.select(context, en: 'Accept Proposal', ur: 'تجویز منظور کریں'),
                       onPressed: () async {
                         await ref
                             .read(proposalRemoteDataSourceProvider)
@@ -199,7 +200,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppDimensions.md),
                     AppButton(
-                      text: 'Reject • مسترد کریں',
+                      text: AppL10n.select(context, en: 'Reject', ur: 'مسترد کریں'),
                       type: AppButtonType.outline,
                       onPressed: () async {
                         await ref
@@ -225,10 +226,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ProposalStatus.pending => ('Pending • زیر التوا', AppColors.warningOrange),
-      ProposalStatus.accepted => ('Accepted • منظور', AppColors.successGreen),
-      ProposalStatus.rejected => ('Rejected • مسترد', AppColors.errorRed),
-      ProposalStatus.withdrawn => ('Withdrawn • واپس', context.mutedColor),
+      ProposalStatus.pending => (AppL10n.select(context, en: 'Pending', ur: 'زیر التوا'), AppColors.warningOrange),
+      ProposalStatus.accepted => (AppL10n.select(context, en: 'Accepted', ur: 'منظور'), AppColors.successGreen),
+      ProposalStatus.rejected => (AppL10n.select(context, en: 'Rejected', ur: 'مسترد'), AppColors.errorRed),
+      ProposalStatus.withdrawn => (AppL10n.select(context, en: 'Withdrawn', ur: 'واپس'), context.mutedColor),
     };
 
     return Container(

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -83,7 +84,7 @@ class _AiPhotoDiagnosticModalState extends State<AiPhotoDiagnosticModal> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'AI Photo Diagnose • تصویر سے تشخیص',
+              AppL10n.select(context, en: 'AI Photo Diagnose', ur: 'تصویر سے تشخیص'),
               style: AppTextStyles.heading3.copyWith(
                 color: context.textColor,
               ),

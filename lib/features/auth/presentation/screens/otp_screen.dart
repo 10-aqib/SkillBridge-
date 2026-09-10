@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -154,7 +155,7 @@ class _OtpVerificationScreenState
 
               // ── Header (Sora + Inter) ─────────────────────────────────────
               Text(
-                'Verify Phone • فون نمبر کی تصدیق',
+                AppL10n.select(context, en: 'Verify Phone', ur: 'فون نمبر کی تصدیق'),
                 style: AppTextStyles.headlineLg.copyWith(
                   color: context.textColor,
                 ),
@@ -188,7 +189,7 @@ class _OtpVerificationScreenState
 
               // ── Verify Button (52px Primary) ───────────────────────────────
               AppButton(
-                text: 'Verify Account • تصدیق کریں',
+                text: AppL10n.select(context, en: 'Verify Account', ur: 'تصدیق کریں'),
                 onPressed: (state.isVerifying || state.isSending)
                     ? null
                     : () {

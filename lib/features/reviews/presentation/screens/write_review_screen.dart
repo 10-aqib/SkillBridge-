@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,7 +82,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           );
 
       if (mounted) {
-        context.showSnackBar('Review submitted successfully! • رائے درج ہو گئی');
+        context.showSnackBar(AppL10n.select(context, en: 'Review submitted successfully!', ur: 'رائے درج ہو گئی'));
         GoRouter.of(context).pop();
       }
     } catch (e) {
@@ -108,7 +109,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Write a Review • رائے لکھیں',
+          AppL10n.select(context, en: 'Write a Review', ur: 'رائے لکھیں'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -123,7 +124,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               child: Column(
                 children: [
                   Text(
-                    'How was your experience with • آپ کا تجربہ کیسا رہا',
+                    AppL10n.select(context, en: 'How was your experience with', ur: 'آپ کا تجربہ کیسا رہا'),
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyPrimary.copyWith(
                       color: context.mutedColor,
@@ -186,7 +187,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             // Comment textfield
             AppTextField(
               controller: _commentController,
-              labelText: 'Feedback / Comment • تاثرات',
+              labelText: AppL10n.select(context, en: 'Feedback / Comment', ur: 'تاثرات'),
               hintText: 'Share details of your experience...',
               maxLines: 4,
             ),
@@ -194,7 +195,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
             // Mock Photo Attachment UI
             Text(
-              'Attach Photos (Optional) • تصاویر شامل کریں',
+              AppL10n.select(context, en: 'Attach Photos (Optional)', ur: 'تصاویر شامل کریں'),
               style: AppTextStyles.labelCaption,
             ),
             const SizedBox(height: AppDimensions.sm),
@@ -274,7 +275,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
             // Submit Button
             AppButton(
-              text: 'Submit Review • رائے جمع کریں',
+              text: AppL10n.select(context, en: 'Submit Review', ur: 'رائے جمع کریں'),
               isLoading: _isLoading,
               onPressed: _submitReview,
               width: double.infinity,

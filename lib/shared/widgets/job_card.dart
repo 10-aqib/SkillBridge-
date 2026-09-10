@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
@@ -124,7 +125,7 @@ class JobCard extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                                   ),
                                   child: Text(
-                                    'URGENT • فوری',
+                                    AppL10n.select(context, en: 'URGENT', ur: 'فوری'),
                                     style: AppTextStyles.labelCaption.copyWith(
                                       color: AppColors.onErrorContainer,
                                       fontWeight: FontWeight.w700,

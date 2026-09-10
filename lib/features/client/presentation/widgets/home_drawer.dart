@@ -309,7 +309,7 @@ class HomeDrawer extends ConsumerWidget {
                       size: 14, color: AppColors.successGreen),
                   const SizedBox(width: 6),
                   Text(
-                    'Skill Bridge v1.0.0 • Made in Pakistan 🇵🇰',
+                    AppL10n.select(context, en: 'Skill Bridge v1.0.0', ur: 'Made in Pakistan 🇵🇰'),
                     style: AppTextStyles.labelCaption.copyWith(
                       color: context.mutedColor,
                       fontSize: 11,

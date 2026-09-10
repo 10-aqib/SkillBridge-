@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +121,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 // ── Header (Sora) ───────────────────────────────────────────
                 Text(
-                  'Create Account • اکاؤنٹ بنائیں',
+                  AppL10n.select(context, en: 'Create Account', ur: 'اکاؤنٹ بنائیں'),
                   style: AppTextStyles.headlineLg.copyWith(
                     color: context.textColor,
                   ),
@@ -173,7 +174,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // ── Form Fields (12px radius, Inter) ────────────────────────
                 AppTextField(
                   controller: _nameController,
-                  labelText: 'Full Name • پورا نام',
+                  labelText: AppL10n.select(context, en: 'Full Name', ur: 'پورا نام'),
                   hintText: 'e.g. Tariq Mahmood',
                   prefixIcon: Icons.person_outline_rounded,
                   textInputAction: TextInputAction.next,
@@ -188,7 +189,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 AppTextField(
                   controller: _emailController,
-                  labelText: 'Email Address • ای میل',
+                  labelText: AppL10n.select(context, en: 'Email Address', ur: 'ای میل'),
                   hintText: 'name@example.com',
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -199,7 +200,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 AppTextField(
                   controller: _phoneController,
-                  labelText: 'Phone Number • فون نمبر',
+                  labelText: AppL10n.select(context, en: 'Phone Number', ur: 'فون نمبر'),
                   hintText: '300 1234567',
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone_outlined,
@@ -212,7 +213,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _selectedCity,
                   decoration: InputDecoration(
-                    labelText: 'Default City • شہر',
+                    labelText: AppL10n.select(context, en: 'Default City', ur: 'شہر'),
                     prefixIcon: const Icon(Icons.location_on_outlined,
                         color: AppColors.primary),
                     filled: true,
@@ -240,7 +241,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 AppTextField(
                   controller: _passwordController,
-                  labelText: 'Password • پاس ورڈ',
+                  labelText: AppL10n.select(context, en: 'Password', ur: 'پاس ورڈ'),
                   hintText: 'Min 8 chars, 1 number',
                   isPassword: true,
                   prefixIcon: Icons.lock_outline_rounded,
@@ -251,7 +252,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 AppTextField(
                   controller: _confirmPasswordController,
-                  labelText: 'Confirm Password • پاس ورڈ کی تصدیق',
+                  labelText: AppL10n.select(context, en: 'Confirm Password', ur: 'پاس ورڈ کی تصدیق'),
                   hintText: 'Re-enter password',
                   isPassword: true,
                   prefixIcon: Icons.lock_outline_rounded,
@@ -266,7 +267,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 // ── Register Button ─────────────────────────────────────────
                 AppButton(
-                  text: 'Create Account • اکاؤنٹ بنائیں',
+                  text: AppL10n.select(context, en: 'Create Account', ur: 'اکاؤنٹ بنائیں'),
                   onPressed: state.isLoading ? null : _onRegister,
                   isLoading: state.isLoading,
                   width: double.infinity,

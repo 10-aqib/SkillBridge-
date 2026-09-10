@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
@@ -129,7 +130,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           currentUserId: currentUserPhoto,
           otherUserId: otherUserPhoto,
         },
-        'lastMessage': 'Chat started • بات چیت شروع ہوئی',
+        'lastMessage': 'Chat started',
         'lastMessageSenderId': currentUserId,
         'lastMessageAt': FieldValue.serverTimestamp(),
         'unreadCount': {

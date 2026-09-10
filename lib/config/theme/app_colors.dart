@@ -71,15 +71,15 @@ class AppColors {
   static const Color red = errorRed;
 
   // Dark Palette Variants (Guild Modernist Dark)
-  static const Color darkBg = Color(0xFF10141D);
-  static const Color darkCard = Color(0xFF1A2130);
-  static const Color darkText = Color(0xFFEDF0FF);
-  static const Color darkMuted = Color(0xFF9096A8);
-  static const Color darkLine = Color(0xFF2C344A);
-  static const Color darkGreen = Color(0xFF63DCA6);
-  static const Color darkRed = Color(0xFFFF6B6B);
-  static const Color darkContainer = Color(0xFF1A3B8B);
-  static const Color darkAmberContainer = Color(0xFF3D2E0A);
+  static const Color darkBg = Color(0xFF121212);
+  static const Color darkCard = Color(0xFF1E1E1E);
+  static const Color darkText = Color(0xFFE0E0E0);
+  static const Color darkMuted = Color(0xFFA0A0A0);
+  static const Color darkLine = Color(0xFF2C2C2C);
+  static const Color darkGreen = Color(0xFF81C784);
+  static const Color darkRed = Color(0xFFE57373);
+  static const Color darkContainer = Color(0xFF1976D2);
+  static const Color darkAmberContainer = Color(0xFFFFA000);
 
   /// Get the 4px vertical accent bar color by trade category name
   static Color getCategoryColor(String? category) {

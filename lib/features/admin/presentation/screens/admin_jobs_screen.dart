@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +43,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Manage Jobs • کاموں کا انتظام',
+          AppL10n.select(context, en: 'Manage Jobs', ur: 'کاموں کا انتظام'),
           style: AppTextStyles.heading3.copyWith(color: context.textColor),
         ),
       ),
@@ -61,7 +62,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                     color: context.textColor,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search jobs by title • کام تلاش کریں...',
+                    hintText: AppL10n.select(context, en: 'Search jobs by title', ur: 'کام تلاش کریں...'),
                     hintStyle: AppTextStyles.bodyPrimary.copyWith(
                       color: context.mutedColor,
                     ),
@@ -98,7 +99,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Filter • فلٹر',
+                      AppL10n.select(context, en: 'Filter', ur: 'فلٹر'),
                       style: AppTextStyles.labelLarge.copyWith(
                         color: context.mutedColor,
                       ),
@@ -115,15 +116,15 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                           setState(() => _selectedFilter = val);
                         }
                       },
-                      items: const [
+                      items: [
                         DropdownMenuItem(
-                            value: 'all', child: Text('All Jobs • تمام')),
+                            value: 'all', child: Text(AppL10n.select(context, en: 'All Jobs', ur: 'تمام'))),
                         DropdownMenuItem(
                             value: 'active',
-                            child: Text('Active / Open • فعال')),
+                            child: Text(AppL10n.select(context, en: 'Active / Open', ur: 'فعال'))),
                         DropdownMenuItem(
                             value: 'disputed',
-                            child: Text('Disputed / Cancelled • تنازعات')),
+                            child: Text(AppL10n.select(context, en: 'Disputed / Cancelled', ur: 'تنازعات'))),
                       ],
                     ),
                   ],
@@ -164,8 +165,8 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                 }).toList();
 
                 if (filteredJobs.isEmpty) {
-                  return const AppEmptyState(
-                    title: 'No Jobs Found • کوئی کام نہیں ملا',
+                  return AppEmptyState(
+                    title: AppL10n.select(context, en: 'No Jobs Found', ur: 'کوئی کام نہیں ملا'),
                     description: 'No jobs match your search criteria.',
                     icon: Icons.work_off_outlined,
                   );
@@ -232,7 +233,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Category • زمرہ: ${job.categoryName}',
+                                    AppL10n.select(context, en: 'Category', ur: 'زمرہ: ${job.categoryName}'),
                                     style: AppTextStyles.labelCaption.copyWith(
                                       color: context.mutedColor,
                                     ),
@@ -252,7 +253,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                             const SizedBox(width: AppDimensions.sm),
                             if (isDisputed)
                               IconButton(
-                                tooltip: 'Resolve Dispute • حل کریں',
+                                tooltip: AppL10n.select(context, en: 'Resolve Dispute', ur: 'حل کریں'),
                                 icon: const Icon(Icons.check_circle_outline,
                                     color: AppColors.successGreen),
                                 onPressed: () async {
@@ -268,7 +269,7 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
                               )
                             else
                               IconButton(
-                                tooltip: 'Flag Dispute • تنازعہ درج کریں',
+                                tooltip: AppL10n.select(context, en: 'Flag Dispute', ur: 'تنازعہ درج کریں'),
                                 icon: const Icon(Icons.flag_outlined,
                                     color: AppColors.warningOrange),
                                 onPressed: () async {

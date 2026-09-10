@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
@@ -39,7 +40,7 @@ class WorkerMainScreen extends StatelessWidget {
               context,
               icon: Icons.home_outlined,
               selectedIcon: Icons.home_rounded,
-              label: 'Home • ہوم',
+              label: AppL10n.select(context, en: 'Home', ur: 'ہوم'),
             ),
             _buildNavDestination(
               context,

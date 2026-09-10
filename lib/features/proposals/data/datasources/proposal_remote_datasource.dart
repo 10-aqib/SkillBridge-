@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
 import 'package:skill_bridge/core/errors/app_exception.dart';
@@ -180,7 +181,7 @@ class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
             workerId: proposalData['workerPhotoUrl'],
           },
           'lastMessage':
-              'Proposal accepted! You can now message each other • بات چیت شروع ہوئی',
+              'Proposal accepted! You can now message each other',
           'lastMessageSenderId': clientId,
           'lastMessageAt': FieldValue.serverTimestamp(),
           'unreadCount': {

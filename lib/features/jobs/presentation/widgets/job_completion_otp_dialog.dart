@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
@@ -90,8 +91,8 @@ class _JobCompletionOtpDialogState extends State<JobCompletionOtpDialog> {
           Expanded(
             child: Text(
               widget.isClient
-                  ? 'Job Sign-off Code • تصدیق کوڈ'
-                  : 'Enter Completion Code • تصدیق درج کریں',
+                  ? AppL10n.select(context, en: 'Job Sign-off Code', ur: 'تصدیق کوڈ')
+                  : AppL10n.select(context, en: 'Enter Completion Code', ur: 'تصدیق درج کریں'),
               style: AppTextStyles.heading3.copyWith(
                 color: context.textColor,
               ),

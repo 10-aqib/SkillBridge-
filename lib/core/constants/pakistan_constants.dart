@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Defines Pakistani worker categories, cities, payment methods, and seed profiles.
@@ -129,7 +130,7 @@ class PakistanConstants {
     },
     {
       'id': 'raast_qr',
-      'name': 'Raast / IBFT Instant QR • راست آئی بی ایف ٹی',
+      'name': 'Raast / IBFT Instant QR',
       'shortName': 'Raast QR',
       'icon': Icons.qr_code_scanner_rounded,
       'color': 0xFF006622,

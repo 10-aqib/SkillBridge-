@@ -1,4 +1,5 @@
-import 'dart:ui';
+import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'dart:uiAppL10n.select(context, en: ';
 
 /// Represents a bilingual (English / Urdu) notification for Pakistani users.
 class AppNotificationMessage {
@@ -14,11 +15,11 @@ class AppNotificationMessage {
     required this.bodyUr,
   });
 
-  /// Formats the notification title as bilingual English • اردو
-  String formatBilingualTitle() => '$titleEn • $titleUr';
+  /// Formats the notification title as bilingual English', ur: 'اردو
+  String formatBilingualTitle() => ')$titleEn • $titleUrAppL10n.select(context, en: ';
 
-  /// Formats the notification body as bilingual English • اردو
-  String formatBilingualBody() => '$bodyEn \n$bodyUr';
+  /// Formats the notification body as bilingual English', ur: 'اردو
+  String formatBilingualBody() => ')$bodyEn \n$bodyUr';
 
   /// Returns ONLY English title if locale is English, OR ONLY Urdu title if Urdu.
   String localizedTitle(Locale locale) {

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
@@ -30,7 +31,7 @@ class WorkerEarningsChart extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '7-Day Earnings • ہفتہ وار آمدنی',
+                    AppL10n.select(context, en: '7-Day Earnings', ur: 'ہفتہ وار آمدنی'),
                     style: AppTextStyles.bodyStrong.copyWith(
                       color: context.mutedColor,
                     ),

@@ -1,3 +1,4 @@
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -161,7 +162,7 @@ class _WorkerProfileSetupScreenState
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          'Setup Worker Profile • کاریگر پروفائل',
+          AppL10n.select(context, en: 'Setup Worker Profile', ur: 'کاریگر پروفائل'),
           style: AppTextStyles.heading3.copyWith(
             color: context.textColor,
           ),
@@ -174,7 +175,7 @@ class _WorkerProfileSetupScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Complete your Profile • پروفائل مکمل کریں',
+              AppL10n.select(context, en: 'Complete your Profile', ur: 'پروفائل مکمل کریں'),
               style: AppTextStyles.headlineLg.copyWith(
                 color: context.textColor,
               ),
@@ -191,14 +192,14 @@ class _WorkerProfileSetupScreenState
             // ── Professional Headline ───────────────────────────────────────
             AppTextField(
               controller: _headlineController,
-              labelText: 'Professional Headline • پیشہ ورانہ عنوان',
+              labelText: AppL10n.select(context, en: 'Professional Headline', ur: 'پیشہ ورانہ عنوان'),
               hintText: 'e.g. Master Electrician with 5+ Years Experience',
             ).animate().fade(delay: 150.ms, duration: 400.ms),
             const SizedBox(height: AppDimensions.lg),
 
             // ── Category Dropdown ───────────────────────────────────────────
             Text(
-              'Primary Category • زمرہ',
+              AppL10n.select(context, en: 'Primary Category', ur: 'زمرہ'),
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -241,7 +242,7 @@ class _WorkerProfileSetupScreenState
             // ── Hourly Rate (PKR) ───────────────────────────────────────────
             AppTextField(
               controller: _hourlyRateController,
-              labelText: 'Hourly Rate (PKR) • فی گھنٹہ ریٹ',
+              labelText: AppL10n.select(context, en: 'Hourly Rate (PKR)', ur: 'فی گھنٹہ ریٹ'),
               hintText: 'e.g. 800',
               keyboardType: TextInputType.number,
             ).animate().fade(delay: 250.ms, duration: 400.ms),
@@ -251,7 +252,7 @@ class _WorkerProfileSetupScreenState
             DropdownButtonFormField<String>(
               initialValue: _selectedCity,
               decoration: InputDecoration(
-                labelText: 'City • شہر',
+                labelText: AppL10n.select(context, en: 'City', ur: 'شہر'),
                 prefixIcon: const Icon(Icons.location_on_outlined,
                     color: AppColors.primary),
                 filled: true,
@@ -280,7 +281,7 @@ class _WorkerProfileSetupScreenState
             // ── CNIC Number (Optional) ──────────────────────────────────────
             AppTextField(
               controller: _cnicController,
-              labelText: 'CNIC Number (Optional) • شناختی کارڈ نمبر',
+              labelText: AppL10n.select(context, en: 'CNIC Number (Optional)', ur: 'شناختی کارڈ نمبر'),
               hintText: '35202-1234567-1',
               keyboardType: TextInputType.number,
             ).animate().fade(delay: 290.ms, duration: 400.ms),
@@ -289,7 +290,7 @@ class _WorkerProfileSetupScreenState
             // ── Bio ─────────────────────────────────────────────────────────
             AppTextField(
               controller: _bioController,
-              labelText: 'About / Bio • تعارف',
+              labelText: AppL10n.select(context, en: 'About / Bio', ur: 'تعارف'),
               hintText:
                   'Describe your work experience, tools, and specialty...',
               maxLines: 3,
@@ -298,7 +299,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Select Skills (Using AppChip) ───────────────────────────────
             Text(
-              'Select Skills • مہارتیں منتخب کریں',
+              AppL10n.select(context, en: 'Select Skills', ur: 'مہارتیں منتخب کریں'),
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -328,7 +329,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Select Languages (Using AppChip) ────────────────────────────
             Text(
-              'Languages • زبانیں',
+              AppL10n.select(context, en: 'Languages', ur: 'زبانیں'),
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -358,7 +359,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Response Time Dropdown ───────────────────────────────────────
             Text(
-              'Average Response Time • جواب دینے کا وقت',
+              AppL10n.select(context, en: 'Average Response Time', ur: 'جواب دینے کا وقت'),
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -400,7 +401,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Submit Button ───────────────────────────────────────────────
             AppButton(
-              text: 'Save & Continue • محفوظ کریں اور آگے بڑھیں',
+              text: AppL10n.select(context, en: 'Save & Continue', ur: 'محفوظ کریں اور آگے بڑھیں'),
               onPressed: _isLoading ? null : _submitProfile,
               isLoading: _isLoading,
               width: double.infinity,
