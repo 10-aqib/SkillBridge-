@@ -27,7 +27,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final SearchController _searchController = SearchController();
-  String _selectedCity = 'Lahore';
+  String _selectedCity = 'Islamabad';
   int _currentBanner = 0;
   late PageController _pageController;
   late AnimationController _heroAnim;
@@ -53,9 +53,6 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
       'image': 'assets/images/banner_electrician.jpg',
       'icon': Icons.electric_bolt_rounded,
       'tag': '⚡ Top Rated',
-      'rating': 4.9,
-      'jobsCompleted': 120,
-      'startingPrice': 500,
     },
     {
       'title': 'Home Cleaning',
@@ -65,8 +62,6 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
       'image': 'assets/images/banner_cleaning.jpg',
       'icon': Icons.cleaning_services_rounded,
       'tag': '✨ Premium',
-      'rating': 4.8,
-      'startingPrice': 1500,
     },
     {
       'title': 'AC & HVAC Repair',
@@ -76,7 +71,6 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
       'image': 'assets/images/banner_ac_repair.jpg',
       'icon': Icons.ac_unit_rounded,
       'tag': '❄️ Verified',
-      'jobsCompleted': 85,
     },
   ];
 
@@ -94,6 +88,10 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
   @override
   void initState() {
     super.initState();
+    final user = ref.read(currentUserProvider);
+    if (user != null && user.city != null && ['Islamabad', 'Rawalpindi'].contains(user.city)) {
+      _selectedCity = user.city!;
+    }
     _pageController = PageController(viewportFraction: 0.92);
     _heroAnim = AnimationController(vsync: this, duration: 600.ms)..forward();
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
@@ -124,7 +122,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
-    final firstName = (user?.displayName ?? 'Guest').split(' ').first;
+    final firstName = (user?.formattedDisplayName ?? 'Client').split(' ').first;
     final categories = PakistanConstants.categories;
 
     return Scaffold(
@@ -309,11 +307,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                                     color: Colors.white,
                                     size: 16),
                                 items: [
-                                  'Lahore',
                                   'Islamabad',
-                                  'Karachi',
                                   'Rawalpindi',
-                                  'Faisalabad'
                                 ]
                                     .map((c) => DropdownMenuItem(
                                           value: c,
@@ -694,41 +689,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                if (b['rating'] != null) ...[
-                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    b['rating'].toString(),
-                                    style: AppTextStyles.labelCaption.copyWith(color: Colors.white, fontSize: 11),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                if (b['jobsCompleted'] != null) ...[
-                                  const Icon(Icons.task_alt_rounded, color: Colors.white, size: 12),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${b['jobsCompleted']}+ done',
-                                    style: AppTextStyles.labelCaption.copyWith(color: Colors.white, fontSize: 11),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                if (b['startingPrice'] != null) ...[
-                                  Text(
-                                    'Rs ${b['startingPrice']} up',
-                                    style: AppTextStyles.labelCaption.copyWith(
-                                      color: Colors.white, 
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 14),
                             GestureDetector(
                               onTap: () => context
                                   .push(RouteNames.clientNearbyWorkersPath),

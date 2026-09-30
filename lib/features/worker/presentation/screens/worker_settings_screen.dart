@@ -55,60 +55,6 @@ class WorkerSettingsScreen extends ConsumerWidget {
                           BorderRadius.circular(AppDimensions.radiusSm),
                     ),
                     child: Icon(
-                      Icons.language_rounded,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  title: Text(
-                    AppL10n.select(context, en: 'Language', ur: 'زبان'),
-                    style: AppTextStyles.bodyStrong.copyWith(
-                      color: context.textColor,
-                    ),
-                  ),
-                  subtitle: Text(
-                    ref.watch(languageProvider).languageCode == 'ur'
-                        ? 'اردو (RTL Mode Active)'
-                        : 'English (LTR Mode Active)',
-                    style: AppTextStyles.bodyPrimary.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusSm),
-                    ),
-                    child: Text(
-                      ref.watch(languageProvider).languageCode == 'ur'
-                          ? 'اردو'
-                          : 'EN',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  onTap: () {
-                    ref.read(languageProvider.notifier).toggleLanguage();
-                  },
-                ),
-                Divider(height: 1, color: context.borderColor),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.blueTint,
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusSm),
-                    ),
-                    child: Icon(
                       Icons.dark_mode_outlined,
                       color: AppColors.primary,
                     ),

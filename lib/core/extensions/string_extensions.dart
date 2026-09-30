@@ -33,4 +33,13 @@ extension StringExtensions on String {
   int get toInt {
     return int.tryParse(this) ?? 0;
   }
+
+  // Capitalize all words
+  String get capitalizeWords {
+    if (trim().isEmpty) return this;
+    return trim().split(RegExp(r'\s+')).map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
 }

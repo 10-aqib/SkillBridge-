@@ -345,7 +345,7 @@ class _JobList extends ConsumerWidget {
                       SizedBox(width: 8),
                       _StatChip(
                         icon: Icons.location_on_outlined,
-                        label: job.city.isEmpty ? 'Lahore' : job.city,
+                        label: job.city.isEmpty ? 'Islamabad' : job.city,
                         color: context.mutedColor,
                       ),
                     ],

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:skill_bridge/core/errors/app_exception.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// Remote data source that communicates with Firebase Auth and Firestore.
 abstract class AuthRemoteDataSource {
@@ -22,6 +23,7 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
   });
+  Future<UserModel> loginWithGoogle({required String role});
   Future<void> signOut();
   Future<void> sendPasswordResetEmail({required String email});
   Future<String> sendPhoneOtp({required String phoneNumber});
@@ -52,17 +54,48 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Stream<UserModel?> get authStateChanges {
-    return _auth.authStateChanges().asyncMap((firebaseUser) async {
-      if (firebaseUser == null) return null;
-      try {
-        final doc = await _usersCollection.doc(firebaseUser.uid).get();
-        if (!doc.exists) return null;
-        return UserModel.fromFirestore(doc);
-      } catch (e) {
-        Logger.e('authStateChanges error', e);
-        return null;
-      }
-    });
+    late StreamController<UserModel?> controller;
+    StreamSubscription? authSub;
+    StreamSubscription? docSub;
+
+    controller = StreamController<UserModel?>.broadcast(
+      onListen: () {
+        authSub = _auth.authStateChanges().listen((firebaseUser) {
+          docSub?.cancel();
+          if (firebaseUser == null) {
+            controller.add(null);
+          } else {
+            docSub = _usersCollection
+                .doc(firebaseUser.uid)
+                .snapshots()
+                .listen((doc) {
+              if (!doc.exists) {
+                controller.add(null);
+              } else {
+                try {
+                  controller.add(UserModel.fromFirestore(doc));
+                } catch (e) {
+                  Logger.e('authStateChanges error', e);
+                  controller.add(null);
+                }
+              }
+            }, onError: (e) {
+              Logger.e('authStateChanges snapshot error', e);
+              controller.add(null);
+            });
+          }
+        }, onError: (e) {
+          Logger.e('authStateChanges auth error', e);
+          controller.add(null);
+        });
+      },
+      onCancel: () {
+        authSub?.cancel();
+        docSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
   @override
@@ -157,6 +190,51 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       rethrow;
     } on FirebaseException catch (e) {
       throw ServerException(e.message ?? 'Login failed', e.code);
+    }
+  }
+  @override
+  Future<UserModel> loginWithGoogle({required String role}) async {
+    try {
+      final googleSignIn = GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw const AuthException('Google sign in was cancelled', 'cancelled');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      final firebaseUser = userCredential.user!;
+
+      final doc = await _usersCollection.doc(firebaseUser.uid).get();
+      if (!doc.exists) {
+        final userModel = UserModel.newUser(
+          uid: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          displayName: firebaseUser.displayName ?? 'Google User',
+          phoneNumber: firebaseUser.phoneNumber ?? '',
+          role: role,
+        );
+        await _usersCollection.doc(firebaseUser.uid).set(userModel.toFirestore());
+        return userModel;
+      } else {
+        final userModel = UserModel.fromFirestore(doc);
+        if (!userModel.isActive) {
+          await _auth.signOut();
+          await googleSignIn.signOut();
+          throw const AuthException('Your account has been suspended. Contact support.', 'suspended');
+        }
+        return userModel;
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseAuthError(e.code), e.code);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw ServerException('Google Login failed: $e');
     }
   }
 

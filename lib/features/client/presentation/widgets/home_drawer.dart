@@ -24,8 +24,6 @@ class HomeDrawer extends ConsumerWidget {
     final displayName = user?.displayName ?? 'Guest';
     final email = user?.email ?? '';
     final photoUrl = user?.photoUrl;
-    final locale = ref.watch(languageProvider);
-    final isUrdu = locale.languageCode == 'ur';
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
 
@@ -92,105 +90,51 @@ class HomeDrawer extends ConsumerWidget {
               ),
             ),
 
-            // ── Language & Theme Toggles ──────────────────────────────────────
+            // ── Theme Mode Toggle ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.all(AppDimensions.md),
-              child: Row(
-                children: [
-                  // Language Toggle
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: context.borderColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => ref
-                                  .read(languageProvider.notifier)
-                                  .setLanguage('en'),
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 9),
-                                decoration: BoxDecoration(
-                                  color: !isUrdu
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(9),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'EN',
-                                  style: TextStyle(
-                                    color: !isUrdu
-                                        ? Colors.white
-                                        : context.mutedColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => ref
-                                  .read(languageProvider.notifier)
-                                  .setLanguage('ur'),
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 9),
-                                decoration: BoxDecoration(
-                                  color: isUrdu
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(9),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'اردو',
-                                  style: TextStyle(
-                                    color: isUrdu
-                                        ? Colors.white
-                                        : context.mutedColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+              child: GestureDetector(
+                onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(
+                      isDark ? ThemeMode.light : ThemeMode.dark,
                     ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: context.borderColor),
                   ),
-                  const SizedBox(width: 10),
-                  // Dark Mode Toggle
-                  GestureDetector(
-                    onTap: () =>
-                        ref.read(themeModeProvider.notifier).setThemeMode(
-                              isDark ? ThemeMode.light : ThemeMode.dark,
-                            ),
-                    child: Container(
-                      padding: const EdgeInsets.all(11),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: context.borderColor),
-                      ),
-                      child: Icon(
+                  child: Row(
+                    children: [
+                      Icon(
                         isDark
                             ? Icons.light_mode_rounded
                             : Icons.dark_mode_outlined,
                         color: AppColors.primary,
                         size: 20,
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Text(
+                        isDark ? 'Dark Mode' : 'Light Mode',
+                        style: TextStyle(
+                          color: context.textColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const Spacer(),
+                      Switch.adaptive(
+                        value: isDark,
+                        activeColor: AppColors.primary,
+                        onChanged: (val) {
+                          ref.read(themeModeProvider.notifier).setThemeMode(
+                                val ? ThemeMode.dark : ThemeMode.light,
+                              );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
 
@@ -272,16 +216,6 @@ class HomeDrawer extends ConsumerWidget {
                       );
                     },
                   ),
-                  const Divider(indent: 16, endIndent: 16),
-                  _DrawerTile(
-                    icon: Icons.engineering_rounded,
-                    title: 'Join as a Professional',
-                    subtitle: 'Start earning today — it\'s free',
-                    onTap: () {
-                      context.pop();
-                      context.push(RouteNames.signupPath);
-                    },
-                  ),
                   if (user != null) ...[
                     const Divider(indent: 16, endIndent: 16),
                     _DrawerTile(
@@ -309,7 +243,7 @@ class HomeDrawer extends ConsumerWidget {
                       size: 14, color: AppColors.successGreen),
                   const SizedBox(width: 6),
                   Text(
-                    AppL10n.select(context, en: 'Skill Bridge v1.0.0', ur: 'Made in Pakistan 🇵🇰'),
+                    'Skill Bridge v1.0.0',
                     style: AppTextStyles.labelCaption.copyWith(
                       color: context.mutedColor,
                       fontSize: 11,

@@ -51,8 +51,8 @@ class BookingPaymentSheet extends ConsumerStatefulWidget {
 }
 
 class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
-  String _selectedCity = 'Lahore';
-  final _addressController = TextEditingController(text: 'DHA Phase 5, Sector C');
+  String _selectedCity = 'Islamabad';
+  final _addressController = TextEditingController(text: 'F-10 Markaz');
   final _phoneController = TextEditingController(text: '+92 300 ');
   int _hours = 2;
   String _selectedPaymentMethod = 'jazzcash';

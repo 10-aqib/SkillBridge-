@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Category Filter Chip
 /// Selected: Primary Blue (#003fb1) with white text
@@ -30,8 +29,8 @@ class AppChip extends StatelessWidget {
       avatar: avatar,
       showCheckmark: false,
       labelStyle: AppTextStyles.labelCaption.copyWith(
-        color: isSelected ? AppColors.onPrimary : AppColors.primary,
-        fontWeight: FontWeight.w600,
+        color: isSelected ? Colors.white : AppColors.primary,
+        fontWeight: FontWeight.bold,
         fontSize: 13,
       ),
       backgroundColor: AppColors.blueTint,
@@ -39,7 +38,7 @@ class AppChip extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
         side: BorderSide(
-          color: isSelected ? AppColors.primary : context.borderColor.withValues(alpha: 0.6),
+          color: isSelected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

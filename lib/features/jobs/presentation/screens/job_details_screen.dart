@@ -21,6 +21,8 @@ import 'package:skill_bridge/shared/widgets/app_badge.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
+import 'package:skill_bridge/core/services/location_tracking_service.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/worker_live_tracking_map.dart';
 
 /// Guild Modernist Job Details Screen
 class JobDetailsScreen extends ConsumerWidget {
@@ -221,6 +223,26 @@ class JobDetailsScreen extends ConsumerWidget {
                         width: double.infinity,
                       ).animate().fade(delay: 350.ms, duration: 400.ms),
                   ] else if (jobData.status == JobStatus.assigned) ...[
+                    if (isOwner && jobData.selectedWorkerId != null) ...[
+                      WorkerLiveTrackingMap(
+                        workerId: jobData.selectedWorkerId!,
+                        workerName: jobData.selectedWorkerName ?? 'Assigned Worker',
+                        workerPhone: '',
+                        clientLat: jobData.location?.latitude ?? 33.6844,
+                        clientLon: jobData.location?.longitude ?? 73.0479,
+                      ).animate().fade(delay: 300.ms, duration: 400.ms),
+                      const SizedBox(height: AppDimensions.lg),
+                    ],
+                    if (isAssignedWorker) ...[
+                      _WorkerLocationSharingCard(
+                        jobId: jobData.id,
+                        workerUid: user.uid,
+                        jobAddress: jobData.address,
+                        jobLat: jobData.location?.latitude ?? 33.6844,
+                        jobLon: jobData.location?.longitude ?? 73.0479,
+                      ).animate().fade(delay: 300.ms, duration: 400.ms),
+                      const SizedBox(height: AppDimensions.lg),
+                    ],
                     if (isOwner || isAssignedWorker)
                       AppButton(
                         text: AppL10n.select(context, en: 'Start Work', ur: 'کام شروع کریں'),
@@ -248,6 +270,26 @@ class JobDetailsScreen extends ConsumerWidget {
                         width: double.infinity,
                       ).animate().fade(delay: 350.ms, duration: 400.ms),
                   ] else if (jobData.status == JobStatus.inProgress) ...[
+                    if (isOwner && jobData.selectedWorkerId != null) ...[
+                      WorkerLiveTrackingMap(
+                        workerId: jobData.selectedWorkerId!,
+                        workerName: jobData.selectedWorkerName ?? 'Assigned Worker',
+                        workerPhone: '',
+                        clientLat: jobData.location?.latitude ?? 33.6844,
+                        clientLon: jobData.location?.longitude ?? 73.0479,
+                      ).animate().fade(delay: 300.ms, duration: 400.ms),
+                      const SizedBox(height: AppDimensions.lg),
+                    ],
+                    if (isAssignedWorker) ...[
+                      _WorkerLocationSharingCard(
+                        jobId: jobData.id,
+                        workerUid: user.uid,
+                        jobAddress: jobData.address,
+                        jobLat: jobData.location?.latitude ?? 33.6844,
+                        jobLon: jobData.location?.longitude ?? 73.0479,
+                      ).animate().fade(delay: 300.ms, duration: 400.ms),
+                      const SizedBox(height: AppDimensions.lg),
+                    ],
                     if (isOwner || isAssignedWorker)
                       AppButton(
                         text: AppL10n.select(context, en: 'Mark as Complete', ur: 'کام مکمل کریں'),
@@ -697,3 +739,138 @@ class JobDetailsScreen extends ConsumerWidget {
     );
   }
 }
+
+class _WorkerLocationSharingCard extends ConsumerWidget {
+  final String jobId;
+  final String workerUid;
+  final String jobAddress;
+  final double jobLat;
+  final double jobLon;
+
+  const _WorkerLocationSharingCard({
+    required this.jobId,
+    required this.workerUid,
+    required this.jobAddress,
+    required this.jobLat,
+    required this.jobLon,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locationAsync = ref.watch(userLiveLocationStreamProvider(workerUid));
+    final trackingService = ref.watch(locationTrackingServiceProvider);
+
+    final isSharing = locationAsync.when(
+      data: (data) => data?['isLocationSharing'] as bool? ?? false,
+      loading: () => trackingService.isTracking,
+      error: (_, __) => false,
+    );
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppDimensions.md),
+      shadow: AppShadows.level2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSharing
+                      ? AppColors.successGreen.withValues(alpha: 0.12)
+                      : AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isSharing ? Icons.location_on : Icons.location_off_outlined,
+                  color: isSharing ? AppColors.successGreen : AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Live GPS Location Sharing',
+                      style: AppTextStyles.bodyStrong.copyWith(
+                        color: context.textColor,
+                      ),
+                    ),
+                    Text(
+                      isSharing
+                          ? 'Client is receiving your live location'
+                          : 'Share location so client can track your arrival',
+                      style: AppTextStyles.labelCaption.copyWith(
+                        color: isSharing ? AppColors.successGreen : context.mutedColor,
+                        fontWeight: isSharing ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: isSharing,
+                activeTrackColor: AppColors.primary,
+                onChanged: (val) async {
+                  if (val) {
+                    final status = await trackingService.startTracking(workerUid);
+                    if (!context.mounted) return;
+                    if (status == LocationTrackingStatus.serviceDisabled) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Please enable GPS/Location services.'),
+                          action: SnackBarAction(
+                            label: 'Settings',
+                            onPressed: () => trackingService.openLocationSettings(),
+                          ),
+                        ),
+                      );
+                    } else if (status == LocationTrackingStatus.permissionDenied ||
+                        status == LocationTrackingStatus.permissionPermanentlyDenied) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Location permission is required for live tracking.'),
+                          action: SnackBarAction(
+                            label: 'Settings',
+                            onPressed: () => trackingService.openAppSettings(),
+                          ),
+                        ),
+                      );
+                    }
+                  } else {
+                    await trackingService.stopTracking(workerUid);
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.sm),
+          Divider(height: 1, color: context.borderColor),
+          const SizedBox(height: AppDimensions.sm),
+          Row(
+            children: [
+              const Icon(Icons.navigation_outlined, size: 14, color: AppColors.primary),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'Job Destination: $jobAddress',
+                  style: AppTextStyles.labelCaption.copyWith(
+                    color: context.mutedColor,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+

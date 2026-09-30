@@ -1,82 +1,33 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'dart:math' as math;
 
-/// Represents a geofenced Pakistani locality with coordinates and city.
-class PakistaniLocality {
-  final String name;
-  final String city;
-  final String urduName;
-  final double latitude;
-  final double longitude;
-  final double radiusKm;
-
-  const PakistaniLocality({
-    required this.name,
-    required this.city,
-    required this.urduName,
-    required this.latitude,
-    required this.longitude,
-    this.radiusKm = 3.5,
-  });
+enum LocationAccuracyLevel {
+  high,
+  medium,
+  low,
+  unknown
 }
 
-/// Geolocation and Geofencing utility tailored for Pakistani cities
-/// (Lahore, Karachi, Islamabad) with Haversine distance and city traffic ETA.
+/// Core Geolocation utilities utilizing Haversine distance and real coordinates.
 class GeoLocationUtil {
   static const double _earthRadiusKm = 6371.0;
 
-  /// Built-in Pakistani major localities for geofencing & address matching.
-  static const List<PakistaniLocality> pakistaniLocalities = [
-    PakistaniLocality(
-      name: 'Gulberg III',
-      city: 'Lahore',
-      urduName: 'گلبرگ 3، لاہور',
-      latitude: 31.5102,
-      longitude: 74.3441,
-    ),
-    PakistaniLocality(
-      name: 'DHA Phase 5',
-      city: 'Lahore',
-      urduName: 'ڈی ایچ اے فیز 5، لاہور',
-      latitude: 31.4697,
-      longitude: 74.4093,
-    ),
-    PakistaniLocality(
-      name: 'Johar Town',
-      city: 'Lahore',
-      urduName: 'جوہرتائون، لاہور',
-      latitude: 31.4697,
-      longitude: 74.2965,
-    ),
-    PakistaniLocality(
-      name: 'Bahria Town',
-      city: 'Lahore',
-      urduName: 'بحریہ ٹائون، لاہور',
-      latitude: 31.3653,
-      longitude: 74.1770,
-    ),
-    PakistaniLocality(
-      name: 'Model Town',
-      city: 'Lahore',
-      urduName: 'ماڈل ٹائون، لاہور',
-      latitude: 31.4826,
-      longitude: 74.3262,
-    ),
-    PakistaniLocality(
-      name: 'Clifton Block 4',
-      city: 'Karachi',
-      urduName: 'کلفٹن بلاک 4، کراچی',
-      latitude: 24.8138,
-      longitude: 67.0300,
-    ),
-    PakistaniLocality(
-      name: 'F-10 Markaz',
-      city: 'Islamabad',
-      urduName: 'ایف 10 مرکز، اسلام آباد',
-      latitude: 33.6938,
-      longitude: 73.0111,
-    ),
-  ];
+  /// Strict validation for GPS coordinates.
+  static bool isValidCoordinate(double? lat, double? lng) {
+    if (lat == null || lng == null) return false;
+    if (lat.isNaN || lng.isNaN) return false;
+    if (lat == 0.0 && lng == 0.0) return false; // Common default/error value
+    if (lat < -90.0 || lat > 90.0) return false;
+    if (lng < -180.0 || lng > 180.0) return false;
+    return true;
+  }
+
+  /// Evaluates the accuracy level based on meters.
+  static LocationAccuracyLevel evaluateAccuracy(double accuracyInMeters) {
+    if (accuracyInMeters <= 20.0) return LocationAccuracyLevel.high;
+    if (accuracyInMeters <= 50.0) return LocationAccuracyLevel.medium;
+    if (accuracyInMeters > 50.0) return LocationAccuracyLevel.low;
+    return LocationAccuracyLevel.unknown;
+  }
 
   /// Calculates the surface distance in kilometers between two GPS coordinates
   /// using the Haversine formula.
@@ -102,8 +53,7 @@ class GeoLocationUtil {
     return double.parse(distance.toStringAsFixed(2));
   }
 
-  /// Calculates estimated driving time in minutes based on Pakistani city
-  /// traffic conditions (default average speed 25 km/h + 2 mins parking buffer).
+  /// Calculates estimated driving time in minutes based on average speed.
   static int calculateEtaMinutes(
     double distanceKm, {
     double averageSpeedKmh = 25.0,
@@ -114,43 +64,27 @@ class GeoLocationUtil {
     return math.max(1, minutes);
   }
 
-  /// Detects the closest Pakistani locality from GPS coordinates.
-  /// Returns standard formatted string `"Locality, City', ur: 'اردو نام"`.
-  static String detectLocality(double lat, double lon) {
-    PakistaniLocality? closest;
-    double minDistance = double.infinity;
-
-    for (final loc in pakistaniLocalities) {
-      final dist = calculateDistanceKm(lat, lon, loc.latitude, loc.longitude);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closest = loc;
-      }
-    }
-
-    if (closest != null && minDistance <= 15.0) {
-      return ')${closest.name}, ${closest.city} • ${closest.urduName}';
-    }
-
-    return 'Lahore City';
-  }
-
-  /// Formats distance in inDrive style (meters if < 1 km, e.g. "800 m", km otherwise e.g. "1.4 km").
-  static String formatInDriveDistance(double distanceKm, {bool isUrdu = false}) {
+  /// Formats distance (meters if < 1 km, e.g. "800 m", km otherwise e.g. "1.4 km").
+  static String formatDistance(double distanceKm) {
     if (distanceKm < 1.0) {
       final meters = (distanceKm * 1000).round();
-      return isUrdu ? '$meters میٹر' : '$meters m';
+      return '$meters m';
     } else {
       final kmStr = distanceKm.toStringAsFixed(1);
-      return isUrdu ? '$kmStr کلومیٹر' : '$kmStr km';
+      return '$kmStr km';
     }
   }
+  
+  /// (Deprecated/Legacy) Formats inDrive-style Distance string
+  static String formatInDriveDistance(double distanceKm, {bool isUrdu = false}) {
+    return formatDistance(distanceKm);
+  }
 
-  /// Formats inDrive-style Distance & ETA string (e.g., "800 m', ur: '~3 min away" or Urdu equivalent).
+  /// Formats Distance & ETA string (e.g. "800 m • ~3 min away").
   static String formatInDriveDistanceEta(double distanceKm, {bool isUrdu = false}) {
-    final distStr = formatInDriveDistance(distanceKm, isUrdu: isUrdu);
+    final distStr = formatDistance(distanceKm);
     final eta = calculateEtaMinutes(distanceKm);
-    return isUrdu ? '$distStr • ~$eta منٹ دور' : '$distStr • ~$eta min away';
+    return '$distStr • ~$eta min away';
   }
 
   static double _degToRad(double deg) => deg * (math.pi / 180.0);

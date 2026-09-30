@@ -6,50 +6,30 @@ import 'package:flutter/material.dart';
 class AppL10n {
   AppL10n._();
 
-  /// Returns true if the current UI language is Urdu (RTL).
-  static bool isUrdu(BuildContext context) {
-    try {
-      final directionality = Directionality.maybeOf(context);
-      if (directionality == TextDirection.rtl) {
-        return true;
-      }
-      final locale = Localizations.maybeLocaleOf(context);
-      if (locale != null && locale.languageCode == 'ur') {
-        return true;
-      }
-    } catch (_) {
-      // Fallback to English if no context locale is available
-      return false;
-    }
-    return false;
-  }
+  /// App is strictly English-only. Always returns false.
+  static bool isUrdu(BuildContext context) => false;
 
   /// Selects a single string based on the active [BuildContext].
-  /// Returns [ur] if Urdu is selected, otherwise [en].
+  /// App is English-only, so this always returns [en].
   static String select(
     BuildContext context, {
     required String en,
     required String ur,
-  }) {
-    return isUrdu(context) ? ur : en;
-  }
+  }) => en;
 
   /// Selects a single string based on an explicit [Locale].
-  /// Returns [ur] if [locale.languageCode] is 'ur', otherwise [en].
+  /// App is English-only, so this always returns [en].
   static String selectByLocale(
     Locale locale, {
     required String en,
     required String ur,
-  }) {
-    return locale.languageCode == 'ur' ? ur : en;
-  }
+  }) => en;
 
-  /// Formats Pakistani Rupee currency according to the active language.
-  /// Example EN: 'Rs. 3,500' | Example UR: '3,500 روپے'
-  static String formatCurrency(double amountPkr, {required bool isUrdu}) {
+  /// Formats Pakistani Rupee currency in English format (e.g. 'Rs. 3,500').
+  static String formatCurrency(double amountPkr, {bool isUrdu = false}) {
     final intAmount = amountPkr.toInt();
     final formattedNum = _formatWithCommas(intAmount);
-    return isUrdu ? '$formattedNum روپے' : 'Rs. $formattedNum';
+    return 'Rs. $formattedNum';
   }
 
   static String _formatWithCommas(int value) {

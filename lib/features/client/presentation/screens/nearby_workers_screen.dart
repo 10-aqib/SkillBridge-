@@ -19,6 +19,8 @@ import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/booking_payment_sheet.dart';
+import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
+import 'package:skill_bridge/core/services/routes_service.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,7 +35,6 @@ class NearbyWorkersScreen extends ConsumerStatefulWidget {
 
 class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
     with TickerProviderStateMixin {
-  String _selectedCity = 'Lahore';
   String _selectedCategory = 'All';
   double _maxDistanceRadiusKm = 5.0;
   double _maxHourlyRate = 3000.0;
@@ -44,6 +45,8 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   GoogleMapController? _mapController;
   late AnimationController _filterAnim;
   bool _showFilters = true;
+  LocationResult? _customLocation;
+  Set<Polyline> _polylines = {};
 
   static const _mapStyle = '''[
     {"featureType":"poi","stylers":[{"visibility":"off"}]},
@@ -102,12 +105,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   }
 
   Widget _buildMainScaffold(BuildContext context, bool isFallback, {double? userLat, double? userLng}) {
-    final cityMeta = PakistanConstants.cities.firstWhere(
-      (c) => c['name'] == _selectedCity,
-      orElse: () => PakistanConstants.cities.first,
-    );
-    final centerLat = isFallback ? (cityMeta['lat'] as num).toDouble() : userLat!;
-    final centerLng = isFallback ? (cityMeta['lng'] as num).toDouble() : userLng!;
+    // Determine the center based on custom location or GPS or fallback
+    final centerLat = _customLocation?.latitude ?? (isFallback ? 33.6844 : userLat!);
+    final centerLng = _customLocation?.longitude ?? (isFallback ? 73.0479 : userLng!);
     
     final currentUserLocation = GeoPointLocation(
       latitude: centerLat,
@@ -220,15 +220,45 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
       padding: const EdgeInsets.all(AppDimensions.md),
       child: Column(
         children: [
-          // City + Category row
+          // Location + Category row
           Row(
             children: [
               Expanded(
-                child: _buildDropdown(
-                  label: 'City',
-                  value: _selectedCity,
-                  items: PakistanConstants.cities.map((c) => c['name'] as String).toList(),
-                  onChanged: (v) => setState(() => _selectedCity = v!),
+                child: GestureDetector(
+                  onTap: () async {
+                    final result = await Navigator.push<LocationResult>(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+                    );
+                    if (result != null) {
+                      setState(() {
+                        _customLocation = result;
+                        _polylines.clear(); // clear any routes
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: context.borderColor),
+                      borderRadius: BorderRadius.circular(8),
+                      color: context.surfaceColor,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 16, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _customLocation?.formattedAddress ?? 'Current Location',
+                            style: AppTextStyles.bodyMedium.copyWith(color: context.textColor),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -415,6 +445,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 ),
                 markers: markers,
                 circles: circles,
+                polylines: _polylines,
                 myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
@@ -444,13 +475,35 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                           _selectedWorkerId ?? workers.first.workerId
                         );
                         return GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _selectedWorkerId = w.workerId);
                             _mapController?.animateCamera(
-                              CameraUpdate.newLatLng(
-                                LatLng(w.location.latitude, w.location.longitude),
+                              CameraUpdate.newLatLngBounds(
+                                _boundsFromLatLngList([
+                                  LatLng(centerLat, centerLng),
+                                  LatLng(w.location.latitude, w.location.longitude)
+                                ]),
+                                60.0, // padding
                               ),
                             );
+                            
+                            // Fetch route
+                            final route = await RoutesService.getDrivingRoute(
+                              LatLng(centerLat, centerLng),
+                              LatLng(w.location!.latitude, w.location!.longitude),
+                            );
+                            if (route != null) {
+                              setState(() {
+                                _polylines = {
+                                  Polyline(
+                                    polylineId: const PolylineId('route'),
+                                    points: route.polylinePoints,
+                                    color: AppColors.primary,
+                                    width: 4,
+                                  )
+                                };
+                              });
+                            }
                           },
                           child: AnimatedContainer(
                             duration: 200.ms,
@@ -827,6 +880,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           const SizedBox(height: 20),
           OutlinedButton(
             onPressed: () => setState(() {
+              _customLocation = null;
               _maxDistanceRadiusKm = 5.0;
               _selectedCategory = 'All';
               _minRating = 0.0;
@@ -836,6 +890,26 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           ),
         ],
       ),
+    );
+  }
+  
+  LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
+    assert(list.isNotEmpty);
+    double? x0, x1, y0, y1;
+    for (LatLng latLng in list) {
+      if (x0 == null) {
+        x0 = x1 = latLng.latitude;
+        y0 = y1 = latLng.longitude;
+      } else {
+        if (latLng.latitude > x1!) x1 = latLng.latitude;
+        if (latLng.latitude < x0) x0 = latLng.latitude;
+        if (latLng.longitude > y1!) y1 = latLng.longitude;
+        if (latLng.longitude < y0!) y0 = latLng.longitude;
+      }
+    }
+    return LatLngBounds(
+      northeast: LatLng(x1!, y1!),
+      southwest: LatLng(x0!, y0!),
     );
   }
 }

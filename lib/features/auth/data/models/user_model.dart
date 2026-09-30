@@ -21,6 +21,12 @@ class UserModel extends UserEntity {
     super.address,
     super.city,
     super.location,
+    super.isLocationSharing = false,
+    super.locationUpdatedAt,
+    super.heading,
+    super.geohash,
+    super.locationAccuracy,
+    super.locationVisibility,
     super.totalJobsPosted,
     super.totalHires,
     super.rating,
@@ -48,13 +54,19 @@ class UserModel extends UserEntity {
       address: data['address'] as String?,
       city: data['city'] as String?,
       location: data['location'] as GeoPoint?,
+      isLocationSharing: data['isLocationSharing'] as bool? ?? false,
+      locationUpdatedAt: (data['locationUpdatedAt'] as Timestamp?)?.toDate(),
+      heading: (data['heading'] as num?)?.toDouble(),
+      geohash: data['geohash'] as String?,
+      locationAccuracy: data['locationAccuracy'] as String?,
+      locationVisibility: data['locationVisibility'] as String?,
       totalJobsPosted: data['totalJobsPosted'] as int? ?? 0,
       totalHires: data['totalHires'] as int? ?? 0,
       rating: (data['rating'] as num?)?.toDouble() ?? 5.0,
       totalReviews: data['totalReviews'] as int? ?? 0,
       workerProfile: data['workerProfile'] != null
           ? WorkerProfileModel.fromMap(
-              data['workerProfile'] as Map<String, dynamic>)
+              Map<String, dynamic>.from(data['workerProfile'] as Map))
           : null,
     );
   }
@@ -78,6 +90,13 @@ class UserModel extends UserEntity {
       if (address != null) 'address': address,
       if (city != null) 'city': city,
       if (location != null) 'location': location,
+      'isLocationSharing': isLocationSharing,
+      if (locationUpdatedAt != null)
+        'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
+      if (heading != null) 'heading': heading,
+      if (geohash != null) 'geohash': geohash,
+      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
+      if (locationVisibility != null) 'locationVisibility': locationVisibility,
       'totalJobsPosted': totalJobsPosted,
       'totalHires': totalHires,
       'rating': rating,
@@ -138,6 +157,9 @@ class WorkerProfileModel extends WorkerProfileEntity {
     super.totalEarnings,
     super.averageRating,
     super.totalReviews,
+    super.geohash,
+    super.locationAccuracy,
+    super.locationAddress,
     super.coverImage,
     super.languages,
     super.responseTime,
@@ -155,7 +177,8 @@ class WorkerProfileModel extends WorkerProfileEntity {
       hourlyRate: (map['hourlyRate'] as num?)?.toDouble() ?? 0,
       dailyRate: (map['dailyRate'] as num?)?.toDouble() ?? 0,
       certifications: (map['certifications'] as List? ?? [])
-          .map((e) => CertificationModel.fromMap(e as Map<String, dynamic>))
+          .map((e) => CertificationModel.fromMap(
+              Map<String, dynamic>.from(e as Map)))
           .toList(),
       portfolioImages: List<String>.from(map['portfolioImages'] as List? ?? []),
       availability: map['availability'] as String? ?? 'available',
@@ -169,6 +192,9 @@ class WorkerProfileModel extends WorkerProfileEntity {
       totalEarnings: (map['totalEarnings'] as num?)?.toDouble() ?? 0,
       averageRating: (map['averageRating'] as num?)?.toDouble() ?? 0,
       totalReviews: map['totalReviews'] as int? ?? 0,
+      geohash: map['geohash'] as String?,
+      locationAccuracy: map['locationAccuracy'] as String?,
+      locationAddress: map['locationAddress'] as String?,
       coverImage: map['coverImage'] as String?,
       languages: List<String>.from(map['languages'] as List? ?? []),
       responseTime: map['responseTime'] as String?,
@@ -199,6 +225,9 @@ class WorkerProfileModel extends WorkerProfileEntity {
       totalEarnings: entity.totalEarnings,
       averageRating: entity.averageRating,
       totalReviews: entity.totalReviews,
+      geohash: entity.geohash,
+      locationAccuracy: entity.locationAccuracy,
+      locationAddress: entity.locationAddress,
       coverImage: entity.coverImage,
       languages: entity.languages,
       responseTime: entity.responseTime,
@@ -231,6 +260,9 @@ class WorkerProfileModel extends WorkerProfileEntity {
       'totalEarnings': totalEarnings,
       'averageRating': averageRating,
       'totalReviews': totalReviews,
+      if (geohash != null) 'geohash': geohash,
+      if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
+      if (locationAddress != null) 'locationAddress': locationAddress,
       if (coverImage != null) 'coverImage': coverImage,
       'languages': languages,
       if (responseTime != null) 'responseTime': responseTime,

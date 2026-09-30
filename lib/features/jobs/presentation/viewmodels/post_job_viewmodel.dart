@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/enums/job_status.dart';
 import 'package:skill_bridge/core/enums/job_type.dart';
@@ -45,6 +46,10 @@ class PostJobNotifier extends Notifier<PostJobState> {
     required double budgetMin,
     required double budgetMax,
     required String budgetType,
+    GeoPoint? location,
+    String? geohash,
+    String? locationAccuracy,
+    DateTime? locationUpdatedAt,
     required String address,
     required String city,
     required String urgency,
@@ -72,6 +77,10 @@ class PostJobNotifier extends Notifier<PostJobState> {
         budgetMin: budgetMin,
         budgetMax: budgetMax,
         budgetType: budgetType,
+        location: location,
+        geohash: geohash,
+        locationAccuracy: locationAccuracy,
+        locationUpdatedAt: locationUpdatedAt,
         address: address,
         city: city,
         status: JobStatus.open,

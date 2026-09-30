@@ -8,6 +8,7 @@ import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 import 'package:skill_bridge/features/auth/domain/repositories/auth_repository.dart';
 import 'package:skill_bridge/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:skill_bridge/features/auth/domain/usecases/login_with_email_usecase.dart';
+import 'package:skill_bridge/features/auth/domain/usecases/login_with_google_usecase.dart';
 import 'package:skill_bridge/features/auth/domain/usecases/register_with_email_usecase.dart';
 
 // ── Data Source ──────────────────────────────────────────────────────────────
@@ -32,6 +33,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final loginWithEmailUseCaseProvider = Provider<LoginWithEmailUseCase>((ref) {
   return LoginWithEmailUseCase(ref.watch(authRepositoryProvider));
+});
+
+final loginWithGoogleUseCaseProvider = Provider<LoginWithGoogleUseCase>((ref) {
+  return LoginWithGoogleUseCase(ref.watch(authRepositoryProvider));
 });
 
 final registerWithEmailUseCaseProvider =

@@ -27,6 +27,9 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// Signs in or signs up a user using Google Sign-In.
+  Future<Either<Failure, UserEntity>> loginWithGoogle({required String role});
+
   /// Signs out the current user.
   Future<Either<Failure, void>> signOut();
 

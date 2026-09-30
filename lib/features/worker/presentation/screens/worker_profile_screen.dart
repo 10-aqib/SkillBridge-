@@ -1,4 +1,3 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +9,12 @@ import 'package:skill_bridge/config/theme/app_shadows.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/reviews/data/datasources/review_remote_datasource.dart';
+import 'package:skill_bridge/core/utils/formatters.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
+import 'package:skill_bridge/shared/widgets/rating_badge.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Worker Profile Screen (b2_worker_profile)
@@ -30,7 +31,7 @@ class WorkerProfileScreen extends ConsumerWidget {
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          AppL10n.select(context, en: 'Worker Profile', ur: 'کاریگر پروفائل'),
+          'Worker Profile',
           style: AppTextStyles.heading3.copyWith(
             color: context.textColor,
           ),
@@ -53,33 +54,49 @@ class WorkerProfileScreen extends ConsumerWidget {
                 children: [
                   const SizedBox(height: AppDimensions.sm),
                   AppAvatar(
-                    name: user.displayName,
+                    name: user.formattedDisplayName,
                     imageUrl: user.photoUrl,
                     size: 100,
                   ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
                   SizedBox(height: AppDimensions.md),
                   Text(
-                    user.displayName,
+                    user.formattedDisplayName,
                     style: AppTextStyles.heading2.copyWith(
                       color: context.textColor,
                     ),
                   ).animate().fade(delay: 100.ms, duration: 400.ms),
                   const SizedBox(height: 4),
                   Text(
-                    AppL10n.select(context, en: 'Professional Electrician', ur: 'الیکٹریشن'),
+                    (user.workerProfile?.headline != null &&
+                            user.workerProfile!.headline.isNotEmpty)
+                        ? user.workerProfile!.headline
+                        : ((user.workerProfile?.categoryName != null &&
+                                user.workerProfile!.categoryName.isNotEmpty)
+                            ? user.workerProfile!.categoryName
+                            : 'Service Provider'),
                     style: AppTextStyles.bodyStrong.copyWith(
                       color: AppColors.primary,
                     ),
                   ).animate().fade(delay: 150.ms, duration: 400.ms),
                   const SizedBox(height: 4),
-                  Text(
-                    '${user.city ?? 'Lahore, Pakistan'} • ★ ${user.rating.toStringAsFixed(1)} (${user.totalReviews} ${AppL10n.select(context, en: 'Reviews', ur: 'جائزے')})',
-                    style: AppTextStyles.bodyPrimary.copyWith(
-                      color: context.mutedColor,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${user.city ?? user.workerProfile?.city ?? 'Islamabad, Pakistan'} • ',
+                        style: AppTextStyles.bodyPrimary.copyWith(
+                          color: context.mutedColor,
+                        ),
+                      ),
+                      RatingBadge(
+                        rating: user.rating,
+                        reviewCount: user.totalReviews,
+                      ),
+                    ],
                   ).animate().fade(delay: 200.ms, duration: 400.ms),
                   const SizedBox(height: 10),
-                  GestureDetector(
+                  if (user.isCnicVerified) ...[
+                    GestureDetector(
                     onTap: () {
                       showDialog(
                         context: context,
@@ -88,7 +105,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                             children: [
                               const Icon(Icons.verified_rounded, color: Color(0xFF006622)),
                               const SizedBox(width: 8),
-                              Text(AppL10n.select(context, en: 'NADRA Verified', ur: 'تصدیق شدہ شناخت')),
+                              const Text('NADRA Verified'),
                             ],
                           ),
                           content: const Text(
@@ -116,7 +133,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                           const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF006622)),
                           const SizedBox(width: 6),
                           Text(
-                            AppL10n.select(context, en: 'NADRA CNIC Verified', ur: 'تصدیق شدہ'),
+                            'NADRA CNIC Verified',
                             style: AppTextStyles.labelSmall.copyWith(
                               color: const Color(0xFF006622),
                               fontWeight: FontWeight.bold,
@@ -127,6 +144,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                     ),
                   ).animate().fade(delay: 220.ms, duration: 400.ms),
                   const SizedBox(height: AppDimensions.xl),
+                  ],
 
                   // ── Hourly Rate Card (Navy Theme + JetBrains Mono) ────────
                   Container(
@@ -141,13 +159,13 @@ class WorkerProfileScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          AppL10n.select(context, en: 'Hourly Rate', ur: 'فی گھنٹہ ریٹ'),
+                          'Hourly Rate',
                           style: AppTextStyles.heading3.copyWith(
                             color: context.surfaceColor,
                           ),
                         ),
                         Text(
-                          'Rs. 800 / hr',
+                          '${Formatters.formatPkr((user.workerProfile?.hourlyRate != null && user.workerProfile!.hourlyRate > 0) ? user.workerProfile!.hourlyRate : 1500)}/hr',
                           style: AppTextStyles.dataNumericLg.copyWith(
                             color: AppColors.amber,
                             fontSize: 22,
@@ -158,29 +176,67 @@ class WorkerProfileScreen extends ConsumerWidget {
                   ).animate().fade(delay: 250.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: AppDimensions.lg),
 
+                  if (user.workerProfile?.bio != null &&
+                      user.workerProfile!.bio.isNotEmpty) ...[
+                    AppCard(
+                      padding: const EdgeInsets.all(AppDimensions.md),
+                      shadow: AppShadows.level2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'About Me',
+                            style: AppTextStyles.heading3.copyWith(
+                              color: context.textColor,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.sm),
+                          Text(
+                            user.workerProfile!.bio,
+                            style: AppTextStyles.bodyPrimary.copyWith(
+                              color: context.textColor,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fade(delay: 275.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
+                    const SizedBox(height: AppDimensions.lg),
+                  ],
+
                   // ── Skills Card ───────────────────────────────────────────
                   AppCard(
-                    padding: EdgeInsets.all(AppDimensions.md),
+                    padding: const EdgeInsets.all(AppDimensions.md),
                     shadow: AppShadows.level2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppL10n.select(context, en: 'Skills & Expertise', ur: 'مہارتیں'),
+                          'Skills & Expertise',
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.md),
-                        const Wrap(
+                        Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: [
-                            AppChip(label: 'Wiring', isSelected: true),
-                            AppChip(label: 'Circuit Repair', isSelected: true),
-                            AppChip(label: 'Generator Setup', isSelected: true),
-                            AppChip(label: 'Solar Inverter', isSelected: true),
-                          ],
+                          children: (user.workerProfile?.skills != null &&
+                                  user.workerProfile!.skills.isNotEmpty)
+                              ? user.workerProfile!.skills
+                                  .map((skill) =>
+                                      AppChip(label: skill, isSelected: true))
+                                  .toList()
+                              : [
+                                  AppChip(
+                                    label: user.workerProfile?.categoryName
+                                                .isNotEmpty ==
+                                            true
+                                        ? user.workerProfile!.categoryName
+                                        : 'General Maintenance',
+                                    isSelected: true,
+                                  ),
+                                ],
                         ),
                       ],
                     ),
@@ -195,7 +251,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppL10n.select(context, en: 'Additional Details', ur: 'اضافی تفصیلات'),
+                          'Additional Details',
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
@@ -220,22 +276,40 @@ class WorkerProfileScreen extends ConsumerWidget {
                             ],
                           ),
                         const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.timer_outlined,
-                                color: AppColors.primary, size: 20),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Response Time: ${user.workerProfile?.responseTime ?? 'Unknown'}',
-                                style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: context.textColor,
+                        if (user.workerProfile?.responseTime != null && user.workerProfile!.responseTime!.isNotEmpty)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.timer_outlined,
+                                  color: AppColors.primary, size: 20),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Response Time: ${user.workerProfile!.responseTime}',
+                                  style: AppTextStyles.bodyPrimary.copyWith(
+                                    color: context.textColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          )
+                        else
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.timer_outlined,
+                                  color: context.mutedColor, size: 20),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Response Time: Not available yet',
+                                  style: AppTextStyles.bodyPrimary.copyWith(
+                                    color: context.mutedColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ).animate().fade(delay: 310.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
@@ -249,17 +323,17 @@ class WorkerProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppL10n.select(context, en: 'Recent Reviews', ur: 'حالیہ جائزے'),
+                          'Recent Reviews',
                           style: AppTextStyles.heading3.copyWith(
                             color: context.textColor,
                           ),
                         ),
-                        SizedBox(height: AppDimensions.md),
+                        const SizedBox(height: AppDimensions.md),
                         ref.watch(userReviewsStreamProvider(user.uid)).when(
                               data: (reviews) {
                                 if (reviews.isEmpty) {
                                   return Text(
-                                    AppL10n.select(context, en: 'No reviews yet', ur: 'ابھی تک کوئی جائزہ نہیں'),
+                                    'No reviews yet',
                                     style: AppTextStyles.bodyPrimary.copyWith(
                                       color: context.mutedColor,
                                     ),
@@ -313,7 +387,7 @@ class WorkerProfileScreen extends ConsumerWidget {
                               loading: () => const Center(
                                   child: CircularProgressIndicator()),
                               error: (e, _) => Text(
-                                AppL10n.select(context, en: 'Could not load reviews', ur: 'جائزے لوڈ نہیں ہو سکے'),
+                                'Could not load reviews',
                                 style: AppTextStyles.bodyPrimary.copyWith(
                                   color: AppColors.error,
                                 ),
@@ -326,7 +400,7 @@ class WorkerProfileScreen extends ConsumerWidget {
 
                   // ── Edit Profile Button ───────────────────────────────────
                   AppButton(
-                    text: AppL10n.select(context, en: 'Edit Worker Profile', ur: 'پروفائل میں ترمیم کریں'),
+                    text: 'Edit Worker Profile',
                     onPressed: () {
                       context.push(RouteNames.workerProfileSetupPath);
                     },

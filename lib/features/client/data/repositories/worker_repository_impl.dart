@@ -11,4 +11,9 @@ class WorkerRepositoryImpl implements WorkerRepository {
   Stream<List<UserEntity>> getWorkersStream() {
     return _remoteDataSource.getWorkersStream();
   }
+
+  @override
+  Stream<List<UserEntity>> getNearbyWorkersStream(double latitude, double longitude, double radiusKm) {
+    return _remoteDataSource.getNearbyWorkersStream(latitude, longitude, radiusKm);
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:skill_bridge/core/extensions/string_extensions.dart';
 
 /// Domain entity representing an authenticated user in SkillBridge.
 class UserEntity {
@@ -23,6 +24,14 @@ class UserEntity {
   final GeoPoint? location;
   final int totalJobsPosted;
   final int totalHires;
+
+  // Real-Time Location & Tracking
+  final bool isLocationSharing;
+  final DateTime? locationUpdatedAt;
+  final double? heading;
+  final String? geohash;
+  final String? locationAccuracy;
+  final String? locationVisibility;
 
   // Rating & Reviews
   final double rating;
@@ -49,6 +58,12 @@ class UserEntity {
     this.address,
     this.city,
     this.location,
+    this.isLocationSharing = false,
+    this.locationUpdatedAt,
+    this.heading,
+    this.geohash,
+    this.locationAccuracy,
+    this.locationVisibility,
     this.totalJobsPosted = 0,
     this.totalHires = 0,
     this.rating = 5.0,
@@ -57,6 +72,7 @@ class UserEntity {
   });
 
   String? get profilePictureUrl => photoUrl;
+  String get formattedDisplayName => displayName.capitalizeWords;
   bool get isClient => role == 'client';
   bool get isWorker => role == 'worker';
   bool get isAdmin => role == 'admin';
@@ -84,6 +100,12 @@ class UserEntity {
     String? address,
     String? city,
     GeoPoint? location,
+    bool? isLocationSharing,
+    DateTime? locationUpdatedAt,
+    double? heading,
+    String? geohash,
+    String? locationAccuracy,
+    String? locationVisibility,
     int? totalJobsPosted,
     int? totalHires,
     WorkerProfileEntity? workerProfile,
@@ -106,6 +128,12 @@ class UserEntity {
       address: address ?? this.address,
       city: city ?? this.city,
       location: location ?? this.location,
+      isLocationSharing: isLocationSharing ?? this.isLocationSharing,
+      locationUpdatedAt: locationUpdatedAt ?? this.locationUpdatedAt,
+      heading: heading ?? this.heading,
+      geohash: geohash ?? this.geohash,
+      locationAccuracy: locationAccuracy ?? this.locationAccuracy,
+      locationVisibility: locationVisibility ?? this.locationVisibility,
       totalJobsPosted: totalJobsPosted ?? this.totalJobsPosted,
       totalHires: totalHires ?? this.totalHires,
       workerProfile: workerProfile ?? this.workerProfile,
@@ -135,6 +163,9 @@ class WorkerProfileEntity {
   final double totalEarnings;
   final double averageRating;
   final int totalReviews;
+  final String? geohash;
+  final String? locationAccuracy;
+  final String? locationAddress;
   
   // New Module 1 Fields
   final String? coverImage;
@@ -164,6 +195,9 @@ class WorkerProfileEntity {
     this.totalEarnings = 0,
     this.averageRating = 0,
     this.totalReviews = 0,
+    this.geohash,
+    this.locationAccuracy,
+    this.locationAddress,
     this.coverImage,
     this.languages = const [],
     this.responseTime,

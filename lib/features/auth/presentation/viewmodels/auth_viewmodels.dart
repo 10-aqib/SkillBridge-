@@ -39,10 +39,12 @@ class LoginState {
 
 class LoginViewModel extends Notifier<LoginState> {
   late final LoginWithEmailUseCase _loginUseCase;
+  late final LoginWithGoogleUseCase _loginWithGoogleUseCase;
 
   @override
   LoginState build() {
     _loginUseCase = ref.watch(loginWithEmailUseCaseProvider);
+    _loginWithGoogleUseCase = ref.watch(loginWithGoogleUseCaseProvider);
     return const LoginState();
   }
 
@@ -53,6 +55,23 @@ class LoginViewModel extends Notifier<LoginState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     final result = await _loginUseCase(email: email, password: password);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        errorMessage: failure.message,
+      ),
+      (user) => state = state.copyWith(
+        isLoading: false,
+        isSuccess: true,
+      ),
+    );
+  }
+
+  Future<void> loginWithGoogle({String role = 'client'}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    final result = await _loginWithGoogleUseCase(role: role);
 
     result.fold(
       (failure) => state = state.copyWith(

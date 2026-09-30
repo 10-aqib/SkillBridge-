@@ -17,6 +17,9 @@ class JobEntity {
   final double budgetMax;
   final String budgetType; // "hourly", "daily", "fixed"
   final GeoPoint? location;
+  final String? geohash;
+  final String? locationAccuracy;
+  final DateTime? locationUpdatedAt;
   final String address;
   final String city;
   final JobStatus status;
@@ -46,6 +49,9 @@ class JobEntity {
     required this.budgetMax,
     required this.budgetType,
     this.location,
+    this.geohash,
+    this.locationAccuracy,
+    this.locationUpdatedAt,
     required this.address,
     required this.city,
     required this.status,

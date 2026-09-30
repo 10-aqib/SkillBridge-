@@ -8,14 +8,16 @@ import 'package:skill_bridge/config/theme/app_shadows.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/enums/job_type.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
 import 'package:skill_bridge/features/worker/presentation/widgets/worker_earnings_chart.dart';
+import 'package:skill_bridge/core/utils/formatters.dart';
+import 'package:skill_bridge/core/utils/geo_location_util.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_error_widget.dart';
 import 'package:skill_bridge/shared/widgets/job_card.dart';
+import 'package:skill_bridge/shared/widgets/rating_badge.dart';
 
 /// Guild Modernist Worker Dashboard (b1_worker_dashboard)
 class WorkerHomeScreen extends ConsumerStatefulWidget {
@@ -29,11 +31,47 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
   String _availability = 'Available';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(currentUserProvider);
+      final a = user?.workerProfile?.availability;
+      if (a != null && mounted) {
+        setState(() {
+          if (a.toLowerCase() == 'busy') {
+            _availability = 'Busy';
+          } else if (a.toLowerCase() == 'unavailable' ||
+              a.toLowerCase() == 'offline') {
+            _availability = 'Unavailable';
+          } else {
+            _availability = 'Available';
+          }
+        });
+      }
+    });
+  }
+
+  Future<void> _updateAvailability(String val) async {
+    setState(() => _availability = val);
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      try {
+        await ref.read(updateUserProfileUseCaseProvider).call(
+              uid: user.uid,
+              data: {
+                'workerProfile.availability': val.toLowerCase(),
+              },
+            );
+      } catch (_) {}
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final jobsAsync = ref.watch(openJobsStreamProvider);
 
-    final displayName = user?.displayName ?? 'Worker';
+    final displayName = user?.formattedDisplayName ?? 'Worker';
     final photoUrl = user?.photoUrl;
     final rating = user?.workerProfile?.averageRating ?? 0.0;
     final totalCompleted = user?.workerProfile?.totalJobsCompleted ?? 0;
@@ -55,11 +93,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppL10n.select(
-                            context,
-                            en: 'Worker Dashboard',
-                            ur: 'کاریگر ڈیش بورڈ',
-                          ),
+                          'Worker Dashboard',
                           style: AppTextStyles.labelCaption.copyWith(
                             color: context.mutedColor,
                             letterSpacing: 0.5,
@@ -67,11 +101,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          AppL10n.select(
-                            context,
-                            en: 'Welcome, $displayName!',
-                            ur: 'خوش آمدید، $displayName!',
-                          ),
+                          'Welcome, $displayName!',
                           style: AppTextStyles.headlineLg.copyWith(
                             color: context.textColor,
                           ),
@@ -139,16 +169,8 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 _availability == 'Available'
-                                    ? AppL10n.select(
-                                        context,
-                                        en: 'Visible to new clients',
-                                        ur: 'کلائنٹس کو نظر آ رہا ہے',
-                                      )
-                                    : AppL10n.select(
-                                        context,
-                                        en: 'Hiding from search',
-                                        ur: 'سرچ سے پوشیدہ',
-                                      ),
+                                    ? 'Visible to new clients'
+                                    : 'Hiding from search',
                                 style: AppTextStyles.bodyPrimary.copyWith(
                                   color: context.mutedColor,
                                   fontSize: 12,
@@ -159,8 +181,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         ],
                       ),
                       PopupMenuButton<String>(
-                        onSelected: (val) =>
-                            setState(() => _availability = val),
+                        onSelected: _updateAvailability,
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'Available',
@@ -200,6 +221,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
               ),
             ),
 
+
             // ── Quick Stats Grid (Level 1 Surfaces) ─────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -216,31 +238,19 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppL10n.select(
-                                context,
-                                en: 'Rating',
-                                ur: 'ریٹنگ',
-                              ),
+                              'Rating',
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: context.mutedColor,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  color: AppColors.amber,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  rating.toStringAsFixed(1),
-                                  style: AppTextStyles.heading2.copyWith(
-                                    color: context.textColor,
-                                  ),
-                                ),
-                              ],
+                            RatingBadge(
+                              rating: rating,
+                              reviewCount: user?.totalReviews ?? 0,
+                              showReviewCount: false,
+                              textStyle: AppTextStyles.heading2.copyWith(
+                                color: context.textColor,
+                              ),
                             ),
                           ],
                         ),
@@ -255,11 +265,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppL10n.select(
-                                context,
-                                en: 'Completed',
-                                ur: 'مکمل کام',
-                              ),
+                              'Completed',
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: context.mutedColor,
                               ),
@@ -284,18 +290,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppL10n.select(
-                                context,
-                                en: 'Rate',
-                                ur: 'اجرت',
-                              ),
+                              'Rate',
                               style: AppTextStyles.labelCaption.copyWith(
                                 color: context.mutedColor,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Rs. $hourlyRate/hr',
+                              '${Formatters.formatPkr(hourlyRate)}/hr',
                               style: AppTextStyles.bodyStrong.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 15,
@@ -312,10 +314,10 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
             ),
 
             // ── 7-Day Earnings Chart ────────────────────────────────────────
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppDimensions.lg),
-                child: WorkerEarningsChart(),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+                child: WorkerEarningsChart(totalCompleted: totalCompleted),
               ),
             ),
             const SliverToBoxAdapter(
@@ -333,11 +335,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      AppL10n.select(
-                        context,
-                        en: 'Jobs Nearby You',
-                        ur: 'قریبی کام',
-                      ),
+                      'Jobs Nearby You',
                       style: AppTextStyles.heading2.copyWith(
                         color: context.textColor,
                       ),
@@ -371,8 +369,38 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                   onRetry: () => ref.refresh(openJobsStreamProvider),
                 ),
               ),
-              data: (jobs) {
-                if (jobs.isEmpty) {
+              data: (allJobs) {
+                // Filter and sort nearby jobs
+                var nearbyJobs = allJobs.where((j) => j.clientId != user?.uid).toList();
+
+                if (user?.location != null) {
+                  // Sort by distance
+                  nearbyJobs.sort((a, b) {
+                    final distA = a.location != null
+                        ? GeoLocationUtil.calculateDistanceKm(
+                            user!.location!.latitude, user.location!.longitude,
+                            a.location!.latitude, a.location!.longitude)
+                        : 9999.0;
+                    final distB = b.location != null
+                        ? GeoLocationUtil.calculateDistanceKm(
+                            user!.location!.latitude, user.location!.longitude,
+                            b.location!.latitude, b.location!.longitude)
+                        : 9999.0;
+                    return distA.compareTo(distB);
+                  });
+                  // Filter out jobs too far away (e.g. > 50km)
+                  nearbyJobs = nearbyJobs.where((j) {
+                    if (j.location == null) return j.city == user!.city;
+                    final dist = GeoLocationUtil.calculateDistanceKm(
+                        user!.location!.latitude, user.location!.longitude,
+                        j.location!.latitude, j.location!.longitude);
+                    return dist <= 50.0;
+                  }).toList();
+                } else if (user?.city != null) {
+                  nearbyJobs = nearbyJobs.where((j) => j.city == user!.city).toList();
+                }
+
+                if (nearbyJobs.isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
@@ -390,7 +418,17 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final job = jobs[index];
+                      final job = nearbyJobs[index];
+                      
+                      String locText = job.city.isNotEmpty ? job.city : job.address;
+                      if (user?.location != null && job.location != null) {
+                        final dist = GeoLocationUtil.calculateDistanceKm(
+                          user!.location!.latitude, user.location!.longitude,
+                          job.location!.latitude, job.location!.longitude
+                        );
+                        locText = '${GeoLocationUtil.formatInDriveDistance(dist)} • $locText';
+                      }
+
                       return Padding(
                         padding: const EdgeInsets.only(
                           left: AppDimensions.lg,
@@ -408,11 +446,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           budgetType: job.jobType == JobType.permanent
                               ? 'Permanent'
                               : 'Temporary',
-                          locationText: job.city.isNotEmpty
-                              ? job.city
-                              : job.address,
-                          clientName: job.clientName,
-                          clientRating: 4.9,
+                          locationText: locText,
+                          clientName: job.clientName.trim().isNotEmpty ? job.clientName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() + w.substring(1).toLowerCase() : '').join(' ') : 'Client',
+                          clientRating: 5.0, // Should be job.clientRating if available
                           isUrgent: job.urgency.toLowerCase() == 'urgent',
                           onTap: () {
                             context.push(
@@ -429,7 +465,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         ),
                       );
                     },
-                    childCount: jobs.length,
+                    childCount: nearbyJobs.length,
                   ),
                 );
               },
@@ -444,3 +480,4 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
     );
   }
 }
+

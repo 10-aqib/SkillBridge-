@@ -101,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ).animate().fade(duration: 600.ms).slideY(begin: -0.1, end: 0),
                 const SizedBox(height: 48),
 
-                // ── Mobile Number Field ─────────────────────────────────────
+                // ── Email Field ─────────────────────────────────────────────
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Icon(Icons.phone_android_rounded, color: Colors.black54),
+                        child: Icon(Icons.email_outlined, color: Colors.black54),
                       ),
                       Container(
                         width: 1,
@@ -122,13 +122,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _mobileController,
-                          keyboardType: TextInputType.phone,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
-                            hintText: 'Mobile Number',
+                            hintText: 'Email Address',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           ),
-                          validator: (value) => Validators.required(value, fieldName: 'Mobile Number'),
+                          validator: (value) => Validators.email(value),
                         ),
                       ),
                     ],
@@ -266,7 +266,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
 
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    ref.read(loginViewModelProvider.notifier).loginWithGoogle();
+                  },
                   icon: const Icon(Icons.g_mobiledata_rounded, size: 36, color: Colors.white),
                   label: Text(
                     'CONTINUE WITH GOOGLE',

@@ -31,7 +31,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String _selectedRole = 'client';
-  String _selectedCity = 'Lahore';
+  String _selectedCity = 'Islamabad';
 
   @override
   void dispose() {

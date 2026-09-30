@@ -10,35 +10,23 @@ class LanguageNotifier extends Notifier<Locale> {
 
   @override
   Locale build() {
-    final cached = OfflineCacheService.read(_cacheKey);
-    if (cached == 'ur') {
-      return const Locale('ur');
-    }
+    // English only across the app
+    OfflineCacheService.save(_cacheKey, 'en');
     return const Locale('en');
   }
 
-  bool get isUrdu => state.languageCode == 'ur';
+  bool get isUrdu => false;
 
   Future<void> toggleLanguage() async {
-    HapticFeedback.lightImpact();
-    if (state.languageCode == 'en') {
-      state = const Locale('ur');
-      await OfflineCacheService.save(_cacheKey, 'ur');
-    } else {
-      state = const Locale('en');
-      await OfflineCacheService.save(_cacheKey, 'en');
-    }
+    // No-op: app is English-only
+    state = const Locale('en');
+    await OfflineCacheService.save(_cacheKey, 'en');
   }
 
   Future<void> setLanguage(String code) async {
-    HapticFeedback.lightImpact();
-    if (code == 'ur') {
-      state = const Locale('ur');
-      await OfflineCacheService.save(_cacheKey, 'ur');
-    } else {
-      state = const Locale('en');
-      await OfflineCacheService.save(_cacheKey, 'en');
-    }
+    // No-op: app is English-only
+    state = const Locale('en');
+    await OfflineCacheService.save(_cacheKey, 'en');
   }
 }
 

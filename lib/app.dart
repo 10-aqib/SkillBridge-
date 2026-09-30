@@ -13,7 +13,6 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final locale = ref.watch(languageProvider);
 
     return MaterialApp.router(
       title: 'Skill Bridge',
@@ -22,8 +21,8 @@ class App extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ref.watch(themeModeProvider),
-      locale: locale,
-      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
+      supportedLocales: const [Locale('en')],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

@@ -18,6 +18,7 @@ import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
 import 'package:skill_bridge/shared/widgets/app_error_widget.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/worker_live_tracking_map.dart';
 
 /// Guild Modernist My Contracts Screen
 class MyContractsScreen extends ConsumerWidget {
@@ -268,6 +269,73 @@ class _ContractList extends StatelessWidget {
                           .updateContractStatus(contract.id, 'completed');
                     },
                     width: double.infinity,
+                  ),
+                  const SizedBox(height: AppDimensions.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (ctx) => Container(
+                            decoration: BoxDecoration(
+                              color: context.surfaceColor,
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(AppDimensions.radiusLg),
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(AppDimensions.md),
+                            child: SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Track Service Provider',
+                                        style: AppTextStyles.heading3.copyWith(
+                                          color: context.textColor,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close),
+                                        onPressed: () => Navigator.of(ctx).pop(),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppDimensions.sm),
+                                  WorkerLiveTrackingMap(
+                                    workerId: contract.workerId,
+                                    workerName: contract.workerName,
+                                    workerImageUrl: contract.workerPhotoUrl,
+                                    workerPhone: '',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        ),
+                      ),
+                      icon: const Icon(Icons.location_searching_rounded, size: 18),
+                      label: Text(
+                        AppL10n.select(
+                          context,
+                          en: 'Track Worker Location',
+                          ur: 'کاریگر کی لوکیشن دیکھیں',
+                        ),
+                      ),
+                    ),
                   ),
                 ],
 

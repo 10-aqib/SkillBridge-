@@ -21,12 +21,25 @@ service cloud.firestore {
     function isWorker() {
       return isAuthenticated() && currentUserData().role == 'worker';
     }
+    
+    // ── Validation Helpers ────────────────────────────────────────────────
+    function isValidGeoPoint(point) {
+      return point != null 
+          && point is latlng
+          && point.latitude >= -90.0 && point.latitude <= 90.0
+          && point.longitude >= -180.0 && point.longitude <= 180.0;
+    }
+    
+    // Checks if the user is updating location fields safely
+    function isValidLocationUpdate(data) {
+      return !('location' in data) || isValidGeoPoint(data.location);
+    }
 
     // ── Users ─────────────────────────────────────────────────────────────
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow update: if (isOwner(userId) && isValidLocationUpdate(request.resource.data)) || isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -34,11 +47,13 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && (isClient() || isAdmin()) &&
-                       request.resource.data.clientId == request.auth.uid;
+                       request.resource.data.clientId == request.auth.uid &&
+                       isValidLocationUpdate(request.resource.data);
       allow update: if isAuthenticated() &&
                        (resource.data.clientId == request.auth.uid || 
                         resource.data.selectedWorkerId == request.auth.uid ||
-                        isAdmin());
+                        isAdmin()) &&
+                       isValidLocationUpdate(request.resource.data);
       allow delete: if isAuthenticated() &&
                        (resource.data.clientId == request.auth.uid || isAdmin());
     }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/core/providers/language_provider.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Guild Modernist Client Bottom Navigation (4 Tabs)
@@ -23,8 +22,6 @@ class ClientMainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isUrdu = ref.watch(languageProvider).languageCode == 'ur';
-
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
@@ -44,25 +41,25 @@ class ClientMainScreen extends ConsumerWidget {
               context,
               icon: Icons.home_outlined,
               selectedIcon: Icons.home_rounded,
-              label: isUrdu ? 'ہوم' : 'Home',
+              label: 'Home',
             ),
             _buildNavDestination(
               context,
               icon: Icons.work_outline_rounded,
               selectedIcon: Icons.work_rounded,
-              label: isUrdu ? 'میرے کام' : 'My Jobs',
+              label: 'My Jobs',
             ),
             _buildNavDestination(
               context,
               icon: Icons.chat_bubble_outline_rounded,
               selectedIcon: Icons.chat_bubble_rounded,
-              label: isUrdu ? 'چیٹ' : 'Chats',
+              label: 'Chats',
             ),
             _buildNavDestination(
               context,
               icon: Icons.person_outline_rounded,
               selectedIcon: Icons.person_rounded,
-              label: isUrdu ? 'پروفائل' : 'Profile',
+              label: 'Profile',
             ),
           ],
         ),

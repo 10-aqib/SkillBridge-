@@ -1,4 +1,3 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +12,10 @@ import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_chip.dart';
 import 'package:skill_bridge/shared/widgets/app_text_field.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
+import 'package:skill_bridge/core/utils/geohash_util.dart';
+import 'package:skill_bridge/core/utils/geo_location_util.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Guild Modernist Worker Profile Setup Screen
 class WorkerProfileSetupScreen extends ConsumerStatefulWidget {
@@ -31,11 +34,12 @@ class _WorkerProfileSetupScreenState
   final _cnicController = TextEditingController();
 
   String _selectedCategory = 'Electrician';
-  String _selectedCity = 'Lahore';
   final List<String> _selectedSkills = ['Wiring'];
   String _selectedResponseTime = 'Within 1 hour';
-  final List<String> _selectedLanguages = ['Urdu', 'English'];
+  final List<String> _selectedLanguages = ['English'];
   bool _isLoading = false;
+  
+  LocationResult? _pickedLocation;
 
   final List<String> _availableCategories = [
     'Electrician',
@@ -69,13 +73,60 @@ class _WorkerProfileSetupScreenState
   ];
 
   final List<String> _availableLanguages = [
-    'Urdu',
     'English',
+    'Urdu',
     'Punjabi',
     'Sindhi',
     'Pashto',
     'Balochi',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(currentUserProvider);
+      if (user != null && mounted) {
+        if (user.cnicNumber != null && user.cnicNumber!.isNotEmpty) {
+          _cnicController.text = user.cnicNumber!;
+        }
+        if (user.workerProfile != null) {
+          final p = user.workerProfile!;
+          setState(() {
+            _headlineController.text = p.headline;
+            _bioController.text = p.bio;
+            if (p.hourlyRate > 0) {
+              _hourlyRateController.text = p.hourlyRate.toInt().toString();
+            }
+            if (p.categoryName.isNotEmpty &&
+                _availableCategories.contains(p.categoryName)) {
+              _selectedCategory = p.categoryName;
+            }
+            if (p.address?.isNotEmpty == true) {
+              _pickedLocation = LocationResult(
+                latitude: p.location?.latitude ?? 0.0,
+                longitude: p.location?.longitude ?? 0.0,
+                formattedAddress: p.address ?? '',
+                city: p.city,
+                accuracy: LocationAccuracyLevel.unknown,
+              );
+            }
+            if (p.skills.isNotEmpty) {
+              _selectedSkills.clear();
+              _selectedSkills.addAll(p.skills);
+            }
+            if (p.responseTime != null && p.responseTime!.isNotEmpty) {
+              _selectedResponseTime = p.responseTime!;
+            }
+            if (p.languages.isNotEmpty) {
+              _selectedLanguages.clear();
+              _selectedLanguages.addAll(p.languages);
+            }
+          });
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -104,7 +155,14 @@ class _WorkerProfileSetupScreenState
                 'experience': user.workerProfile!.experience,
                 'hourlyRate': user.workerProfile!.hourlyRate,
                 'dailyRate': user.workerProfile!.dailyRate,
-                'certifications': user.workerProfile!.certifications,
+                'certifications': user.workerProfile!.certifications
+                    .map((c) => {
+                          'name': c.name,
+                          'issuedBy': c.issuedBy,
+                          'year': c.year,
+                          if (c.imageUrl != null) 'imageUrl': c.imageUrl,
+                        })
+                    .toList(),
                 'portfolioImages': user.workerProfile!.portfolioImages,
                 'availability': user.workerProfile!.availability,
                 'isVerified': user.workerProfile!.isVerified,
@@ -126,7 +184,13 @@ class _WorkerProfileSetupScreenState
         final data = <String, dynamic>{
           if (cnic.isNotEmpty) 'cnicNumber': cnic,
           if (cnic.isNotEmpty) 'isCnicVerified': false,
-          'city': _selectedCity,
+          if (_pickedLocation != null) 'city': _pickedLocation!.city,
+          if (_pickedLocation != null) 'locationAddress': _pickedLocation!.formattedAddress,
+          if (_pickedLocation != null) 'locationAccuracy': _pickedLocation!.accuracy.toString(),
+          if (_pickedLocation != null) 'geohash': GeohashUtil.encode(_pickedLocation!.latitude, _pickedLocation!.longitude),
+          if (_pickedLocation != null) 'location': GeoPoint(_pickedLocation!.latitude, _pickedLocation!.longitude),
+          if (_pickedLocation != null) 'locationVisibility': 'public',
+          
           'workerProfile': {
             ...existingMap,
             'categoryId': _selectedCategory.toLowerCase(),
@@ -135,7 +199,8 @@ class _WorkerProfileSetupScreenState
             'bio': _bioController.text.trim(),
             'hourlyRate': hourlyRate,
             'skills': _selectedSkills,
-            'city': _selectedCity,
+            if (_pickedLocation != null) 'city': _pickedLocation!.city,
+            if (_pickedLocation != null) 'address': _pickedLocation!.formattedAddress,
             'availability': 'available',
             'languages': _selectedLanguages,
             'responseTime': _selectedResponseTime,
@@ -162,7 +227,7 @@ class _WorkerProfileSetupScreenState
         backgroundColor: context.surfaceColor,
         elevation: 0,
         title: Text(
-          AppL10n.select(context, en: 'Setup Worker Profile', ur: 'کاریگر پروفائل'),
+          'Setup Worker Profile',
           style: AppTextStyles.heading3.copyWith(
             color: context.textColor,
           ),
@@ -175,7 +240,7 @@ class _WorkerProfileSetupScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppL10n.select(context, en: 'Complete your Profile', ur: 'پروفائل مکمل کریں'),
+              'Complete your Profile',
               style: AppTextStyles.headlineLg.copyWith(
                 color: context.textColor,
               ),
@@ -192,14 +257,14 @@ class _WorkerProfileSetupScreenState
             // ── Professional Headline ───────────────────────────────────────
             AppTextField(
               controller: _headlineController,
-              labelText: AppL10n.select(context, en: 'Professional Headline', ur: 'پیشہ ورانہ عنوان'),
+              labelText: 'Professional Headline',
               hintText: 'e.g. Master Electrician with 5+ Years Experience',
             ).animate().fade(delay: 150.ms, duration: 400.ms),
             const SizedBox(height: AppDimensions.lg),
 
             // ── Category Dropdown ───────────────────────────────────────────
             Text(
-              AppL10n.select(context, en: 'Primary Category', ur: 'زمرہ'),
+              'Primary Category',
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -242,46 +307,62 @@ class _WorkerProfileSetupScreenState
             // ── Hourly Rate (PKR) ───────────────────────────────────────────
             AppTextField(
               controller: _hourlyRateController,
-              labelText: AppL10n.select(context, en: 'Hourly Rate (PKR)', ur: 'فی گھنٹہ ریٹ'),
+              labelText: 'Hourly Rate (PKR)',
               hintText: 'e.g. 800',
               keyboardType: TextInputType.number,
             ).animate().fade(delay: 250.ms, duration: 400.ms),
             const SizedBox(height: AppDimensions.lg),
 
-            // ── City Dropdown ───────────────────────────────────────────
-            DropdownButtonFormField<String>(
-              initialValue: _selectedCity,
-              decoration: InputDecoration(
-                labelText: AppL10n.select(context, en: 'City', ur: 'شہر'),
-                prefixIcon: const Icon(Icons.location_on_outlined,
-                    color: AppColors.primary),
-                filled: true,
-                fillColor: context.surfaceColor,
-                border: OutlineInputBorder(
+            // ── Service Location Picker ──────────────────────────────────────
+            Text(
+              'Service Location',
+              style: AppTextStyles.bodyStrong.copyWith(
+                color: context.textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<LocationResult>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+                );
+                if (result != null) {
+                  setState(() => _pickedLocation = result);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: context.borderColor),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  borderSide: const BorderSide(color: AppColors.borderGray),
+                  color: context.surfaceColor,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  borderSide: const BorderSide(color: AppColors.borderGray),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on_outlined, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _pickedLocation?.formattedAddress ?? 'Select your service location',
+                        style: AppTextStyles.bodyPrimary.copyWith(
+                          color: _pickedLocation == null ? context.mutedColor : context.textColor,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.borderGray),
+                  ],
                 ),
               ),
-              items: PakistanConstants.majorCities.map((city) {
-                return DropdownMenuItem(
-                  value: city,
-                  child: Text(city, style: AppTextStyles.bodyPrimary),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedCity = val);
-              },
             ).animate().fade(delay: 270.ms, duration: 400.ms),
             const SizedBox(height: AppDimensions.lg),
 
             // ── CNIC Number (Optional) ──────────────────────────────────────
             AppTextField(
               controller: _cnicController,
-              labelText: AppL10n.select(context, en: 'CNIC Number (Optional)', ur: 'شناختی کارڈ نمبر'),
+              labelText: 'CNIC Number (Optional)',
               hintText: '35202-1234567-1',
               keyboardType: TextInputType.number,
             ).animate().fade(delay: 290.ms, duration: 400.ms),
@@ -290,7 +371,7 @@ class _WorkerProfileSetupScreenState
             // ── Bio ─────────────────────────────────────────────────────────
             AppTextField(
               controller: _bioController,
-              labelText: AppL10n.select(context, en: 'About / Bio', ur: 'تعارف'),
+              labelText: 'About / Bio',
               hintText:
                   'Describe your work experience, tools, and specialty...',
               maxLines: 3,
@@ -299,7 +380,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Select Skills (Using AppChip) ───────────────────────────────
             Text(
-              AppL10n.select(context, en: 'Select Skills', ur: 'مہارتیں منتخب کریں'),
+              'Select Skills',
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -329,7 +410,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Select Languages (Using AppChip) ────────────────────────────
             Text(
-              AppL10n.select(context, en: 'Languages', ur: 'زبانیں'),
+              'Languages',
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -359,7 +440,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Response Time Dropdown ───────────────────────────────────────
             Text(
-              AppL10n.select(context, en: 'Average Response Time', ur: 'جواب دینے کا وقت'),
+              'Average Response Time',
               style: AppTextStyles.bodyStrong.copyWith(
                 color: context.textColor,
               ),
@@ -401,7 +482,7 @@ class _WorkerProfileSetupScreenState
 
             // ── Submit Button ───────────────────────────────────────────────
             AppButton(
-              text: AppL10n.select(context, en: 'Save & Continue', ur: 'محفوظ کریں اور آگے بڑھیں'),
+              text: 'Save & Continue',
               onPressed: _isLoading ? null : _submitProfile,
               isLoading: _isLoading,
               width: double.infinity,

@@ -15,6 +15,7 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 import 'package:skill_bridge/features/reviews/data/datasources/review_remote_datasource.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/shared/widgets/rating_badge.dart';
 
 /// Guild Modernist Client Profile Screen — fully functional edit profile
 class ClientProfileScreen extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) => _EditProfileSheet(
-        initialName: user.displayName,
+        initialName: user.formattedDisplayName,
         initialEmail: user.email,
         initialPhone: user.phoneNumber,
         isUrdu: isUrdu,
@@ -170,7 +171,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                                               boxShadow: AppShadows.level2,
                                             ),
                                             child: AppAvatar(
-                                              name: user.displayName,
+                                              name: user.formattedDisplayName,
                                               imageUrl: user.photoUrl,
                                               size: 110,
                                             ),
@@ -199,7 +200,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                             ),
                             const SizedBox(height: 14),
                             Text(
-                              user.displayName,
+                              user.formattedDisplayName,
                               style: AppTextStyles.heading2.copyWith(
                                 color: context.textColor,
                               ),
@@ -217,18 +218,13 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _HeroStat(
-                                  value: '2',
+                                  value: user.totalJobsPosted.toString(),
                                   label: isUrdu ? 'کام' : 'Jobs',
                                 ),
                                 _heroDivider(),
-                                _HeroStat(
-                                  value: user.rating.toStringAsFixed(1),
-                                  label: isUrdu ? 'ریٹنگ' : 'Rating',
-                                ),
-                                _heroDivider(),
-                                _HeroStat(
-                                  value: '${user.totalReviews}',
-                                  label: isUrdu ? 'جائزے' : 'Reviews',
+                                RatingBadge(
+                                  rating: user.rating,
+                                  reviewCount: user.totalReviews,
                                 ),
                               ],
                             ),
@@ -252,7 +248,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                             _ProfileDetailRow(
                               icon: Icons.person_outline_rounded,
                               title: isUrdu ? 'پورا نام' : 'Full Name',
-                              value: user.displayName,
+                              value: user.formattedDisplayName,
                             ),
                             Divider(
                                 height: 24,
@@ -271,7 +267,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                             _ProfileDetailRow(
                               icon: Icons.location_on_outlined,
                               title: isUrdu ? 'شہر / پتہ' : 'Address',
-                              value: (user.city != null && user.city!.isNotEmpty)
+                              value: (user.city != null && user.city!.trim().isNotEmpty)
                                   ? '${user.city}, Pakistan'
                                   : (isUrdu ? 'شامل نہیں' : 'Not added'),
                             ),
@@ -698,10 +694,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   bool _saving = false;
 
   static const _cities = [
-    'Lahore', 'Karachi', 'Islamabad', 'Rawalpindi',
-    'Faisalabad', 'Multan', 'Peshawar', 'Quetta'
+    'Islamabad', 'Rawalpindi',
   ];
-  String _selectedCity = 'Lahore';
+  String _selectedCity = 'Islamabad';
 
   @override
   void initState() {

@@ -16,6 +16,10 @@ import 'package:skill_bridge/features/jobs/presentation/widgets/ai_photo_diagnos
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_text_field.dart';
+import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
+import 'package:skill_bridge/core/utils/geohash_util.dart';
+import 'package:skill_bridge/core/utils/geo_location_util.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Guild Modernist Post Job Screen
 class PostJobScreen extends ConsumerStatefulWidget {
@@ -32,14 +36,16 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   final _minBudgetController = TextEditingController();
   final _maxBudgetController = TextEditingController();
   final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
+  final _cityController = TextEditingController(text: 'Islamabad');
 
   String _selectedCategory = 'Electrician';
   final List<String> _selectedSkills = ['Wiring'];
-  final JobType _jobType = JobType.temporary;
+  final _jobType = JobType.temporary;
   final String _budgetType = 'fixed';
   bool _isMilestoneEscrow = false;
   String _urgency = 'normal';
+  
+  LocationResult? _pickedLocation;
 
   final List<String> _availableCategories =
       PakistanConstants.categories.map((c) => c['name'] as String).toList();
@@ -105,6 +111,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
   void _onPostJobSubmitted() {
     if (!_formKey.currentState!.validate()) return;
+    if (_pickedLocation == null) {
+      context.showSnackBar('Please select a service location.', isError: true);
+      return;
+    }
 
     ref.read(postJobNotifierProvider.notifier).submitJob(
           title: _titleController.text.trim(),
@@ -116,8 +126,12 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           budgetMin: double.tryParse(_minBudgetController.text.trim()) ?? 0,
           budgetMax: double.tryParse(_maxBudgetController.text.trim()) ?? 0,
           budgetType: _budgetType,
-          address: _addressController.text.trim(),
-          city: _cityController.text.trim(),
+          location: GeoPoint(_pickedLocation!.latitude, _pickedLocation!.longitude),
+          geohash: GeohashUtil.encode(_pickedLocation!.latitude, _pickedLocation!.longitude),
+          locationAccuracy: _pickedLocation!.accuracy.toString(),
+          locationUpdatedAt: DateTime.now(),
+          address: _pickedLocation!.formattedAddress,
+          city: _pickedLocation!.city,
           urgency: _urgency,
         );
   }
@@ -312,7 +326,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               ).animate().fade(delay: 200.ms, duration: 400.ms),
               SizedBox(height: AppDimensions.lg),
 
-              // Location
+              // Location Picker
               Text(
                 AppL10n.select(context, en: 'Location', ur: 'مقام'),
                 style: AppTextStyles.heading3.copyWith(
@@ -320,27 +334,36 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                 ),
               ).animate().fade(delay: 250.ms, duration: 400.ms),
               const SizedBox(height: AppDimensions.sm),
-              AppCard(
-                padding: const EdgeInsets.all(AppDimensions.lg),
-                shadow: AppShadows.level1,
-                child: Column(
-                  children: [
-                    AppTextField(
-                      controller: _addressController,
-                      labelText: AppL10n.select(context, en: 'Address', ur: 'پتہ'),
-                      hintText: 'Street address / Area',
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Enter address' : null,
-                    ),
-                    const SizedBox(height: AppDimensions.md),
-                    AppTextField(
-                      controller: _cityController,
-                      labelText: AppL10n.select(context, en: 'City', ur: 'شہر'),
-                      hintText: 'e.g. Lahore, Karachi, Rawalpindi',
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Enter city' : null,
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () async {
+                  final result = await Navigator.push<LocationResult>(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+                  );
+                  if (result != null) {
+                    setState(() => _pickedLocation = result);
+                  }
+                },
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  shadow: AppShadows.level1,
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _pickedLocation?.formattedAddress ?? AppL10n.select(context, en: 'Select your service location', ur: 'مقام منتخب کریں'),
+                          style: AppTextStyles.bodyPrimary.copyWith(
+                            color: _pickedLocation == null ? context.mutedColor : context.textColor,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: AppColors.borderGray),
+                    ],
+                  ),
                 ),
               ).animate().fade(delay: 300.ms, duration: 400.ms),
               const SizedBox(height: AppDimensions.lg),
