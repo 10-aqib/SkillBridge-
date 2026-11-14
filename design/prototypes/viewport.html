@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Viewport Preview</title>
+<style>
+  body { margin: 0; background: #E9ECE8; font-family: system-ui, sans-serif; padding: 24px; display: flex; gap: 32px; justify-content: center; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  figcaption { font-size: 12px; font-weight: 600; color: #596779; letter-spacing: .3px; text-transform: uppercase; }
+  iframe { border: 0; border-radius: 16px; box-shadow: 0 0 0 8px #1B232B; background: #fff; }
+</style>
+</head>
+<body>
+<script>
+  // Renders a page at real device widths: ?src=page.html&w=390,768&h=2400
+  const p = new URLSearchParams(location.search);
+  const src = p.get('src') || 'admin-dashboard.html';
+  const h = p.get('h') || '2400';
+  for (const w of (p.get('w') || '390').split(',')) {
+    const fig = document.createElement('figure');
+    fig.innerHTML = `<figcaption>${w} px</figcaption><iframe title="${src} at ${w}px" src="${src}" width="${w}" height="${h}"></iframe>`;
+    document.body.appendChild(fig);
+  }
+</script>
+</body>
+</html>

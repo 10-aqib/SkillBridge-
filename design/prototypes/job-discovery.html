@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Discovery Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="assets/sb.css">
+</head>
+<body class="board">
+<div class="board-head">
+  <h1>4 · Job discovery (worker)</h1>
+  <p>List-first with a map toggle, filter chips, honest result count and freshness. Each job shows service, area, budget basis, urgency and proposal count; "Apply" is distinct from direct-request "Respond". The second frame shows the offline state with cached results, the third shows loading, empty and error states. Sample content for layout only.</p>
+</div>
+
+<template id="list">
+  <div class="statusbar"><span>9:41</span><span class="icons"><span class="ms">signal_cellular_alt</span><span class="ms">wifi</span><span class="ms">battery_full</span></span></div>
+  <div class="appbar"><div class="grow t-title-lg">Find work</div><button class="icon-btn" aria-label="Notifications"><span class="ms">notifications</span></button></div>
+  <div class="pad"><div class="sb-input"><span class="ms s20">search</span>Search jobs, e.g. "wiring"</div></div>
+  <div class="chips" style="padding:12px 20px 0">
+    <span class="chip"><span class="ms">tune</span>Filters</span>
+    <span class="chip on"><span class="ms">check</span>Electrician</span>
+    <span class="chip on"><span class="ms">check</span>Within 10 km</span>
+    <span class="chip">Urgent</span>
+  </div>
+  <div class="pad" style="margin-top:12px"><div class="seg"><span class="on"><span class="ms s18">list</span>List</span><span><span class="ms s18">map</span>Map</span></div></div>
+  <div class="scroll" style="margin-top:4px">
+    <div class="pad row" style="padding-top:12px;padding-bottom:8px">
+      <div class="grow t-label">18 open jobs</div><span class="t-caption">Newest first</span><span class="ms s18 muted">swap_vert</span>
+    </div>
+    <div class="pad stack">
+      __CARDS__
+    </div>
+  </div>
+  <nav class="navbar">
+    <div class="dest on"><div class="pill"><span class="ms fill">home</span></div>Home</div>
+    <div class="dest"><div class="pill"><span class="ms">description</span></div>Proposals</div>
+    <div class="dest"><div class="pill"><span class="ms">handshake</span></div>Contracts</div>
+    <div class="dest"><div class="pill"><span class="ms">chat_bubble</span></div>Chats</div>
+    <div class="dest"><div class="pill"><span class="ms">person</span></div>Profile</div>
+  </nav>
+</template>
+
+<template id="cards">
+  <div class="card sb-job">
+    <div class="row top">
+      <div class="cat-tile cat-ink"><span class="ms s20">bolt</span></div>
+      <div class="grow"><div class="t-label-sm muted">Electrician</div><div class="t-title-sm">Two switchboards sparking in kitchen</div></div>
+    </div>
+    <div class="metas"><span><span class="ms s16">place</span>G-11/2 · ≈ 1.5 km</span><span><span class="ms s16">schedule</span>12 min ago</span></div>
+    <div class="foot"><span class="grow t-label num">Rs 1,500 – 2,500</span><span class="urgent"><span class="ms s16">bolt</span>Urgent</span><span class="t-caption">1 proposal</span></div>
+    <div class="row" style="margin-top:12px"><button class="sb-btn secondary compact grow">Details</button><button class="sb-btn primary compact grow">Send proposal</button></div>
+  </div>
+  <div class="card sb-job">
+    <div class="row top">
+      <div class="cat-tile cat-ink"><span class="ms s20">solar_power</span></div>
+      <div class="grow"><div class="t-label-sm muted">Solar installation</div><div class="t-title-sm">Install 5 kW inverter and 8 panels on roof</div></div>
+    </div>
+    <div class="metas"><span><span class="ms s16">place</span>E-11 · ≈ 6 km</span><span><span class="ms s16">schedule</span>3 h ago</span></div>
+    <div class="foot"><span class="grow t-label num">Rs 25,000 · fixed</span><span class="t-caption">6 proposals</span></div>
+    <div class="row" style="margin-top:12px"><span class="badge tone-success"><span class="ms">check_circle</span>Proposal sent · Rs 22,000</span><span class="grow"></span><button class="sb-btn quiet compact">View</button></div>
+  </div>
+  <div class="card sb-job">
+    <div class="row top">
+      <div class="cat-tile cat-ink"><span class="ms s20">bolt</span></div>
+      <div class="grow"><div class="t-label-sm muted">Electrician</div><div class="t-title-sm">Ceiling fan installation (3 fans)</div></div>
+    </div>
+    <div class="metas"><span><span class="ms s16">place</span>G-13 · ≈ 4 km</span><span><span class="ms s16">schedule</span>Yesterday</span></div>
+    <div class="foot"><span class="grow t-label num">Rs 600 / hour</span><span class="t-caption">3 proposals</span></div>
+  </div>
+</template>
+
+<template id="offline">
+  <div class="statusbar"><span>9:41</span><span class="icons"><span class="ms">signal_cellular_alt</span><span class="ms">wifi_off</span><span class="ms">battery_full</span></span></div>
+  <div class="appbar"><div class="grow t-title-lg">Find work</div><button class="icon-btn"><span class="ms">notifications</span></button></div>
+  <div class="pad">
+    <div class="banner tone-warning"><span class="ms">cloud_off</span><div class="grow t-body">You're offline. Showing jobs saved at 9:20. You can't send proposals until you reconnect.</div></div>
+  </div>
+  <div class="pad" style="margin-top:12px"><div class="seg"><span class="on"><span class="ms s18">list</span>List</span><span><span class="ms s18">map</span>Map</span></div></div>
+  <div class="scroll">
+    <div class="pad stack" style="padding-top:12px">
+      <div class="card sb-job">
+        <div class="row top"><div class="cat-tile cat-ink"><span class="ms s20">bolt</span></div><div class="grow"><div class="t-label-sm muted">Electrician</div><div class="t-title-sm">Two switchboards sparking in kitchen</div></div></div>
+        <div class="metas"><span><span class="ms s16">place</span>G-11/2 · ≈ 1.5 km</span><span><span class="ms s16">schedule</span>12 min ago</span></div>
+        <div class="foot"><span class="grow t-label num">Rs 1,500 – 2,500</span><span class="urgent"><span class="ms s16">bolt</span>Urgent</span></div>
+        <div class="row" style="margin-top:12px"><button class="sb-btn secondary compact grow">Details</button><button class="sb-btn disabled compact grow" aria-disabled="true"><span class="ms s18">cloud_off</span>Send proposal</button></div>
+      </div>
+      <div class="card sb-job">
+        <div class="row top"><div class="cat-tile cat-teal"><span class="ms s20">plumbing</span></div><div class="grow"><div class="t-label-sm muted">Plumber</div><div class="t-title-sm">Replace leaking kitchen mixer</div></div></div>
+        <div class="metas"><span><span class="ms s16">place</span>G-10 · ≈ 3 km</span><span><span class="ms s16">schedule</span>2 h ago</span></div>
+        <div class="foot"><span class="grow t-label num">Rs 2,000 · fixed</span><span class="t-caption">2 proposals</span></div>
+      </div>
+      <div class="banner tone-info"><span class="ms">schedule_send</span><div class="grow t-body">1 proposal is queued and will send when you're back online.</div></div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <div class="dest on"><div class="pill"><span class="ms fill">home</span></div>Home</div>
+    <div class="dest"><div class="pill"><span class="ms">description</span></div>Proposals</div>
+    <div class="dest"><div class="pill"><span class="ms">handshake</span></div>Contracts</div>
+    <div class="dest"><div class="pill"><span class="ms">chat_bubble</span></div>Chats</div>
+    <div class="dest"><div class="pill"><span class="ms">person</span></div>Profile</div>
+  </nav>
+</template>
+
+<template id="states">
+  <div class="statusbar"><span>9:41</span><span class="icons"><span class="ms">signal_cellular_alt</span><span class="ms">wifi</span><span class="ms">battery_full</span></span></div>
+  <div class="appbar"><div class="grow t-title-lg">State patterns</div></div>
+  <div class="scroll pad">
+    <div class="t-label-sm muted" style="margin:4px 0 8px">LOADING · skeleton matches the card</div>
+    <div class="card sb-job" aria-label="Loading">
+      <div class="row top"><div class="skeleton" style="width:40px;height:40px;border-radius:8px"></div><div class="grow"><div class="skeleton" style="width:30%;height:10px"></div><div class="skeleton" style="width:80%;height:14px;margin-top:8px"></div></div></div>
+      <div class="skeleton" style="width:55%;height:10px;margin-top:16px"></div>
+      <div class="skeleton" style="width:40%;height:12px;margin-top:20px"></div>
+    </div>
+    <div class="t-label-sm muted" style="margin:20px 0 8px">EMPTY · loaded, zero results</div>
+    <div class="card" style="padding:20px;text-align:center">
+      <div style="width:48px;height:48px;border-radius:99px;margin:0 auto" class="tone-neutral row"><span class="ms" style="margin:auto">search_off</span></div>
+      <div class="t-title-sm" style="margin-top:10px">No electrician jobs within 10 km</div>
+      <div class="t-body muted">Try a wider distance or turn off a filter.</div>
+      <button class="sb-btn secondary compact" style="margin-top:12px">Show within 25 km</button>
+    </div>
+    <div class="t-label-sm muted" style="margin:20px 0 8px">ERROR · failed, never shown as empty</div>
+    <div class="card" style="padding:20px;text-align:center">
+      <div style="width:48px;height:48px;border-radius:99px;margin:0 auto" class="tone-error row"><span class="ms" style="margin:auto">error</span></div>
+      <div class="t-title-sm" style="margin-top:10px">Jobs couldn't load</div>
+      <div class="t-body muted">Check your connection and try again. Your filters are kept.</div>
+      <button class="sb-btn secondary compact" style="margin-top:12px"><span class="ms s18">refresh</span>Try again</button>
+    </div>
+    <div class="t-label-sm muted" style="margin:20px 0 8px">SUCCESS · confirms the event and next step</div>
+    <div class="banner tone-success"><span class="ms">check_circle</span><div class="grow t-body">Proposal sent to Sana Ahmed. You'll be notified when she replies.</div></div>
+  </div>
+</template>
+
+<div class="frames" id="frames"></div>
+<script src="assets/frames.js"></script>
+<script>
+  const list = document.getElementById('list');
+  list.innerHTML = list.innerHTML.replace('__CARDS__', document.getElementById('cards').innerHTML);
+  renderFrames([
+    { tpl: 'list', theme: 'light', label: 'Light · list', height: 1060 },
+    { tpl: 'offline', theme: 'dark', label: 'Dark · offline with cache', height: 1060 },
+    { tpl: 'states', theme: 'light', label: 'Loading · empty · error · success', height: 1060 },
+  ]);
+</script>
+</body>
+</html>

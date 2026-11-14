@@ -18,17 +18,95 @@ service firebase.storage {
       // Limit file uploads to 5MB maximum
       return request.resource.size < 5 * 1024 * 1024;
     }
+    function isStaff() {
+      return isAuthenticated() &&
+        request.auth.token.get('role', '') in ['admin', 'SUPER_ADMIN'];
+    }
 
     // ── User Profile & Assets Storage ─────────────────────────────────────
-    match /users/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if isOwner(userId) && (isImage() || isPdf()) && isValidSize();
+    match /users/{userId} {
+      // Sensitive verification documents: owner and staff only.
+      match /verificationDocuments/{documentId} {
+        allow read: if isOwner(userId) || isStaff();
+        allow create, update: if isOwner(userId) && (isImage() || isPdf()) && isValidSize();
+        allow delete: if isOwner(userId) || isStaff();
+      }
+
+      // Public assets (profile/, portfolio/, …). Storage rules OR together, so
+      // this match must exclude the verificationDocuments folder — the old
+      // users/{userId}/{allPaths=**} wildcard made those documents public.
+      match /{folder}/{allPaths=**} {
+        allow read: if folder != 'verificationDocuments';
+        allow create, update: if isOwner(userId) && folder != 'verificationDocuments'
+                              && (isImage() || isPdf()) && isValidSize();
+        // Deletes have no request.resource, so they need their own rule.
+        allow delete: if isOwner(userId) && folder != 'verificationDocuments';
+      }
+
+      // Files stored directly under users/{userId}/ (kept public as before).
+      match /{fileName} {
+        allow read: if true;
+        allow create, update: if isOwner(userId) && (isImage() || isPdf()) && isValidSize();
+        allow delete: if isOwner(userId);
+      }
     }
 
     // ── Job Attachments ───────────────────────────────────────────────────
+    // Unused legacy path: it let any signed-in user overwrite any job's files.
+    // Job photos are stored in the client's own folder
+    // (users/{uid}/jobPhotos/…: owner-only writes, public reads).
     match /jobs/{jobId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuthenticated() && (isImage() || isPdf()) && isValidSize();
+      allow write: if false;
+    }
+
+    // ── Work evidence (Phase 4A) ──────────────────────────────────────────
+    // Photos a worker attaches when submitting work. Readable only by the
+    // two parties and staff. Only the hired worker may upload, and only
+    // while the work is in progress (started, and not waiting for review —
+    // after a revision request it is in progress again). Checked against the
+    // contract with a cross-service read of Firestore.
+    function contractDoc(contractId) {
+      return firestore.get(/databases/(default)/documents/contracts/$(contractId)).data;
+    }
+    // Same rule as stageOf in functions/src/contracts.ts. Phase 4A contracts
+    // have no counters: a set submittedAt means one submission.
+    function awaitingReview(c) {
+      return (c.get('submissionCount', null) is int && c.submissionCount > c.get('revisionCount', 0))
+        || (!(c.get('submissionCount', null) is int) && c.get('submittedAt', null) != null);
+    }
+    match /contracts/{contractId}/evidence/{fileName} {
+      allow read: if isStaff() || (isAuthenticated()
+        && (contractDoc(contractId).clientId == request.auth.uid
+            || contractDoc(contractId).workerId == request.auth.uid));
+      // `resource == null`: an upload can never replace an existing photo.
+      allow create: if isAuthenticated() && resource == null && isImage() && isValidSize()
+        && fileName.matches('^[A-Za-z0-9._-]{1,80}$')
+        && contractDoc(contractId).workerId == request.auth.uid
+        && contractDoc(contractId).status == 'active'
+        && contractDoc(contractId).get('workStartedAt', null) != null
+        && !awaitingReview(contractDoc(contractId));
+      // Evidence is kept once uploaded (it is part of the record).
+      allow update, delete: if isStaff();
+    }
+
+    // ── Chat photos (Phase 4B) ────────────────────────────────────────────
+    // chats/{chatId}/{senderId}/{messageId}/{file}: only the two members of
+    // the conversation can read; a member uploads only into their own
+    // folder. The app shows them with getData() (no shareable download
+    // links). Kept once uploaded, like the message that refers to them.
+    function chatDoc(chatId) {
+      return firestore.get(/databases/(default)/documents/chats/$(chatId)).data;
+    }
+    match /chats/{chatId}/{senderId}/{messageId}/{fileName} {
+      allow read: if isStaff() || (isAuthenticated() && request.auth.uid in chatDoc(chatId).participantIds);
+      allow create: if isAuthenticated() && resource == null && request.auth.uid == senderId
+        && request.auth.uid in chatDoc(chatId).participantIds
+        && messageId.matches('^[A-Za-z0-9_-]{8,64}$')
+        && fileName.matches('^[A-Za-z0-9_-]{1,60}[.](jpg|jpeg|png|webp)$')
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp']
+        && isValidSize();
+      allow update, delete: if isStaff();
     }
 
     // ── Default Deny All ──────────────────────────────────────────────────

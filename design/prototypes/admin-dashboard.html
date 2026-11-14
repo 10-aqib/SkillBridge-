@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="assets/sb.css">
+<style>
+  body { margin: 0; font-family: "Noto Sans", system-ui, sans-serif; background: var(--canvas); color: var(--text); font-size: 14px; line-height: 20px; -webkit-font-smoothing: antialiased; }
+  .shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+  aside { background: var(--surface); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 12px; position: sticky; top: 0; height: 100vh; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; }
+  .mark { width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center; }
+  .mark .ms { font-size: 20px; }
+  .navgroup { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--text2); padding: 12px 12px 6px; }
+  .nav a { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 8px; color: var(--text2); text-decoration: none; font-weight: 500; }
+  .nav a .ms { font-size: 20px; }
+  .nav a.on { background: var(--primary-sub); color: var(--on-primary-sub); font-weight: 600; }
+  .nav a .count { margin-inline-start: auto; font-size: 12px; font-weight: 600; min-width: 22px; height: 20px; border-radius: 99px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .me { margin-top: auto; border-top: 1px solid var(--border); padding: 12px 8px 0; display: flex; gap: 10px; align-items: center; }
+  main { padding: 24px 32px 48px; max-width: 1440px; width: 100%; min-width: 0; }
+  .topline { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+  .crumbs { color: var(--text2); font-size: 13px; display: flex; gap: 4px; align-items: center; }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); padding: 8px 0 20px; flex-wrap: wrap; }
+  h1 { font-size: 24px; line-height: 32px; margin: 0; letter-spacing: -.2px; }
+  h2 { font-size: 15px; line-height: 22px; margin: 0; }
+  .seg.sm > span { height: 32px; padding: 0 12px; font-size: 13px; white-space: nowrap; flex: none; }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 20px; }
+  .attn { grid-column: span 4; display: flex; gap: 14px; padding: 16px; border-inline-start: 4px solid var(--accent); }
+  .kpi { grid-column: span 3; padding: 16px; }
+  .kpi .v { font-size: 26px; line-height: 34px; font-weight: 700; letter-spacing: -.3px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .delta { font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 2px; }
+  .chart { grid-column: span 8; padding: 20px; }
+  .side { grid-column: span 4; padding: 20px; }
+  .tablecard { grid-column: span 12; overflow: hidden; }
+  .cardhead { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; }
+  .bars { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .bars .b { display: grid; grid-template-columns: 96px 1fr 44px; gap: 10px; align-items: center; }
+  .bars .track { height: 8px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
+  .bars .track i { display: block; height: 100%; background: var(--chart-1); border-radius: 99px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: start; font-size: 12px; font-weight: 600; color: var(--text2); background: var(--canvas); padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  a.link { color: var(--primary); font-weight: 600; text-decoration: none; }
+  .tfoot { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--text2); font-size: 13px; }
+  .stacked { display: none; }
+  .note { display: inline-flex; gap: 6px; align-items: center; color: var(--text2); font-size: 12px; }
+  .note .ms { font-size: 15px; }
+  @media (max-width: 1100px) { .attn { grid-column: span 12; } .kpi { grid-column: span 6; } .chart, .side { grid-column: span 12; } }
+  /* < 1024: sidebar becomes a drawer behind the menu button */
+  @media (max-width: 1023px) {
+    .shell { grid-template-columns: 1fr; }
+    aside { display: none; }
+    main { padding: 0 24px 32px; }
+    .mobilebar { display: flex !important; margin: 0 -24px 8px; }
+    .tablescroll { overflow-x: auto; }
+  }
+  /* < 760: single column, tables become stacked records */
+  @media (max-width: 760px) {
+    main { padding: 0 16px 32px; }
+    .mobilebar { margin: 0 -16px 8px; }
+    .grid { grid-template-columns: 1fr; }
+    .grid > * { grid-column: auto !important; min-width: 0; }
+    .head .row { width: 100%; }
+    table { display: none; }
+    .stacked { display: block; }
+  }
+  .mobilebar { display: none; align-items: center; gap: 8px; height: 56px; margin: 0 -16px 8px; padding: 0 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .stacked li { list-style: none; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .stacked dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 8px 0 0; font-size: 13px; }
+  .stacked dt { color: var(--text2); } .stacked dd { margin: 0; }
+  .stacked ul { margin: 0; padding: 0; }
+</style>
+</head>
+<body>
+<script>document.documentElement.dataset.theme = new URLSearchParams(location.search).get('theme') || 'light';</script>
+<div class="shell">
+  <aside aria-label="Admin navigation">
+    <div class="brand"><div class="mark"><span class="ms">handshake</span></div><div><div style="font-weight:700">SkillBridge</div><div class="t-caption">Admin console</div></div></div>
+    <nav class="nav">
+      <a class="on" href="#" aria-current="page"><span class="ms">space_dashboard</span>Overview</a>
+      <div class="navgroup">People</div>
+      <a href="#"><span class="ms">group</span>Users</a>
+      <a href="#"><span class="ms">verified_user</span>Worker verification<span class="count tone-accent">6</span></a>
+      <div class="navgroup">Marketplace</div>
+      <a href="#"><span class="ms">work</span>Jobs &amp; contracts</a>
+      <a href="#"><span class="ms">flag</span>Reports &amp; disputes<span class="count tone-accent">3</span></a>
+      <div class="navgroup">Governance</div>
+      <a href="#"><span class="ms">history</span>Audit log</a>
+      <a href="#"><span class="ms">settings</span>Settings</a>
+    </nav>
+    <div class="me"><div class="avatar sm">AU</div><div class="grow"><div class="t-label ellipsis">Admin user</div><div class="t-caption">Super admin</div></div><button class="icon-btn" style="width:40px;height:40px" aria-label="Sign out"><span class="ms s20 mirror">logout</span></button></div>
+  </aside>
+
+  <main>
+    <div class="mobilebar"><button class="icon-btn" aria-label="Open navigation"><span class="ms">menu</span></button><b class="grow">Overview</b><div class="avatar sm" style="width:32px;height:32px;font-size:12px">AU</div></div>
+    <div class="topline"><nav class="crumbs" aria-label="Breadcrumb"><span>Admin</span><span class="ms s14 mirror">chevron_right</span><span aria-current="page">Overview</span></nav></div>
+    <div class="head">
+      <div>
+        <h1>Overview</h1>
+        <p class="muted" style="margin:2px 0 6px">What needs attention, then how the marketplace is moving.</p>
+        <span class="note"><span class="ms">schedule</span>Firestore snapshot · loaded 14:02 · <a class="link" href="#" style="font-weight:600">Refresh</a></span>
+      </div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <div class="seg sm" role="radiogroup" aria-label="Period"><span>24 h</span><span>7 days</span><span class="on" aria-checked="true">30 days</span><span>12 months</span></div>
+        <button class="sb-btn secondary compact"><span class="ms s18">download</span>Export summary</button>
+      </div>
+    </div>
+
+    <h2 style="margin-top:24px">Needs attention</h2>
+    <div class="grid" style="margin-top:12px">
+      <section class="card attn">
+        <div class="cat-tile cat-amber"><span class="ms s20">verified_user</span></div>
+        <div class="grow"><div class="t-label">Worker verifications</div><div class="t-headline num">6 pending</div><div class="t-caption">Oldest waiting 3 days</div></div>
+        <a class="link" href="#" style="align-self:flex-end">Review</a>
+      </section>
+      <section class="card attn">
+        <div class="cat-tile cat-clay"><span class="ms s20">flag</span></div>
+        <div class="grow"><div class="t-label">Open reports</div><div class="t-headline num">3 open</div><div class="t-caption">1 older than 48 h</div></div>
+        <a class="link" href="#" style="align-self:flex-end">Triage</a>
+      </section>
+      <section class="card attn" style="border-inline-start-color:var(--border)">
+        <div class="cat-tile cat-slate"><span class="ms s20">gavel</span></div>
+        <div class="grow"><div class="t-label">Disputed contracts</div><div class="t-headline num">0</div><div class="t-caption">Nothing waiting</div></div>
+      </section>
+    </div>
+
+    <h2 style="margin-top:28px">Marketplace · last 30 days</h2>
+    <div class="grid" style="margin-top:12px">
+      <section class="card kpi"><div class="t-label muted">New users</div><div class="v">214</div><div class="row" style="gap:6px"><span class="delta" style="color:var(--success)"><span class="ms s16">arrow_upward</span>12%</span><span class="t-caption">vs previous 30 days</span></div></section>
+      <section class="card kpi"><div class="t-label muted">Jobs posted</div><div class="v">389</div><div class="row" style="gap:6px"><span class="delta" style="color:var(--success)"><span class="ms s16">arrow_upward</span>4%</span><span class="t-caption">vs previous 30 days</span></div></section>
+      <section class="card kpi"><div class="t-label muted">Contracts completed</div><div class="v">162</div><div class="row" style="gap:6px"><span class="delta muted"><span class="ms s16">arrow_downward</span>2%</span><span class="t-caption">vs previous 30 days</span></div></section>
+      <section class="card kpi"><div class="t-label muted">Completed contract value</div><div class="v">Rs 7.4 lakh</div><div class="t-caption">Agreed amounts · payments not collected in app</div></section>
+
+      <section class="card chart">
+        <div class="cardhead"><div><h2>New users per day</h2><div class="t-caption">Clients and workers · last 30 days</div></div><button class="sb-btn quiet compact"><span class="ms s18">table_rows</span>View as table</button></div>
+        <svg viewBox="0 0 760 220" width="100%" role="img" aria-label="New users per day, rising from about 4 to about 11 over 30 days" style="margin-top:12px;display:block">
+          <g stroke="var(--chart-grid)" stroke-width="1"><line x1="40" y1="20" x2="750" y2="20"/><line x1="40" y1="80" x2="750" y2="80"/><line x1="40" y1="140" x2="750" y2="140"/><line x1="40" y1="200" x2="750" y2="200"/></g>
+          <g fill="var(--text2)" font-size="11" font-family="Noto Sans"><text x="10" y="24">15</text><text x="10" y="84">10</text><text x="14" y="144">5</text><text x="14" y="204">0</text><text x="40" y="218">9 Oct</text><text x="380" y="218">24 Oct</text><text x="712" y="218">7 Nov</text></g>
+          <path d="M40 152 L64 146 L88 158 L112 140 L136 134 L160 146 L184 128 L208 122 L232 132 L256 116 L280 120 L304 104 L328 110 L352 98 L376 114 L400 96 L424 92 L448 100 L472 84 L496 88 L520 78 L544 92 L568 74 L592 70 L616 82 L640 64 L664 72 L688 58 L712 66 L736 54 L750 60 L750 200 L40 200 Z" fill="var(--chart-1)" opacity=".10"/>
+          <path d="M40 152 L64 146 L88 158 L112 140 L136 134 L160 146 L184 128 L208 122 L232 132 L256 116 L280 120 L304 104 L328 110 L352 98 L376 114 L400 96 L424 92 L448 100 L472 84 L496 88 L520 78 L544 92 L568 74 L592 70 L616 82 L640 64 L664 72 L688 58 L712 66 L736 54 L750 60" fill="none" stroke="var(--chart-1)" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="750" cy="60" r="4" fill="var(--chart-1)"/>
+        </svg>
+      </section>
+      <section class="card side">
+        <div class="cardhead"><div><h2>Jobs by city</h2><div class="t-caption">All time · top 5 of 12 cities</div></div></div>
+        <div class="bars">
+          <div class="b"><span>Islamabad</span><span class="track"><i style="width:92%"></i></span><span class="num t-label" style="text-align:end">1,204</span></div>
+          <div class="b"><span>Rawalpindi</span><span class="track"><i style="width:64%"></i></span><span class="num t-label" style="text-align:end">838</span></div>
+          <div class="b"><span>Lahore</span><span class="track"><i style="width:41%"></i></span><span class="num t-label" style="text-align:end">536</span></div>
+          <div class="b"><span>Karachi</span><span class="track"><i style="width:22%"></i></span><span class="num t-label" style="text-align:end">291</span></div>
+          <div class="b"><span>Peshawar</span><span class="track"><i style="width:9%"></i></span><span class="num t-label" style="text-align:end">117</span></div>
+        </div>
+        <div class="banner tone-neutral" style="margin-top:16px"><span class="ms s18">info</span><div class="t-caption" style="color:inherit">City totals cover all time and don't follow the period filter.</div></div>
+      </section>
+
+      <section class="card tablecard">
+        <div class="cardhead" style="padding:16px 16px 12px"><div><h2>Recent jobs</h2><div class="t-caption">Latest 5 by posted date</div></div><a class="link" href="#" style="display:inline-flex;align-items:center;gap:2px">Open jobs workspace<span class="ms s18 mirror">arrow_forward</span></a></div>
+        <div class="tablescroll"><table style="min-width:920px">
+          <caption class="sr-only" style="position:absolute;left:-9999px">Recent jobs</caption>
+          <thead><tr><th>Job</th><th>Client</th><th>City</th><th>Status</th><th class="num">Budget</th><th class="num">Proposals</th><th>Posted</th></tr></thead>
+          <tbody>
+            <tr><td><a class="link" href="#" style="color:var(--text)">Two switchboards sparking in kitchen</a><div class="t-caption">Electrician</div></td><td>Sana Ahmed</td><td>Islamabad</td><td><span class="badge tone-warning"><span class="ms">schedule</span>Open</span> <span class="badge dense tone-accent"><span class="ms">bolt</span>Urgent</span></td><td class="num">Rs 1,500–2,500</td><td class="num">1</td><td class="muted">12 min ago</td></tr>
+            <tr><td><a class="link" href="#" style="color:var(--text)">AC service — 2 split units</a><div class="t-caption">AC repair</div></td><td>Bilal Khan</td><td>Islamabad</td><td><span class="badge tone-info"><span class="ms">sync</span>In progress</span></td><td class="num">Rs 4,500</td><td class="num">5</td><td class="muted">Today, 10:14</td></tr>
+            <tr><td><a class="link" href="#" style="color:var(--text)">Replace leaking kitchen mixer</a><div class="t-caption">Plumber</div></td><td>Hira Malik</td><td>Rawalpindi</td><td><span class="badge tone-warning"><span class="ms">schedule</span>Open</span></td><td class="num">Rs 2,000</td><td class="num">2</td><td class="muted">Today, 08:40</td></tr>
+            <tr><td><a class="link" href="#" style="color:var(--text)">Repaint two bedrooms</a><div class="t-caption">Painter</div></td><td>Usman Tariq</td><td>Lahore</td><td><span class="badge tone-success"><span class="ms">check_circle</span>Completed</span></td><td class="num">Rs 18,000</td><td class="num">7</td><td class="muted">Yesterday</td></tr>
+            <tr><td><a class="link" href="#" style="color:var(--text)">Wardrobe hinge and drawer repair</a><div class="t-caption">Carpenter</div></td><td>Ayesha Noor</td><td>Islamabad</td><td><span class="badge tone-neutral"><span class="ms">do_not_disturb_on</span>Cancelled</span></td><td class="num">Rs 1,200</td><td class="num">0</td><td class="muted">5 Nov</td></tr>
+          </tbody>
+        </table></div>
+        <div class="stacked"><ul>
+          <li><a class="link" href="#" style="color:var(--text)">Two switchboards sparking in kitchen</a><dl><dt>Status</dt><dd><span class="badge dense tone-warning"><span class="ms">schedule</span>Open</span></dd><dt>Client</dt><dd>Sana Ahmed · Islamabad</dd><dt>Budget</dt><dd class="num">Rs 1,500–2,500</dd><dt>Posted</dt><dd>12 min ago</dd></dl></li>
+          <li><a class="link" href="#" style="color:var(--text)">AC service — 2 split units</a><dl><dt>Status</dt><dd><span class="badge dense tone-info"><span class="ms">sync</span>In progress</span></dd><dt>Client</dt><dd>Bilal Khan · Islamabad</dd><dt>Budget</dt><dd class="num">Rs 4,500</dd><dt>Posted</dt><dd>Today, 10:14</dd></dl></li>
+        </ul></div>
+        <div class="tfoot"><span>Showing 5 of 389 jobs this period</span><a class="link" href="#">View all</a></div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

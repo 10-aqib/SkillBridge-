@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -11,8 +12,11 @@ initializeApp({
 });
 
 async function createAdmin() {
-  const email = 'ak9024706@gmail.com';
-  const password = 'skyblue@1';
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD before running this script.');
+  }
 
   try {
     let userRecord;

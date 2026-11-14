@@ -1,381 +1,461 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
+import 'package:skill_bridge/core/constants/pakistan_constants.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
+import 'package:skill_bridge/features/chat/presentation/open_job_chat.dart';
 import 'package:skill_bridge/features/client/presentation/providers/worker_profile_provider.dart';
 import 'package:skill_bridge/features/reviews/data/datasources/review_remote_datasource.dart';
 import 'package:skill_bridge/features/reviews/data/models/review_model.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:skill_bridge/shared/widgets/app_chip.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
-class WorkerProfileDetailScreen extends ConsumerWidget {
+/// Public worker profile (what clients see). Trust evidence first: identity,
+/// verification (only when staff verified), rating with review count (only
+/// when reviews exist), completed jobs, rate basis, approximate service area —
+/// never a home address or anything from the private verification record.
+class WorkerProfileDetailScreen extends ConsumerStatefulWidget {
   final String workerId;
 
-  const WorkerProfileDetailScreen({
-    super.key,
-    required this.workerId,
-  });
+  const WorkerProfileDetailScreen({super.key, required this.workerId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final workerAsync = ref.watch(workerProfileProvider(workerId));
+  ConsumerState<WorkerProfileDetailScreen> createState() =>
+      _WorkerProfileDetailScreenState();
+}
+
+class _WorkerProfileDetailScreenState
+    extends ConsumerState<WorkerProfileDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final workerAsync = ref.watch(workerProfileProvider(widget.workerId));
+    final viewerId = ref.watch(currentUserProvider)?.uid;
+    final isOwnProfile = viewerId == widget.workerId;
 
     return Scaffold(
-      backgroundColor: context.scaffoldBg,
+      appBar: AppBar(
+        title: Text(l.publicProfileTitle),
+        actions: [
+          if (!isOwnProfile && workerAsync.value != null)
+            IconButton(
+              tooltip: l.reportProfile,
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => _reportWorker(context, ref, workerAsync.value!),
+            ),
+        ],
+      ),
       body: workerAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (err, _) => Center(
-          child: Text('Failed to load profile: $err'),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => SbStateView(
+          kind: SbStateKind.error,
+          title: l.publicProfileLoadError,
+          message: l.errNetwork,
+          actionLabel: l.tryAgain,
+          onAction: () => ref.invalidate(workerProfileProvider(widget.workerId)),
         ),
         data: (worker) {
           if (worker == null || worker.workerProfile == null) {
-            return const Center(child: Text('Worker not found.'));
+            return SbStateView(
+              kind: SbStateKind.empty,
+              icon: Icons.person_search_outlined,
+              title: l.publicProfileNotFound,
+              message: l.publicProfileNotFoundBody,
+            );
           }
-
           final profile = worker.workerProfile!;
-
-          return CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(context, worker, profile),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Basic Info
-                      _buildHeaderInfo(context, worker, profile),
-                      const SizedBox(height: AppDimensions.xl),
-
-                      // Quick Stats
-                      _buildQuickStats(context, worker, profile),
-                      const SizedBox(height: AppDimensions.xl),
-
-                      // Tabs (About, Gallery, Reviews) using DefaultTabController
-                      DefaultTabController(
-                        length: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TabBar(
-                              labelColor: AppColors.primary,
-                              unselectedLabelColor: context.mutedColor,
-                              indicatorColor: AppColors.primary,
-                              tabs: [
-                                Tab(text: 'About'),
-                                Tab(text: 'Gallery'),
-                                Tab(text: 'Reviews'),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.lg),
-                            SizedBox(
-                              height: 600, // Fixed height for tab content for now to avoid scrolling issues
-                              child: TabBarView(
-                                children: [
-                                  _buildAboutTab(context, worker, profile),
-                                  _buildGalleryTab(profile),
-                                  _ReviewsTabWidget(workerId: worker.uid, profile: profile),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+          final edge = SbLayout.edge(context);
+          return ListView(
+            padding: EdgeInsets.fromLTRB(edge, SbSpace.s2, edge, SbSpace.s8),
+            children: [
+              SbReadableWidth(
+                maxWidth: 720,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if (isOwnProfile) ...[
+                    SbInlineBanner(message: l.publicProfileOwnPreview, tone: SbTone.info, icon: Icons.visibility_outlined),
+                    const SizedBox(height: SbSpace.s4),
+                  ],
+                  _Header(worker: worker, profile: profile),
+                  const SizedBox(height: SbSpace.s4),
+                  _TrustStats(worker: worker, profile: profile),
+                  const SizedBox(height: SbSpace.s5),
+                  TabBar(
+                    controller: _tabController,
+                    tabs: [
+                      Tab(text: l.about),
+                      Tab(text: l.publicProfileWorkTab),
+                      Tab(text: l.reviews),
                     ],
                   ),
-                ),
+                  const SizedBox(height: SbSpace.s4),
+                  switch (_tabController.index) {
+                    1 => _Gallery(profile: profile),
+                    2 => _ReviewsTabWidget(workerId: worker.uid, profile: profile),
+                    _ => _About(worker: worker, profile: profile),
+                  },
+                ]),
               ),
             ],
           );
         },
       ),
-      bottomNavigationBar: workerAsync.hasValue && workerAsync.value != null
-          ? _buildBottomActionBar(context, workerAsync.value!)
+      bottomNavigationBar: (workerAsync.value?.workerProfile != null && !isOwnProfile)
+          ? _ActionBar(worker: workerAsync.value!)
           : null,
     );
   }
 
-  Widget _buildSliverAppBar(
-      BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
-    return SliverAppBar(
-      expandedHeight: 220.0,
-      pinned: true,
-      backgroundColor: AppColors.primary,
-      iconTheme: const IconThemeData(color: Colors.white),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.share_rounded),
-          onPressed: () {
-            // Share profile logic (Module 1)
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Share functionality coming soon!')),
-            );
-          },
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Cover Image
-            if (profile.coverImage != null && profile.coverImage!.isNotEmpty)
-              Image.network(
-                profile.coverImage!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Container(color: AppColors.primary),
-              )
-            else
-              Container(color: AppColors.primary),
-            // Gradient Overlay
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.1),
-                    Colors.black.withValues(alpha: 0.6),
-                  ],
-                ),
-              ),
+  Future<void> _reportWorker(BuildContext context, WidgetRef ref, UserEntity worker) async {
+    final l = context.l10n;
+    final reasons = <String, String>{
+      'Safety concern': l.reportReasonSafety,
+      'Misleading profile or credentials': l.reportReasonMisleading,
+      'Inappropriate conduct': l.reportReasonConduct,
+      'Other': l.reportReasonOther,
+    };
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SbSpace.s5, 0, SbSpace.s5, SbSpace.s2),
+            child: Text(l.reportProfileTitle, style: Theme.of(sheetContext).textTheme.titleLarge),
+          ),
+          for (final entry in reasons.entries)
+            ListTile(
+              title: Text(entry.value),
+              onTap: () => Navigator.pop(sheetContext, entry.key),
             ),
-            // Profile Photo positioned at bottom left
-            Positioned(
-              left: AppDimensions.lg,
-              bottom: AppDimensions.lg,
-              child: AppAvatar(
-                name: worker.displayName,
-                imageUrl: worker.photoUrl,
-                size: 80,
-              ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
-            ),
-          ],
-        ),
+        ]),
       ),
     );
-  }
+    if (reason == null) return;
 
-  Widget _buildHeaderInfo(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    worker.displayName,
-                    style: AppTextStyles.heading2.copyWith(color: context.textColor),
-                  ).animate().fade(delay: 100.ms),
-                  const SizedBox(height: 4),
-                  Text(
-                    profile.headline,
-                    style: AppTextStyles.bodyStrong.copyWith(color: AppColors.primary),
-                  ).animate().fade(delay: 150.ms),
-                ],
-              ),
-            ),
-            if (profile.isVerified)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF006622).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF006622)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Verified',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: const Color(0xFF006622),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fade(delay: 200.ms),
-          ],
-        ),
-        SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(Icons.location_on_outlined, size: 16, color: context.mutedColor),
-            SizedBox(width: 4),
-            Text(
-              '${profile.city} (Serves up to ${profile.serviceRadius} km)',
-              style: AppTextStyles.bodyPrimary.copyWith(color: context.mutedColor),
-            ),
-          ],
-        ).animate().fade(delay: 250.ms),
-      ],
-    );
-  }
-
-  Widget _buildQuickStats(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildStatItem(context, '★ ${profile.averageRating.toStringAsFixed(1)}', '${profile.totalReviews} Reviews'),
-        _buildStatItem(context, '${profile.totalJobsCompleted}', 'Jobs Done'),
-        _buildStatItem(context, '${profile.experience} Yrs', 'Experience'),
-        _buildStatItem(context, 'Rs. ${profile.hourlyRate}', 'Starting Price'),
-      ],
-    ).animate().fade(delay: 300.ms).slideY(begin: 0.1);
-  }
-
-  Widget _buildStatItem(BuildContext context, String value, String label) {
-    return AppCard(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      shadow: AppShadows.level1,
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: AppTextStyles.bodyStrong.copyWith(color: context.textColor, fontSize: 16),
-          ),
-          SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutTab(BuildContext context, UserEntity worker, WorkerProfileEntity profile) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Bio', style: AppTextStyles.heading3),
-          const SizedBox(height: 8),
-          Text(profile.bio, style: AppTextStyles.bodyPrimary),
-          const SizedBox(height: AppDimensions.xl),
-          
-          Text('Skills', style: AppTextStyles.heading3),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: profile.skills.map((s) => AppChip(label: s, isSelected: true)).toList(),
-          ),
-          const SizedBox(height: AppDimensions.xl),
-
-          Text('Additional Info', style: AppTextStyles.heading3),
-          const SizedBox(height: 8),
-          _buildInfoRow(Icons.timer_outlined, 'Response Time', profile.responseTime ?? 'Usually responds quickly'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.language_rounded, 'Languages', profile.languages.isNotEmpty ? profile.languages.join(', ') : 'Urdu, English'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.event_available_rounded, 'Availability', profile.availability == 'available' ? 'Available for work' : 'Busy'),
-          const SizedBox(height: AppDimensions.xl),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Text('$label: ', style: AppTextStyles.bodyStrong),
-        Expanded(child: Text(value, style: AppTextStyles.bodyPrimary)),
-      ],
-    );
-  }
-
-  Widget _buildGalleryTab(WorkerProfileEntity profile) {
-    final images = [...profile.portfolioImages, ...profile.beforeAfterImages];
-    if (images.isEmpty) {
-      return const Center(child: Text('No images in gallery.'));
+    final reporterId = ref.read(currentUserProvider)?.uid;
+    if (reporterId == null) return;
+    try {
+      // Stored reason stays in English (admin review queue).
+      await FirebaseFirestore.instance.collection('reports').add({
+        'reporterId': reporterId,
+        'targetUserId': worker.uid,
+        'targetType': 'worker_profile',
+        'reason': reason,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (context.mounted) context.showSnackBar(l.reportSubmitted);
+    } catch (_) {
+      if (context.mounted) context.showSnackBar(l.reportFailed, isError: true);
     }
-    
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
+  }
+}
+
+String _categoryLabel(BuildContext context, WorkerProfileEntity p) {
+  for (final c in PakistanConstants.categories) {
+    if (c['id'] == p.categoryId || (c['name'] as String).toLowerCase() == p.categoryName.toLowerCase()) {
+      return context.isUrdu ? c['urdu'] as String : c['name'] as String;
+    }
+  }
+  return p.categoryName;
+}
+
+/// "Rs 800 / hour", "Rs 5,000 / day" or "Rate on request" — never a made-up number.
+String workerRateLabel(BuildContext context, WorkerProfileEntity p) {
+  final l = context.l10n;
+  String rs(double v) => 'Rs ${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')}';
+  if (p.hourlyRate > 0) return l.rateHourly(rs(p.hourlyRate));
+  if (p.dailyRate > 0) return l.rateDaily(rs(p.dailyRate));
+  return l.rateOnRequest;
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.worker, required this.profile});
+  final UserEntity worker;
+  final WorkerProfileEntity profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final available = profile.availability == 'available';
+    return Column(children: [
+      SbAvatar(name: worker.displayName, imageUrl: worker.photoUrl, size: 96),
+      const SizedBox(height: SbSpace.s3),
+      Text(worker.formattedDisplayName, style: t.headlineSmall, textAlign: TextAlign.center),
+      const SizedBox(height: SbSpace.s1),
+      if (profile.headline.isNotEmpty)
+        Text(profile.headline, style: t.bodyLarge, textAlign: TextAlign.center),
+      Text(
+        [
+          _categoryLabel(context, profile),
+          if (profile.experience > 0) l.yearsExperience(profile.experience),
+        ].where((s) => s.isNotEmpty).join(' · '),
+        style: t.bodyMedium!.copyWith(color: c.textSecondary),
+        textAlign: TextAlign.center,
       ),
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            images[index],
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: AppColors.borderGray,
-              child: const Icon(Icons.image_not_supported),
+      const SizedBox(height: SbSpace.s3),
+      Wrap(alignment: WrapAlignment.center, spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+        if (profile.isVerified) SbStatusBadge.verified(label: l.verificationBadge),
+        available
+            ? SbStatusBadge.available(label: l.available)
+            : SbStatusBadge.unavailable(label: profile.availability == 'busy' ? l.busy : l.offline),
+      ]),
+    ]);
+  }
+}
+
+class _TrustStats extends StatelessWidget {
+  const _TrustStats({required this.worker, required this.profile});
+  final UserEntity worker;
+  final WorkerProfileEntity profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final hasReviews = profile.totalReviews > 0;
+    Widget stat(String value, String label, {Widget? icon}) => Expanded(
+          child: MergeSemantics(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: SbSpace.s3, horizontal: SbSpace.s1),
+              child: Column(children: [
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  Flexible(child: Text(value, style: SbTypography.numeric(t.titleMedium!), textAlign: TextAlign.center)),
+                  ?icon,
+                ]),
+                Text(label, style: t.bodySmall, textAlign: TextAlign.center),
+              ]),
             ),
           ),
         );
-      },
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        decoration: BoxDecoration(
+          color: c.surface,
+          border: Border.all(color: c.border),
+          borderRadius: BorderRadius.circular(SbRadius.card),
+        ),
+        child: IntrinsicHeight(
+          child: Row(children: [
+            hasReviews
+                ? stat(profile.averageRating.toStringAsFixed(1), l.profileReviewsCount(profile.totalReviews),
+                    icon: Padding(padding: const EdgeInsetsDirectional.only(start: 2), child: Icon(Icons.star_rounded, size: 16, color: c.accent)))
+                : stat(l.publicProfileNew, l.profileNoReviews),
+            VerticalDivider(width: 1, color: c.border),
+            stat('${profile.totalJobsCompleted}', l.publicProfileJobsDone),
+            VerticalDivider(width: 1, color: c.border),
+            stat('${worker.createdAt.year}', l.publicProfileMemberSince),
+          ]),
+        ),
+      ),
+      const SizedBox(height: SbSpace.s3),
+      Container(
+        padding: const EdgeInsets.all(SbSpace.s4),
+        decoration: BoxDecoration(
+          color: c.surface,
+          border: Border.all(color: c.border),
+          borderRadius: BorderRadius.circular(SbRadius.card),
+        ),
+        child: Row(children: [
+          Icon(Icons.payments_outlined, color: c.primary),
+          const SizedBox(width: SbSpace.s3),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(workerRateLabel(context, profile), style: SbTypography.numeric(t.titleSmall!)),
+              Text(l.publicProfilePriceNote, style: t.bodySmall),
+            ]),
+          ),
+        ]),
+      ),
+    ]);
+  }
+}
+
+class _About extends StatelessWidget {
+  const _About({required this.worker, required this.profile});
+  final UserEntity worker;
+  final WorkerProfileEntity profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    Widget heading(String s) => Padding(
+          padding: const EdgeInsets.only(top: SbSpace.s5, bottom: SbSpace.s2),
+          child: Semantics(header: true, child: Text(s, style: t.titleMedium)),
+        );
+    final area = profile.city.isNotEmpty ? profile.city : (worker.city ?? '');
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(profile.bio.trim().isEmpty ? l.publicProfileNoBio : profile.bio,
+          style: t.bodyLarge!.copyWith(color: profile.bio.trim().isEmpty ? c.textSecondary : c.text)),
+      if (profile.skills.isNotEmpty) ...[
+        heading(l.skills),
+        Wrap(spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+          for (final s in profile.skills) Chip(label: Text(s)),
+        ]),
+      ],
+      heading(l.publicProfileServiceArea),
+      Row(children: [
+        Icon(Icons.near_me_outlined, size: 20, color: c.textSecondary),
+        const SizedBox(width: SbSpace.s2),
+        Expanded(
+          child: Text(
+            area.isEmpty ? l.profileNotAdded : l.publicProfileAreaValue(area, profile.serviceRadius.round()),
+            style: t.bodyLarge,
+          ),
+        ),
+      ]),
+      const SizedBox(height: SbSpace.s1),
+      Text(l.publicProfileAreaPrivacy, style: t.bodySmall),
+      if (profile.languages.isNotEmpty) ...[
+        heading(l.workerSetupLanguages),
+        Text(profile.languages.join(', '), style: t.bodyLarge),
+      ],
+    ]);
+  }
+}
+
+class _Gallery extends StatelessWidget {
+  const _Gallery({required this.profile});
+  final WorkerProfileEntity profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.sb;
+    final images = [...profile.portfolioImages, ...profile.beforeAfterImages];
+    if (images.isEmpty) {
+      return SbStateView(
+        kind: SbStateKind.empty,
+        compact: true,
+        icon: Icons.photo_library_outlined,
+        title: l.publicProfileNoPhotos,
+      );
+    }
+    return GridView.count(
+      crossAxisCount: SbWindowSize.of(context) == SbWindowSize.compact ? 3 : 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: SbSpace.s2,
+      crossAxisSpacing: SbSpace.s2,
+      children: [
+        for (final (i, url) in images.indexed)
+          Semantics(
+            button: true,
+            label: l.publicProfilePhotoN(i + 1, images.length),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(SbRadius.control),
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (_) => Dialog(
+                  clipBehavior: Clip.antiAlias,
+                  child: InteractiveViewer(child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain)),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(SbRadius.control),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => const SbSkeleton(height: double.infinity, radius: SbRadius.control),
+                  errorWidget: (_, _, _) => ColoredBox(color: c.surfaceSunken, child: Icon(Icons.broken_image_outlined, color: c.textSecondary)),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
+}
 
-  // _buildReviewsTab removed in favor of _ReviewsTabWidget
+class _ActionBar extends ConsumerStatefulWidget {
+  const _ActionBar({required this.worker});
+  final UserEntity worker;
 
-  Widget _buildBottomActionBar(BuildContext context, UserEntity worker) {
+  @override
+  ConsumerState<_ActionBar> createState() => _ActionBarState();
+}
+
+class _ActionBarState extends ConsumerState<_ActionBar> {
+  bool _opening = false;
+
+  UserEntity get worker => widget.worker;
+
+  /// Opens (or creates) this client's conversation with the worker through
+  /// the trusted function.
+  Future<void> _message() async {
+    setState(() => _opening = true);
+    final ok = await openDirectChat(context, ref, workerId: worker.uid);
+    if (!mounted) return;
+    setState(() => _opening = false);
+    if (!ok) context.showSnackBar(context.l10n.jobMessageFailed, isError: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.sb;
+    // Conversations outside a job are started by clients only.
+    final isClient = ref.watch(currentUserProvider)?.isClient ?? false;
     return Container(
-      padding: EdgeInsets.all(AppDimensions.lg),
-      decoration: BoxDecoration(
-        color: context.surfaceColor,
-        boxShadow: AppShadows.level2,
-      ),
+      decoration: BoxDecoration(color: c.surface, border: Border(top: BorderSide(color: c.border))),
+      padding: EdgeInsets.fromLTRB(SbLayout.edge(context), SbSpace.s3, SbLayout.edge(context), SbSpace.s3),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              flex: 1,
-              child: AppButton(
-                text: 'Contact',
-                onPressed: () {
-                  // Module 8 Chat or Module 1 simple message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Chat feature coming soon!')),
-                  );
-                },
-                type: AppButtonType.outline,
-              ),
+        top: false,
+        // Message keeps its natural width (a fixed share cut it to "Mess…" on
+        // phones); booking takes the rest.
+        child: Row(children: [
+          if (isClient) ...[
+            SbButton(
+              label: l.message,
+              icon: Icons.chat_bubble_outline_rounded,
+              variant: SbButtonVariant.secondary,
+              isLoading: _opening,
+              onPressed: _opening ? null : _message,
             ),
-            const SizedBox(width: AppDimensions.md),
-            Expanded(
-              flex: 2,
-              child: AppButton(
-                text: 'Hire Now',
-                onPressed: () {
-                  // Will integrate with Module 3 Booking System
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Booking flow coming in Module 3!')),
-                  );
-                },
-              ),
-            ),
+            const SizedBox(width: SbSpace.s3),
           ],
-        ),
+          Expanded(
+            child: SbButton(
+              label: l.publicProfileRequestBooking,
+              expand: true,
+              onPressed: () => context.push(
+                RouteNames.clientPostJobPath,
+                extra: {'workerId': worker.uid, 'workerName': worker.formattedDisplayName},
+              ),
+            ),
+          ),
+        ]),
       ),
     );
   }
@@ -384,7 +464,7 @@ class WorkerProfileDetailScreen extends ConsumerWidget {
 class _ReviewsTabWidget extends ConsumerStatefulWidget {
   final String workerId;
   final WorkerProfileEntity profile;
-  
+
   const _ReviewsTabWidget({required this.workerId, required this.profile});
 
   @override
@@ -396,111 +476,194 @@ class _ReviewsTabWidgetState extends ConsumerState<_ReviewsTabWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ref.watch(userReviewsStreamProvider(widget.workerId)).when(
-      data: (reviews) {
-        // Calculate Rating Distribution
-        int count5 = 0, count4 = 0, count3 = 0, count2 = 0, count1 = 0;
-        for (var r in reviews) {
-          if (r.rating >= 4.5) count5++;
-          else if (r.rating >= 3.5) count4++;
-          else if (r.rating >= 2.5) count3++;
-          else if (r.rating >= 1.5) count2++;
-          else count1++;
-        }
-        int total = reviews.isEmpty ? 1 : reviews.length; // avoid division by zero
+    return ref
+        .watch(userReviewsStreamProvider(widget.workerId))
+        .when(
+          data: (reviews) {
+            // Calculate Rating Distribution
+            int count5 = 0, count4 = 0, count3 = 0, count2 = 0, count1 = 0;
+            for (var r in reviews) {
+              if (r.rating >= 4.5) {
+                count5++;
+              } else if (r.rating >= 3.5) {
+                count4++;
+              } else if (r.rating >= 2.5) {
+                count3++;
+              } else if (r.rating >= 1.5) {
+                count2++;
+              } else {
+                count1++;
+              }
+            }
+            int total = reviews.isEmpty ? 1 : reviews.length;
 
-        // Sort reviews
-        final sortedReviews = List<ReviewModel>.from(reviews);
-        if (_sortOrder == 'highest') {
-          sortedReviews.sort((a, b) => b.rating.compareTo(a.rating));
-        } else if (_sortOrder == 'lowest') {
-          sortedReviews.sort((a, b) => a.rating.compareTo(b.rating));
-        } else {
-          sortedReviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        }
+            // Sort reviews
+            final sortedReviews = List<ReviewModel>.from(reviews);
+            if (_sortOrder == 'highest') {
+              sortedReviews.sort((a, b) => b.rating.compareTo(a.rating));
+            } else if (_sortOrder == 'lowest') {
+              sortedReviews.sort((a, b) => a.rating.compareTo(b.rating));
+            } else {
+              sortedReviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            }
 
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Rating Distribution
-              Text('Rating & Reviews', style: AppTextStyles.heading3),
-              const SizedBox(height: AppDimensions.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    children: [
-                      Text(widget.profile.averageRating.toStringAsFixed(1), style: AppTextStyles.headlineLgMobile.copyWith(fontSize: 48)),
-                      Row(
-                        children: List.generate(5, (index) => Icon(
-                          index < widget.profile.averageRating.floor() ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: AppColors.amber,
-                          size: 20,
-                        )),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('${widget.profile.totalReviews} Reviews', style: AppTextStyles.labelCaption),
-                    ],
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Rating Distribution
+                Text(
+                  context.l10n.publicProfileRatingReviews,
+                  style: AppTextStyles.heading3.copyWith(
+                    color: context.textColor,
                   ),
-                  const SizedBox(width: AppDimensions.xl),
-                  Expanded(
-                    child: Column(
+                ),
+                const SizedBox(height: AppDimensions.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
                       children: [
-                        _buildDistributionBar('5', count5 / total),
-                        _buildDistributionBar('4', count4 / total),
-                        _buildDistributionBar('3', count3 / total),
-                        _buildDistributionBar('2', count2 / total),
-                        _buildDistributionBar('1', count1 / total),
+                        Text(
+                          widget.profile.averageRating.toStringAsFixed(1),
+                          style: AppTextStyles.headlineLgMobile.copyWith(
+                            fontSize: 42,
+                            color: context.textColor,
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < widget.profile.averageRating.floor()
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              color: AppColors.amber,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${widget.profile.totalReviews} Reviews',
+                          style: AppTextStyles.labelCaption.copyWith(
+                            color: context.mutedColor,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.xl),
-              
-              // Sort dropdown
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Recent Reviews', style: AppTextStyles.heading3),
-                  DropdownButton<String>(
-                    value: _sortOrder,
-                    underline: const SizedBox(),
-                    items: const [
-                      DropdownMenuItem(value: 'recent', child: Text('Most Recent')),
-                      DropdownMenuItem(value: 'highest', child: Text('Highest Rating')),
-                      DropdownMenuItem(value: 'lowest', child: Text('Lowest Rating')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _sortOrder = val);
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.md),
-              
-              if (sortedReviews.isEmpty) 
-                const Center(child: Text('No reviews yet.'))
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sortedReviews.length,
-                  separatorBuilder: (_, __) => const Divider(height: 32),
-                  itemBuilder: (context, index) {
-                    final r = sortedReviews[index];
-                    return _ReviewCardWidget(review: r);
-                  },
+                    const SizedBox(width: AppDimensions.lg),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildDistributionBar('5', count5 / total),
+                          _buildDistributionBar('4', count4 / total),
+                          _buildDistributionBar('3', count3 / total),
+                          _buildDistributionBar('2', count2 / total),
+                          _buildDistributionBar('1', count1 / total),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppDimensions.xl),
-            ],
+
+                // Sort dropdown
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.publicProfileRecentReviews,
+                        style: AppTextStyles.heading3.copyWith(
+                          color: context.textColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: _sortOrder,
+                      dropdownColor: context.surfaceColor,
+                      underline: const SizedBox(),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'recent',
+                          child: Text(
+                            context.l10n.reviewsSortRecent,
+                            style: TextStyle(color: context.textColor),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'highest',
+                          child: Text(
+                            context.l10n.reviewsSortHighest,
+                            style: TextStyle(color: context.textColor),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'lowest',
+                          child: Text(
+                            context.l10n.reviewsSortLowest,
+                            style: TextStyle(color: context.textColor),
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _sortOrder = val);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimensions.md),
+
+                if (sortedReviews.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.lg,
+                    ),
+                    child: Center(
+                      child: Text(
+                        context.l10n.profileNoReviews,
+                        style: AppTextStyles.bodyPrimary.copyWith(
+                          color: context.mutedColor,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: sortedReviews.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 32),
+                    itemBuilder: (context, index) {
+                      final r = sortedReviews[index];
+                      return _ReviewCardWidget(review: r);
+                    },
+                  ),
+                const SizedBox(height: AppDimensions.xl),
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppDimensions.xl),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (e, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.xl),
+              child: Text(
+                context.l10n.profileReviewsError,
+                style: AppTextStyles.bodyPrimary.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ),
           ),
         );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error loading reviews')),
-    );
   }
 
   Widget _buildDistributionBar(String label, double percent) {
@@ -540,50 +703,83 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
   Widget build(BuildContext context) {
     final r = widget.review;
     final currentUser = ref.watch(currentUserProvider);
-    final hasUpvoted = currentUser != null && r.upvoters.contains(currentUser.uid);
+    final hasUpvoted =
+        currentUser != null && r.upvoters.contains(currentUser.uid);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                AppAvatar(name: r.reviewerName, imageUrl: r.reviewerPhotoUrl, size: 40),
-                const SizedBox(width: AppDimensions.sm),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            Expanded(
+              child: Row(
+                children: [
+                  AppAvatar(
+                    name: r.reviewerName,
+                    imageUrl: r.reviewerPhotoUrl,
+                    size: 40,
+                  ),
+                  const SizedBox(width: AppDimensions.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(r.reviewerName, style: AppTextStyles.bodyStrong),
-                        if (r.isVerifiedCustomer) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF006622)),
-                        ]
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                r.reviewerName,
+                                style: AppTextStyles.bodyStrong.copyWith(
+                                  color: context.textColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (r.isVerifiedCustomer) ...[
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.verified_rounded,
+                                size: 14,
+                                color: Color(0xFF006622),
+                              ),
+                            ],
+                          ],
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < r.rating.floor()
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              color: AppColors.amber,
+                              size: 14,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    Row(
-                      children: List.generate(5, (index) => Icon(
-                        index < r.rating.floor() ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: AppColors.amber,
-                        size: 14,
-                      )),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Text(
               '${r.createdAt.day}/${r.createdAt.month}/${r.createdAt.year}',
-              style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
+              style: AppTextStyles.labelSmall.copyWith(
+                color: context.mutedColor,
+              ),
             ),
           ],
         ),
         const SizedBox(height: AppDimensions.md),
-        Text(r.comment, style: AppTextStyles.bodyPrimary),
-        
+        Text(
+          r.comment,
+          style: AppTextStyles.bodyPrimary.copyWith(color: context.textColor),
+        ),
+
         if (r.photos != null && r.photos!.isNotEmpty) ...[
           const SizedBox(height: AppDimensions.sm),
           SizedBox(
@@ -591,7 +787,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: r.photos!.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -611,35 +807,60 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
         Row(
           children: [
             InkWell(
-              onTap: _isLoadingVote || currentUser == null ? null : () async {
-                setState(() => _isLoadingVote = true);
-                try {
-                  await ref.read(reviewRemoteDataSourceProvider).updateHelpfulVote(r.id, currentUser.uid, !hasUpvoted);
-                } catch(e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                }
-                if (mounted) setState(() => _isLoadingVote = false);
-              },
+              onTap: _isLoadingVote || currentUser == null
+                  ? null
+                  : () async {
+                      setState(() => _isLoadingVote = true);
+                      try {
+                        await ref
+                            .read(reviewRemoteDataSourceProvider)
+                            .updateHelpfulVote(
+                              r.id,
+                              currentUser.uid,
+                              !hasUpvoted,
+                            )
+                            .timeout(const Duration(seconds: 30));
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(
+                            this.context,
+                          ).showSnackBar(SnackBar(content: Text(e.toString())));
+                        }
+                      }
+                      if (mounted) setState(() => _isLoadingVote = false);
+                    },
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: hasUpvoted ? AppColors.primary.withValues(alpha: 0.1) : context.surfaceColor,
-                  border: Border.all(color: hasUpvoted ? AppColors.primary : AppColors.borderGray),
+                  color: hasUpvoted
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : context.surfaceColor,
+                  border: Border.all(
+                    color: hasUpvoted
+                        ? AppColors.primary
+                        : AppColors.borderGray,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      hasUpvoted ? Icons.thumb_up_alt_rounded : Icons.thumb_up_alt_outlined, 
-                      size: 16, 
-                      color: hasUpvoted ? AppColors.primary : context.mutedColor
+                      hasUpvoted
+                          ? Icons.thumb_up_alt_rounded
+                          : Icons.thumb_up_alt_outlined,
+                      size: 16,
+                      color: hasUpvoted
+                          ? AppColors.primary
+                          : context.mutedColor,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Helpful (${r.helpfulVotes})',
+                      context.l10n.reviewsHelpful(r.helpfulVotes),
                       style: AppTextStyles.labelCaption.copyWith(
-                        color: hasUpvoted ? AppColors.primary : context.mutedColor,
+                        color: hasUpvoted
+                            ? AppColors.primary
+                            : context.mutedColor,
                       ),
                     ),
                   ],
@@ -650,9 +871,9 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
         ),
 
         if (r.workerReply != null && r.workerReply!.isNotEmpty) ...[
-          SizedBox(height: AppDimensions.md),
+          const SizedBox(height: AppDimensions.md),
           Container(
-            padding: EdgeInsets.all(AppDimensions.md),
+            padding: const EdgeInsets.all(AppDimensions.md),
             decoration: BoxDecoration(
               color: context.scaffoldBg,
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -664,22 +885,45 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.reply_rounded, size: 16, color: AppColors.primary),
-                        SizedBox(width: 4),
-                        Text('Reply from ${r.revieweeName}', style: AppTextStyles.bodyStrong),
-                      ],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.reply_rounded,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              context.l10n.reviewsReplyFrom(r.revieweeName),
+                              style: AppTextStyles.bodyStrong.copyWith(
+                                color: context.textColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    if (r.workerReplyAt != null)
+                    if (r.workerReplyAt != null) ...[
+                      const SizedBox(width: 8),
                       Text(
                         '${r.workerReplyAt!.day}/${r.workerReplyAt!.month}/${r.workerReplyAt!.year}',
-                        style: AppTextStyles.labelSmall.copyWith(color: context.mutedColor),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: context.mutedColor,
+                        ),
                       ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(r.workerReply!, style: AppTextStyles.bodyPrimary),
+                Text(
+                  r.workerReply!,
+                  style: AppTextStyles.bodyPrimary.copyWith(
+                    color: context.textColor,
+                  ),
+                ),
               ],
             ),
           ),
@@ -688,7 +932,7 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
           TextButton.icon(
             onPressed: () => _showReplyDialog(context, r.id),
             icon: const Icon(Icons.reply_rounded, size: 18),
-            label: const Text('Reply to Review'),
+            label: Text(context.l10n.reviewsReplyTitle),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
               padding: EdgeInsets.zero,
@@ -711,22 +955,24 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Reply to Review', style: AppTextStyles.heading3),
+              title: Text(context.l10n.reviewsReplyTitle, style: AppTextStyles.heading3),
               content: TextField(
                 controller: controller,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Write your response here...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  hintText: context.l10n.reviewsReplyHint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
                 AppButton(
-                  text: 'Submit Reply',
+                  text: context.l10n.reviewsReplySubmit,
                   isLoading: isSubmitting,
                   onPressed: () async {
                     final reply = controller.text.trim();
@@ -734,22 +980,28 @@ class _ReviewCardWidgetState extends ConsumerState<_ReviewCardWidget> {
 
                     setState(() => isSubmitting = true);
                     try {
-                      await ref.read(reviewRemoteDataSourceProvider).addWorkerReply(reviewId, reply);
+                      await ref
+                          .read(reviewRemoteDataSourceProvider)
+                          .addWorkerReply(reviewId, reply)
+                          .timeout(const Duration(seconds: 30));
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(e.toString())));
                       }
-                      setState(() => isSubmitting = false);
+                      if (context.mounted) {
+                        setState(() => isSubmitting = false);
+                      }
                     }
                   },
                 ),
               ],
             );
-          }
+          },
         );
       },
     );
   }
 }
-

@@ -1,12 +1,22 @@
 import 'package:dartz/dartz.dart';
 import 'package:skill_bridge/core/errors/failure.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 import 'package:skill_bridge/features/auth/domain/repositories/auth_repository.dart';
 
 class SignOutUseCase {
   final AuthRepository _repository;
-  const SignOutUseCase(this._repository);
 
-  Future<Either<Failure, void>> call() => _repository.signOut();
+  /// Runs while still signed in (e.g. stop live location sharing and remove
+  /// the shared position, which needs the account's access).
+  final Future<void> Function()? beforeSignOut;
+  const SignOutUseCase(this._repository, {this.beforeSignOut});
+
+  Future<Either<Failure, void>> call() async {
+    try {
+      await beforeSignOut?.call();
+    } catch (_) {}
+    return _repository.signOut();
+  }
 }
 
 class SendPasswordResetEmailUseCase {
@@ -58,4 +68,30 @@ class UpdateUserProfileUseCase {
     required Map<String, dynamic> data,
   }) =>
       _repository.updateUserProfile(uid: uid, data: data);
+}
+
+class CompleteProfileUseCase {
+  final AuthRepository _repository;
+  const CompleteProfileUseCase(this._repository);
+
+  Future<Either<Failure, UserEntity>> call({
+    required String role,
+    String? displayName,
+    String? phoneNumber,
+  }) =>
+      _repository.completeProfile(role: role, displayName: displayName, phoneNumber: phoneNumber);
+}
+
+class SendEmailVerificationUseCase {
+  final AuthRepository _repository;
+  const SendEmailVerificationUseCase(this._repository);
+
+  Future<Either<Failure, void>> call() => _repository.sendEmailVerification();
+}
+
+class RefreshEmailVerificationUseCase {
+  final AuthRepository _repository;
+  const RefreshEmailVerificationUseCase(this._repository);
+
+  Future<Either<Failure, bool>> call() => _repository.refreshEmailVerification();
 }

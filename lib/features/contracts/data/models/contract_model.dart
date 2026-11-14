@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:skill_bridge/core/enums/contract_status.dart';
 import 'package:skill_bridge/core/enums/payment_method.dart';
 import 'package:skill_bridge/core/enums/payment_status.dart';
@@ -38,13 +39,40 @@ class ContractModel extends ContractEntity {
     required super.workerReviewed,
     required super.createdAt,
     required super.updatedAt,
+    super.jobDescription,
+    super.estimatedDuration,
+    super.priceMin,
+    super.serviceArea,
+    super.addressSharedAt,
+    super.serviceLocation,
+    super.serviceLocationSetAt,
+    super.acceptedAt,
+    super.respondedAt,
+    super.workStartedAt,
+    super.submittedAt,
+    super.submissionNote,
+    super.submissionAttachments,
+    super.cancelledAt,
+    super.cancelledBy,
+    super.cancelledByRole,
+    super.cancelReason,
+    super.cancelNote,
+    super.submissionCount,
+    super.revisionCount,
+    super.revisionRequestedAt,
+    super.revisionNote,
+    super.updateCount,
+    super.lastUpdateAt,
   });
 
-  factory ContractModel.fromSnapshot(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ContractModel.fromSnapshot(DocumentSnapshot doc) =>
+      ContractModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
 
+  factory ContractModel.fromMap(String id, Map<String, dynamic> data) {
+    DateTime? ts(String k) => (data[k] as Timestamp?)?.toDate();
+    final submission = data['submission'] is Map ? Map<String, dynamic>.from(data['submission'] as Map) : const <String, dynamic>{};
     return ContractModel(
-      id: doc.id,
+      id: id,
       jobId: data['jobId'] ?? '',
       jobTitle: data['jobTitle'] ?? '',
       proposalId: data['proposalId'] ?? '',
@@ -85,6 +113,32 @@ class ContractModel extends ContractEntity {
       workerReviewed: data['workerReviewed'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      jobDescription: data['jobDescription'] as String? ?? '',
+      estimatedDuration: data['estimatedDuration'] as String? ?? '',
+      priceMin: (data['priceMin'] as num?)?.toDouble(),
+      serviceArea: data['serviceArea'] as String?,
+      addressSharedAt: ts('addressSharedAt'),
+      serviceLocation: data['serviceLocation'] is GeoPoint
+          ? LatLng((data['serviceLocation'] as GeoPoint).latitude, (data['serviceLocation'] as GeoPoint).longitude)
+          : null,
+      serviceLocationSetAt: ts('serviceLocationSetAt'),
+      acceptedAt: ts('acceptedAt'),
+      respondedAt: ts('respondedAt'),
+      workStartedAt: ts('workStartedAt'),
+      submittedAt: ts('submittedAt'),
+      submissionNote: submission['note'] as String?,
+      submissionAttachments: (submission['attachments'] as List?)?.whereType<String>().toList() ?? const [],
+      cancelledAt: ts('cancelledAt'),
+      cancelledBy: data['cancelledBy'] as String?,
+      cancelledByRole: data['cancelledByRole'] as String?,
+      cancelReason: data['cancelReason'] as String?,
+      cancelNote: data['cancelNote'] as String?,
+      submissionCount: (data['submissionCount'] as num?)?.toInt(),
+      revisionCount: (data['revisionCount'] as num?)?.toInt() ?? 0,
+      revisionRequestedAt: ts('revisionRequestedAt'),
+      revisionNote: data['revisionNote'] as String?,
+      updateCount: (data['updateCount'] as num?)?.toInt() ?? 0,
+      lastUpdateAt: ts('lastUpdateAt'),
     );
   }
 

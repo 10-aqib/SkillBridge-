@@ -28,7 +28,7 @@ abstract class AuthRepository {
   });
 
   /// Signs in or signs up a user using Google Sign-In.
-  Future<Either<Failure, UserEntity>> loginWithGoogle({required String role});
+  Future<Either<Failure, UserEntity>> loginWithGoogle({String? role});
 
   /// Signs out the current user.
   Future<Either<Failure, void>> signOut();
@@ -62,4 +62,18 @@ abstract class AuthRepository {
     required String uid,
     required Map<String, dynamic> data,
   });
+
+  /// Creates or finishes the profile for the signed-in Firebase user with a
+  /// client/worker role (Google sign-up, interrupted registration).
+  Future<Either<Failure, UserEntity>> completeProfile({
+    required String role,
+    String? displayName,
+    String? phoneNumber,
+  });
+
+  /// Sends the email verification message to the signed-in user.
+  Future<Either<Failure, void>> sendEmailVerification();
+
+  /// Reloads verification state; true once the email is verified.
+  Future<Either<Failure, bool>> refreshEmailVerification();
 }

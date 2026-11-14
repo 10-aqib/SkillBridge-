@@ -20,10 +20,7 @@ import 'package:skill_bridge/shared/widgets/app_text_field.dart';
 class WriteReviewScreen extends ConsumerStatefulWidget {
   final ContractEntity contract;
 
-  const WriteReviewScreen({
-    super.key,
-    required this.contract,
-  });
+  const WriteReviewScreen({super.key, required this.contract});
 
   @override
   ConsumerState<WriteReviewScreen> createState() => _WriteReviewScreenState();
@@ -33,7 +30,6 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   final _commentController = TextEditingController();
   double _rating = 5.0;
   bool _isLoading = false;
-  final List<String> _attachedPhotos = [];
 
   @override
   void dispose() {
@@ -49,15 +45,18 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     try {
       final isClient = user.uid == widget.contract.clientId;
-      final reviewerName =
-          isClient ? widget.contract.clientName : widget.contract.workerName;
+      final reviewerName = isClient
+          ? widget.contract.clientName
+          : widget.contract.workerName;
       final reviewerPhotoUrl = isClient
           ? widget.contract.clientPhotoUrl
           : widget.contract.workerPhotoUrl;
-      final revieweeId =
-          isClient ? widget.contract.workerId : widget.contract.clientId;
-      final revieweeName =
-          isClient ? widget.contract.workerName : widget.contract.clientName;
+      final revieweeId = isClient
+          ? widget.contract.workerId
+          : widget.contract.clientId;
+      final revieweeName = isClient
+          ? widget.contract.workerName
+          : widget.contract.clientName;
 
       final review = ReviewModel(
         id: '',
@@ -72,17 +71,23 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         comment: _commentController.text.trim(),
         reviewType: isClient ? 'client_to_worker' : 'worker_to_client',
         createdAt: DateTime.now(),
-        isVerifiedCustomer: true, // They are reviewing from a contract
-        photos: _attachedPhotos,
+        isVerifiedCustomer: true,
+        photos: const [],
       );
 
-      await ref.read(reviewRemoteDataSourceProvider).submitReview(
-            review: review,
-            isClientReview: isClient,
-          );
+      await ref
+          .read(reviewRemoteDataSourceProvider)
+          .submitReview(review: review, isClientReview: isClient)
+          .timeout(const Duration(seconds: 30));
 
       if (mounted) {
-        context.showSnackBar(AppL10n.select(context, en: 'Review submitted successfully!', ur: 'رائے درج ہو گئی'));
+        context.showSnackBar(
+          AppL10n.select(
+            context,
+            en: 'Review submitted successfully!',
+            ur: 'رائے درج ہو گئی',
+          ),
+        );
         GoRouter.of(context).pop();
       }
     } catch (e) {
@@ -100,8 +105,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final isClient = user?.uid == widget.contract.clientId;
-    final revieweeName =
-        isClient ? widget.contract.workerName : widget.contract.clientName;
+    final revieweeName = isClient
+        ? widget.contract.workerName
+        : widget.contract.clientName;
 
     return Scaffold(
       backgroundColor: context.scaffoldBg,
@@ -124,7 +130,11 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               child: Column(
                 children: [
                   Text(
-                    AppL10n.select(context, en: 'How was your experience with', ur: 'آپ کا تجربہ کیسا رہا'),
+                    AppL10n.select(
+                      context,
+                      en: 'How was your experience with',
+                      ur: 'آپ کا تجربہ کیسا رہا',
+                    ),
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyPrimary.copyWith(
                       color: context.mutedColor,
@@ -167,8 +177,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.warningOrange.withValues(alpha: 0.15),
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusFull,
+                      ),
                     ),
                     child: Text(
                       'Rating: ${_rating.toInt()} / 5',
@@ -187,95 +198,23 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             // Comment textfield
             AppTextField(
               controller: _commentController,
-              labelText: AppL10n.select(context, en: 'Feedback / Comment', ur: 'تاثرات'),
+              labelText: AppL10n.select(
+                context,
+                en: 'Feedback / Comment',
+                ur: 'تاثرات',
+              ),
               hintText: 'Share details of your experience...',
               maxLines: 4,
             ),
             const SizedBox(height: AppDimensions.xl),
 
-            // Mock Photo Attachment UI
-            Text(
-              AppL10n.select(context, en: 'Attach Photos (Optional)', ur: 'تصاویر شامل کریں'),
-              style: AppTextStyles.labelCaption,
-            ),
-            const SizedBox(height: AppDimensions.sm),
-            Wrap(
-              spacing: AppDimensions.sm,
-              runSpacing: AppDimensions.sm,
-              children: [
-                ..._attachedPhotos.map((url) => Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                            image: DecorationImage(
-                              image: NetworkImage(url),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: -8,
-                          top: -8,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _attachedPhotos.remove(url);
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppColors.errorRed,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )),
-                if (_attachedPhotos.length < 3)
-                  GestureDetector(
-                    onTap: () {
-                      // Mocking photo upload for now
-                      setState(() {
-                        _attachedPhotos.add('https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/200');
-                      });
-                    },
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                        border: Border.all(
-                          color: AppColors.borderGray,
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.add_a_photo_outlined,
-                          color: context.mutedColor,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.xl),
-
             // Submit Button
             AppButton(
-              text: AppL10n.select(context, en: 'Submit Review', ur: 'رائے جمع کریں'),
+              text: AppL10n.select(
+                context,
+                en: 'Submit Review',
+                ur: 'رائے جمع کریں',
+              ),
               isLoading: _isLoading,
               onPressed: _submitReview,
               width: double.infinity,

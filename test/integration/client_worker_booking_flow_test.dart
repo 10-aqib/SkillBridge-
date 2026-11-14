@@ -55,11 +55,12 @@ void main() {
         );
         expect(OfflineOutboxService.pendingCount(), equals(1));
 
-        // STEP 4: Network restored -> Firestore Outbox Sync Engine flushes queue
+        // STEP 4: Without an initialized Firebase backend, the outbox must keep
+        // the job queued instead of reporting a simulated successful sync.
         final syncEngine = FirestoreOutboxSyncEngine();
         final syncedCount = await syncEngine.syncPendingItems();
-        expect(syncedCount, equals(1));
-        expect(OfflineOutboxService.pendingCount(), equals(0));
+        expect(syncedCount, equals(0));
+        expect(OfflineOutboxService.pendingCount(), equals(1));
 
         // STEP 5: Worker submits proposal & Client confirms Raast Escrow
         final escrowNotif = AppNotificationService.escrowConfirmed(3500.0);

@@ -1,165 +1,124 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/core/utils/validators.dart';
-import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
-import 'package:skill_bridge/shared/widgets/app_text_field.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
+import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist Forgot Password Screen
+/// Password reset: Firebase emails a secure link; the new password is set on
+/// Firebase's page, then the person signs in here. The confirmation never says
+/// whether an account exists for the email (no account enumeration).
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _email = TextEditingController();
+  late final ResendCooldown _cooldown = ResendCooldown(() {
+    if (mounted) setState(() {});
+  });
+
+  @override
+  void initState() {
+    super.initState();
+    // Fresh state each time the screen opens.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(forgotPasswordViewModelProvider.notifier).reset();
+    });
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _cooldown.dispose();
+    _email.dispose();
     super.dispose();
   }
 
-  void _onResetPassword() {
-    if (!_formKey.currentState!.validate()) return;
-    ref
-        .read(forgotPasswordViewModelProvider.notifier)
-        .sendResetEmail(email: _emailController.text.trim());
+  Future<void> _send() async {
+    FocusScope.of(context).unfocus();
+    // Resend from the confirmation view reuses the already-validated email
+    // (the form isn't on screen then).
+    final resending = ref.read(forgotPasswordViewModelProvider).emailSent;
+    if (!resending && !(_formKey.currentState?.validate() ?? false)) return;
+    await ref.read(forgotPasswordViewModelProvider.notifier).sendResetEmail(email: _email.text.trim());
+    if (mounted && ref.read(forgotPasswordViewModelProvider).emailSent) _cooldown.start();
   }
+
+  void _back() => context.canPop() ? context.pop() : context.go(RouteNames.loginPath);
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<ForgotPasswordState>(forgotPasswordViewModelProvider,
-        (prev, next) {
-      if (next.emailSent && !(prev?.emailSent ?? false)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent!'),
-            backgroundColor: AppColors.tertiary, // Skill Green
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(forgotPasswordViewModelProvider.notifier).reset();
-        context.pop();
-      }
-      if (next.errorMessage != null &&
-          next.errorMessage != prev?.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: AppColors.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(forgotPasswordViewModelProvider.notifier).clearError();
-      }
-    });
-
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
     final state = ref.watch(forgotPasswordViewModelProvider);
 
-    return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: context.textColor,
-            size: 20,
+    if (state.emailSent) {
+      final waiting = _cooldown.remaining > 0;
+      return AuthScaffold(
+        onBack: _back,
+        footer: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SbButton(label: l.forgotBackToSignIn, expand: true, onPressed: () => context.go(RouteNames.loginPath)),
+          SbButton(
+            label: waiting ? l.forgotResendIn(_cooldown.remaining) : l.forgotResend,
+            variant: SbButtonVariant.quiet,
+            expand: true,
+            isLoading: state.isLoading,
+            onPressed: waiting ? null : _send,
           ),
-        ),
+        ]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SbStateView(
+            kind: SbStateKind.success,
+            icon: Icons.mark_email_read_outlined,
+            title: l.forgotSentTitle,
+            message: l.forgotSentBody(_email.text.trim()),
+          ),
+          SbFailureBanner(failure: state.failure),
+          Text(l.forgotSentTip, style: t.bodySmall, textAlign: TextAlign.center),
+          const SizedBox(height: SbSpace.s2),
+          TextButton(
+            onPressed: () => ref.read(forgotPasswordViewModelProvider.notifier).reset(),
+            child: Text(l.forgotDifferentEmail),
+          ),
+        ]),
+      );
+    }
+
+    return AuthScaffold(
+      onBack: _back,
+      title: l.forgotTitle,
+      subtitle: l.forgotSubtitle,
+      footer: SbButton(
+        label: l.forgotSend,
+        expand: true,
+        isLoading: state.isLoading,
+        loadingSemanticLabel: l.forgotSending,
+        onPressed: _send,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.lg,
-            vertical: AppDimensions.md,
+      child: Form(
+        key: _formKey,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SbFailureBanner(failure: state.failure),
+          SbTextField(
+            label: l.email,
+            hint: l.authEmailHint,
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.email],
+            prefixIcon: Icons.mail_outline_rounded,
+            validator: AuthValidators(l).email,
+            enabled: !state.isLoading,
+            autovalidateMode: AutovalidateMode.disabled,
+            onSubmitted: (_) => _send(),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Icon Box (White 16px Radius + Primary Icon) ─────────────
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x19000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.lock_reset_rounded,
-                      size: 36,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ).animate().fade(duration: 600.ms).scale(
-                    duration: 600.ms, curve: Curves.easeOutBack),
-                const SizedBox(height: AppDimensions.xl),
-
-                // ── Header (Sora + Inter) ───────────────────────────────────
-                Text(
-                  AppL10n.select(context, en: 'Reset Password', ur: 'پاس ورڈ ری سیٹ کریں'),
-                  style: AppTextStyles.headlineLg.copyWith(
-                    color: context.textColor,
-                  ),
-                ).animate().fade(delay: 100.ms, duration: 500.ms),
-                const SizedBox(height: 8),
-                Text(
-                  'Enter your email address and we will send you a secure link to reset your password.',
-                  style: AppTextStyles.bodyPrimary.copyWith(
-                    color: context.mutedColor,
-                    height: 1.5,
-                  ),
-                ).animate().fade(delay: 150.ms, duration: 500.ms),
-                const SizedBox(height: AppDimensions.xl),
-
-                // ── Email Field ─────────────────────────────────────────────
-                AppTextField(
-                  controller: _emailController,
-                  labelText: AppL10n.select(context, en: 'Email Address', ur: 'ای میل'),
-                  hintText: 'you@example.com',
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _onResetPassword(),
-                  validator: (value) => Validators.email(value),
-                ).animate().fade(delay: 200.ms, duration: 500.ms),
-                const SizedBox(height: AppDimensions.xl),
-
-                // ── Reset Button (52px Primary) ─────────────────────────────
-                AppButton(
-                  text: AppL10n.select(context, en: 'Send Reset Link', ur: 'ری سیٹ لنک بھیجیں'),
-                  onPressed: state.isLoading ? null : _onResetPassword,
-                  isLoading: state.isLoading,
-                  width: double.infinity,
-                ).animate().fade(delay: 250.ms, duration: 500.ms),
-              ],
-            ),
-          ),
-        ),
+        ]),
       ),
     );
   }

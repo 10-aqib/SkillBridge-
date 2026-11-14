@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase 2A Comparison</title>
+<style>
+  body { margin: 0; padding: 28px; background: #E9ECE8; font-family: "Segoe UI", system-ui, sans-serif; color: #18232F; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lead { margin: 0 0 20px; color: #596779; font-size: 13px; max-width: 900px; }
+  .row { display: flex; gap: 28px; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; }
+  figure { margin: 0; }
+  figcaption { font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #596779; margin-bottom: 6px; }
+  img { display: block; border-radius: 12px; box-shadow: 0 0 0 1px #B4C0CA; }
+  .pair { display: flex; gap: 10px; }
+  .grp { background: #fff; border-radius: 14px; padding: 14px; border: 1px solid #DCE3E8; }
+  .grp h2 { font-size: 13px; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<h1>Phase 2A · before → after (running app, signed-out screens)</h1>
+<p class="lead">Real release builds of the Flutter web app and the admin console, captured headlessly. "No internet connection" appears because the headless browser can't reach Firestore; it shows identically before and after.</p>
+<div id="rows"></div>
+<script>
+  const sets = [
+    ['App · Create account', 'app-signup', 260],
+    ['App · Reset password', 'app-forgot-password', 260],
+    ['App · Sign in', 'app-login', 260],
+  ];
+  const rows = document.getElementById('rows');
+  for (const [title, base, w] of sets) {
+    const row = document.createElement('div'); row.className = 'row';
+    for (const theme of ['light', 'dark']) {
+      const g = document.createElement('div'); g.className = 'grp';
+      g.innerHTML = `<h2>${title} · ${theme}</h2><div class="pair">
+        <figure><figcaption>Before</figcaption><img src="before/${base}-${theme}.png" width="${w}"></figure>
+        <figure><figcaption>After</figcaption><img src="after/${base}-${theme}.png" width="${w}"></figure></div>`;
+      row.appendChild(g);
+    }
+    rows.appendChild(row);
+  }
+  const admin = document.createElement('div'); admin.className = 'row';
+  admin.innerHTML = `<div class="grp"><h2>Admin · Sign in (desktop)</h2><div class="pair">
+    <figure><figcaption>Before</figcaption><img src="before/admin-login-desktop.png" width="560"></figure>
+    <figure><figcaption>After · light</figcaption><img src="after/admin-login-desktop-light.png" width="560"></figure>
+    <figure><figcaption>After · dark</figcaption><img src="after/admin-login-desktop-dark.png" width="560"></figure></div></div>`;
+  rows.appendChild(admin);
+</script>
+</body>
+</html>

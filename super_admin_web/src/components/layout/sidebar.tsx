@@ -2,65 +2,70 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Briefcase, 
+import {
+  LayoutDashboard,
+  Users,
+  Briefcase,
   ClipboardList,
-  AlertTriangle, 
+  AlertTriangle,
   ShieldAlert,
-  Settings, 
+  Settings,
   LogOut,
-  Search,
-  CheckCircle2
+  Handshake,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { auth } from '@/lib/firebase/client';
 import { signOut } from 'firebase/auth';
+import type { AdminIdentity } from '@/lib/auth/admin-session';
+import { ThemeToggle } from '@/components/sb/theme-toggle';
 
-const routes = [
+type NavRoute = { label: string; icon: LucideIcon; href: string };
+
+// Same routes and labels as before, grouped by task.
+const groups: { title?: string; routes: NavRoute[] }[] = [
   {
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    href: '/dashboard',
+    routes: [{ label: 'Dashboard', icon: LayoutDashboard, href: '/adminpanel/dashboard' }],
   },
   {
-    label: 'Users',
-    icon: Users,
-    href: '/users',
+    title: 'People',
+    routes: [
+      { label: 'Users', icon: Users, href: '/adminpanel/users' },
+      { label: 'Workers', icon: Briefcase, href: '/adminpanel/workers' },
+    ],
   },
   {
-    label: 'Workers',
-    icon: Briefcase,
-    href: '/workers',
+    title: 'Marketplace',
+    routes: [
+      { label: 'Jobs & Contracts', icon: ClipboardList, href: '/adminpanel/jobs' },
+      { label: 'Reports & Disputes', icon: AlertTriangle, href: '/adminpanel/reports' },
+    ],
   },
   {
-    label: 'Jobs & Contracts',
-    icon: ClipboardList,
-    href: '/jobs',
-  },
-  {
-    label: 'Reports & Disputes',
-    icon: AlertTriangle,
-    href: '/reports',
-  },
-  {
-    label: 'Audit Logs',
-    icon: ShieldAlert,
-    href: '/audit-logs',
+    title: 'Governance',
+    routes: [
+      { label: 'Audit Logs', icon: ShieldAlert, href: '/adminpanel/audit-logs' },
+      { label: 'Settings', icon: Settings, href: '/adminpanel/settings' },
+    ],
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  admin,
+  onNavigate,
+}: {
+  admin: AdminIdentity;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const displayName = admin.name || admin.email || 'Administrator';
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
       await fetch('/api/auth/session', { method: 'DELETE' });
-      router.push('/login');
+      router.push('/admin-login');
       router.refresh();
     } catch (error) {
       console.error('Error logging out:', error);
@@ -68,92 +73,84 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-[#E8EFF9] flex flex-col h-full select-none figma-card-shadow z-30">
-      {/* Top Profile Card (Figma Style) */}
-      <div className="p-5 pb-4 border-b border-[#F0F4FA]">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-11 w-11 rounded-full ring-2 ring-[#2F80ED]/20">
-              <AvatarImage src="/avatar-admin.png" alt="Admin" />
-              <AvatarFallback className="bg-gradient-to-br from-[#2F80ED] to-[#6366F1] text-white font-bold text-sm">
-                AQ
-              </AvatarFallback>
-            </Avatar>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-slate-800 truncate">Aqib (Admin)</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#2F80ED] shrink-0" />
-            </div>
-            <span className="text-xs text-slate-400 font-medium">Super Administrator</span>
-          </div>
-        </div>
-
-        {/* Search Bar (Figma Style) */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input 
-            type="text"
-            placeholder="Search here..."
-            className="w-full h-9 pl-9 pr-3 rounded-full bg-[#F4F7FE] border-none text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F80ED]/30 transition"
-          />
-        </div>
+    <aside
+      data-sb
+      aria-label="Admin navigation"
+      className="flex h-full w-64 select-none flex-col border-r border-sb-border bg-sb-surface"
+    >
+      {/* Brand */}
+      <div className="flex h-16 items-center gap-2.5 border-b border-sb-border px-5">
+        <span className="flex size-8 items-center justify-center rounded-sb-control bg-sb-primary text-sb-on-primary">
+          <Handshake aria-hidden className="size-[18px]" />
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-sm font-bold text-sb-text">SkillBridge</span>
+          <span className="text-xs text-sb-text-secondary">Admin console</span>
+        </span>
       </div>
 
-      {/* Navigation List */}
-      <div className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-        <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Main Menu
-        </div>
-        {routes.map((route) => {
-          const isActive = pathname === route.href || pathname.startsWith(`${route.href}/`);
-          const Icon = route.icon;
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-3">
+        {groups.map((group, gi) => (
+          <div key={group.title ?? gi} className={cn(gi > 0 && 'mt-4')}>
+            {group.title && (
+              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-sb-text-secondary">
+                {group.title}
+              </p>
+            )}
+            <ul className="space-y-0.5">
+              {group.routes.map((route) => {
+                const isActive = pathname === route.href || pathname.startsWith(`${route.href}/`);
+                const Icon = route.icon;
+                return (
+                  <li key={route.href}>
+                    <Link
+                      href={route.href}
+                      onClick={onNavigate}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'sb-focus flex h-10 items-center gap-3 rounded-sb-control px-3 text-sm transition-colors duration-150',
+                        isActive
+                          ? 'bg-sb-primary-subtle font-semibold text-sb-on-primary-subtle'
+                          : 'font-medium text-sb-text-secondary hover:bg-sb-canvas hover:text-sb-text',
+                      )}
+                    >
+                      <Icon aria-hidden className="size-[18px] shrink-0" />
+                      <span className="truncate">{route.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
 
-          return (
-            <Link
-              key={route.href}
-              href={route.href}
-              className={cn(
-                'group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                isActive 
-                  ? 'bg-[#EBF3FF] text-[#2F80ED] font-semibold shadow-xs' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-[#F8FAFD]'
-              )}
-            >
-              <Icon className={cn(
-                'h-4 w-4 transition-colors',
-                isActive ? 'text-[#2F80ED]' : 'text-slate-400 group-hover:text-slate-700'
-              )} />
-              <span className="truncate">{route.label}</span>
-              {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#2F80ED]"></div>
-              )}
-            </Link>
-          );
-        })}
+      {/* Theme switch lives in the header from 640px up; the drawer carries it on phones. */}
+      <div className="flex items-center justify-between border-t border-sb-border px-5 py-2.5 sm:hidden">
+        <span className="text-xs font-medium text-sb-text-secondary">Theme</span>
+        <ThemeToggle />
       </div>
 
-      {/* Pinned Bottom Settings & Logout */}
-      <div className="p-3 border-t border-[#F0F4FA] space-y-1 bg-[#FAFCFF]">
-        <Link
-          href="/settings"
-          className={cn(
-            'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-            pathname === '/settings' 
-              ? 'bg-[#EBF3FF] text-[#2F80ED] font-semibold' 
-              : 'text-slate-500 hover:text-slate-900 hover:bg-white'
-          )}
-        >
-          <Settings className="h-4 w-4 text-slate-400" />
-          <span>Settings</span>
-        </Link>
+      {/* Identity + sign out */}
+      <div className="flex items-center gap-3 border-t border-sb-border px-4 py-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sb-primary-subtle text-xs font-semibold text-sb-on-primary-subtle">
+          {displayName.slice(0, 2).toUpperCase()}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="truncate text-sm font-semibold text-sb-text">{displayName}</span>
+          <span className="text-xs text-sb-text-secondary">
+            {admin.role === 'admin' ? 'Administrator' : 'Super Administrator'}
+          </span>
+        </span>
         <button
+          type="button"
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50/70 transition-all duration-150 text-left"
+          aria-label="Sign out"
+          title="Sign out"
+          className="sb-focus flex size-9 items-center justify-center rounded-sb-control text-sb-text-secondary transition-colors hover:bg-sb-error-subtle hover:text-sb-error"
         >
-          <LogOut className="h-4 w-4 text-red-400" />
-          <span>Sign Out</span>
+          <LogOut aria-hidden className="size-[18px] rtl:rotate-180" />
         </button>
       </div>
     </aside>

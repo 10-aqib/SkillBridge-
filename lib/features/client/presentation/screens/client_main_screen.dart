@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/chat/data/datasources/chat_remote_datasource.dart';
 
 /// Guild Modernist Client Bottom Navigation (4 Tabs)
 class ClientMainScreen extends ConsumerWidget {
@@ -22,6 +23,8 @@ class ClientMainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Conversations with unread messages (kept by the server).
+    final unreadChats = ref.watch(unreadChatsCountProvider);
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
@@ -47,13 +50,14 @@ class ClientMainScreen extends ConsumerWidget {
               context,
               icon: Icons.work_outline_rounded,
               selectedIcon: Icons.work_rounded,
-              label: 'My Jobs',
+              label: 'Bookings',
             ),
             _buildNavDestination(
               context,
               icon: Icons.chat_bubble_outline_rounded,
               selectedIcon: Icons.chat_bubble_rounded,
-              label: 'Chats',
+              label: 'Messages',
+              badge: unreadChats,
             ),
             _buildNavDestination(
               context,
@@ -72,10 +76,12 @@ class ClientMainScreen extends ConsumerWidget {
     required IconData icon,
     required IconData selectedIcon,
     required String label,
+    int badge = 0,
   }) {
+    Widget withBadge(Widget child) => Badge(isLabelVisible: badge > 0, label: Text('$badge'), child: child);
     return NavigationDestination(
-      icon: Icon(icon, color: context.mutedColor),
-      selectedIcon: Icon(selectedIcon, color: AppColors.primary),
+      icon: withBadge(Icon(icon, color: context.mutedColor)),
+      selectedIcon: withBadge(Icon(selectedIcon, color: AppColors.primary)),
       label: label,
     );
   }

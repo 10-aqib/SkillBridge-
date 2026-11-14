@@ -60,7 +60,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(user);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -84,7 +84,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(user);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -94,7 +94,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> loginWithGoogle({required String role}) async {
+  Future<Either<Failure, UserEntity>> loginWithGoogle({String? role}) async {
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
@@ -102,7 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remoteDataSource.loginWithGoogle(role: role);
       return Right(user);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -117,7 +117,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _remoteDataSource.signOut();
       return const Right(null);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } catch (e) {
       Logger.e('signOut error', e);
       return Left(ServerFailure('Sign out failed.'));
@@ -135,7 +135,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _remoteDataSource.sendPasswordResetEmail(email: email);
       return const Right(null);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } catch (e) {
       Logger.e('sendPasswordResetEmail error', e);
       return Left(ServerFailure('Failed to send reset email. Please try again.'));
@@ -154,7 +154,7 @@ class AuthRepositoryImpl implements AuthRepository {
           await _remoteDataSource.sendPhoneOtp(phoneNumber: phoneNumber);
       return Right(verificationId);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } catch (e) {
       Logger.e('sendPhoneOtp error', e);
       return Left(ServerFailure('Failed to send OTP. Please try again.'));
@@ -176,7 +176,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return const Right(null);
     } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+      return Left(AuthFailure(e.message, e.code));
     } catch (e) {
       Logger.e('verifyPhoneOtp error', e);
       return Left(AuthFailure('OTP verification failed. Please try again.'));
@@ -234,6 +234,62 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       Logger.e('updateUserProfile error', e);
       return Left(ServerFailure('Failed to update profile.'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> completeProfile({
+    required String role,
+    String? displayName,
+    String? phoneNumber,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+    try {
+      final user = await _remoteDataSource.completeProfile(
+        role: role,
+        displayName: displayName,
+        phoneNumber: phoneNumber,
+      );
+      return Right(user);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message, e.code));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      Logger.e('completeProfile error', e);
+      return const Left(ServerFailure('Could not save your profile. Please try again.'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> sendEmailVerification() async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+    try {
+      await _remoteDataSource.sendEmailVerification();
+      return const Right(null);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message, e.code));
+    } catch (e) {
+      Logger.e('sendEmailVerification error', e);
+      return const Left(ServerFailure('Could not send the verification email.'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> refreshEmailVerification() async {
+    try {
+      return Right(await _remoteDataSource.refreshEmailVerification());
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message, e.code));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      Logger.e('refreshEmailVerification error', e);
+      return const Left(ServerFailure('Could not check verification status.'));
     }
   }
 }

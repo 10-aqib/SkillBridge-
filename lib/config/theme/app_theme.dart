@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
@@ -15,6 +16,7 @@ class AppTheme {
         foregroundColor: AppColors.onSurface,
         elevation: 0,
         centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         titleTextStyle: AppTextStyles.heading2.copyWith(
           color: AppColors.onSurface,
         ),
@@ -108,6 +110,7 @@ class AppTheme {
         foregroundColor: AppColors.darkText,
         elevation: 0,
         centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: AppTextStyles.heading2.copyWith(
           color: AppColors.darkText,
         ),

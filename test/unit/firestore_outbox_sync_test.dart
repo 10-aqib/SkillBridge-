@@ -25,25 +25,30 @@ void main() {
       }
     });
 
-    test('syncPendingItems flushes queued outbox mutations', () async {
-      await OfflineOutboxService.clear();
-      await OfflineOutboxService.enqueue(
-        type: 'POST_JOB',
-        payload: {'title': 'Fix AC', 'budget': 3500},
-      );
-      await OfflineOutboxService.enqueue(
-        type: 'SEND_MESSAGE',
-        payload: {'text': 'Salam Ustad'},
-      );
+    test(
+      'syncPendingItems keeps actions until Firestore acknowledges them',
+      () async {
+        await OfflineOutboxService.clear();
+        await OfflineOutboxService.enqueue(
+          type: 'POST_JOB',
+          payload: {'title': 'Fix AC', 'budget': 3500},
+        );
+        await OfflineOutboxService.enqueue(
+          type: 'SEND_MESSAGE',
+          payload: {'text': 'Salam Ustad'},
+        );
 
-      expect(OfflineOutboxService.pendingCount(), equals(2));
+        expect(OfflineOutboxService.pendingCount(), equals(2));
 
-      final syncEngine = FirestoreOutboxSyncEngine();
-      final count = await syncEngine.syncPendingItems();
+        final syncEngine = FirestoreOutboxSyncEngine();
+        final count = await syncEngine.syncPendingItems();
 
-      expect(count, equals(2));
-      expect(OfflineOutboxService.pendingCount(), equals(0));
-    });
+        // There is no initialized Firebase app in this test, so writes cannot be
+        // acknowledged. A failed sync must leave both queued actions intact.
+        expect(count, equals(0));
+        expect(OfflineOutboxService.pendingCount(), equals(2));
+      },
+    );
   });
 
   group('AppNotificationService', () {

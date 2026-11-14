@@ -1,102 +1,209 @@
 import 'dart:convert';
-import 'package:hive_flutter/hive_flutter.dart';
 
-/// Represents a queued offline mutation waiting to be synced to cloud servers.
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
+
 class OutboxItem {
   final String id;
   final String type;
   final Map<String, dynamic> payload;
   final DateTime createdAt;
+  final String? idempotencyKey;
+  final int attemptCount;
+  final DateTime? nextAttemptAt;
+  final String? lastError;
 
   OutboxItem({
     required this.id,
     required this.type,
     required this.payload,
     required this.createdAt,
+    this.idempotencyKey,
+    this.attemptCount = 0,
+    this.nextAttemptAt,
+    this.lastError,
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'payload': payload,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'type': type,
+    'payload': _encodeFirestoreValue(payload),
+    'createdAt': createdAt.toIso8601String(),
+    if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
+    'attemptCount': attemptCount,
+    if (nextAttemptAt != null)
+      'nextAttemptAt': nextAttemptAt!.toIso8601String(),
+    if (lastError != null) 'lastError': lastError,
+  };
 
   factory OutboxItem.fromJson(Map<String, dynamic> json) => OutboxItem(
-        id: json['id'] as String,
-        type: json['type'] as String,
-        payload: json['payload'] as Map<String, dynamic>,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-      );
+    id: json['id'] as String,
+    type: json['type'] as String,
+    payload: Map<String, dynamic>.from(
+      _decodeFirestoreValue(json['payload']) as Map,
+    ),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    idempotencyKey: json['idempotencyKey'] as String?,
+    attemptCount: json['attemptCount'] as int? ?? 0,
+    nextAttemptAt: json['nextAttemptAt'] is String
+        ? DateTime.tryParse(json['nextAttemptAt'] as String)
+        : null,
+    lastError: json['lastError'] as String?,
+  );
 }
 
-/// Offline-first Hive Outbox queue for SkillBridge Pakistani marketplace.
-/// Ensures reliable execution of chat messages, bookings, and reviews even during cellular data drops.
+/// Persistent outbox for writes that cannot be committed while offline.
 class OfflineOutboxService {
   static const String _boxName = 'skillbridge_offline_outbox';
-  static bool _isInitialized = false;
+  static const Uuid _uuid = Uuid();
 
-  /// Initialize Hive outbox box.
+  /// Opens the outbox after the app's HiveService has initialized Hive.
   static Future<void> init() async {
-    if (_isInitialized) return;
-    await Hive.initFlutter();
-    await Hive.openBox<String>(_boxName);
-    _isInitialized = true;
+    if (!Hive.isBoxOpen(_boxName)) {
+      await Hive.openBox<String>(_boxName);
+    }
   }
 
-  /// Add a pending action to the offline queue.
-  static Future<void> enqueue({
+  /// Stores an action. A repeated idempotency key returns the existing item.
+  static Future<String> enqueue({
     required String type,
     required Map<String, dynamic> payload,
+    String? idempotencyKey,
   }) async {
-    if (!Hive.isBoxOpen(_boxName)) return;
+    if (!Hive.isBoxOpen(_boxName)) {
+      throw StateError('Offline outbox has not been initialized.');
+    }
     final box = Hive.box<String>(_boxName);
+    if (idempotencyKey != null) {
+      for (final item in getPendingItems()) {
+        if (item.idempotencyKey == idempotencyKey) return item.id;
+      }
+    }
+
+    final id = _uuid.v4();
     final item = OutboxItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: id,
       type: type,
       payload: payload,
       createdAt: DateTime.now(),
+      idempotencyKey: idempotencyKey,
     );
-    await box.put(item.id, jsonEncode(item.toJson()));
+    await box.put(id, jsonEncode(item.toJson()));
+    return id;
   }
 
-  /// Return the number of pending actions in the queue.
   static int pendingCount() {
     if (!Hive.isBoxOpen(_boxName)) return 0;
-    final box = Hive.box<String>(_boxName);
-    return box.length;
+    return Hive.box<String>(_boxName).length;
   }
 
-  /// Get all queued pending items.
+  static Stream<int> watchPendingCount() async* {
+    if (!Hive.isBoxOpen(_boxName)) {
+      yield 0;
+      return;
+    }
+    final box = Hive.box<String>(_boxName);
+    yield box.length;
+    yield* box.watch().map((_) => box.length).distinct();
+  }
+
   static List<OutboxItem> getPendingItems() {
     if (!Hive.isBoxOpen(_boxName)) return [];
     final box = Hive.box<String>(_boxName);
     final items = <OutboxItem>[];
     for (final key in box.keys) {
       final raw = box.get(key);
-      if (raw != null) {
-        try {
-          final decoded = jsonDecode(raw) as Map<String, dynamic>;
-          items.add(OutboxItem.fromJson(decoded));
-        } catch (_) {
-          // ignore malformed items
-        }
+      if (raw == null) continue;
+      try {
+        items.add(OutboxItem.fromJson(jsonDecode(raw) as Map<String, dynamic>));
+      } catch (_) {
+        // Keep malformed records in place for inspection instead of discarding them.
       }
     }
     return items;
   }
 
-  /// Clear the entire outbox queue after successful synchronization.
-  static Future<void> clear() async {
+  static Future<void> markAttemptFailed(OutboxItem item, Object error) async {
     if (!Hive.isBoxOpen(_boxName)) return;
-    final box = Hive.box<String>(_boxName);
-    await box.clear();
+    final attempts = item.attemptCount + 1;
+    final exponent = (attempts - 1).clamp(0, 9).toInt();
+    final delaySeconds = (5 * (1 << exponent)).clamp(5, 1800).toInt();
+    final updated = OutboxItem(
+      id: item.id,
+      type: item.type,
+      payload: item.payload,
+      createdAt: item.createdAt,
+      idempotencyKey: item.idempotencyKey,
+      attemptCount: attempts,
+      nextAttemptAt: DateTime.now().add(Duration(seconds: delaySeconds)),
+      lastError: error.toString(),
+    );
+    await Hive.box<String>(_boxName).put(item.id, jsonEncode(updated.toJson()));
   }
 
-  /// Remove a specific item from the queue by ID.
+  static Future<void> clear() async {
+    if (!Hive.isBoxOpen(_boxName)) return;
+    await Hive.box<String>(_boxName).clear();
+  }
+
   static Future<void> remove(String id) async {
     if (!Hive.isBoxOpen(_boxName)) return;
-    final box = Hive.box<String>(_boxName);
-    await box.delete(id);
+    await Hive.box<String>(_boxName).delete(id);
+  }
+}
+
+dynamic _encodeFirestoreValue(dynamic value) {
+  if (value is Timestamp) {
+    return {
+      '__offlineType': 'timestamp',
+      'value': value.toDate().toIso8601String(),
+    };
+  }
+  if (value is GeoPoint) {
+    return {
+      '__offlineType': 'geoPoint',
+      'latitude': value.latitude,
+      'longitude': value.longitude,
+    };
+  }
+  if (value is FieldValue) {
+    return {'__offlineType': 'serverTimestamp'};
+  }
+  if (value is DateTime) {
+    return {'__offlineType': 'dateTime', 'value': value.toIso8601String()};
+  }
+  if (value is Map) {
+    return value.map(
+      (key, item) => MapEntry(key.toString(), _encodeFirestoreValue(item)),
+    );
+  }
+  if (value is Iterable) {
+    return value.map(_encodeFirestoreValue).toList();
+  }
+  return value;
+}
+
+dynamic _decodeFirestoreValue(dynamic value) {
+  if (value is List) return value.map(_decodeFirestoreValue).toList();
+  if (value is! Map) return value;
+
+  final map = Map<String, dynamic>.from(value);
+  switch (map['__offlineType']) {
+    case 'timestamp':
+    case 'dateTime':
+      final date = DateTime.parse(map['value'] as String);
+      return map['__offlineType'] == 'timestamp'
+          ? Timestamp.fromDate(date)
+          : date;
+    case 'geoPoint':
+      return GeoPoint(
+        (map['latitude'] as num).toDouble(),
+        (map['longitude'] as num).toDouble(),
+      );
+    case 'serverTimestamp':
+      return FieldValue.serverTimestamp();
+    default:
+      return map.map((key, item) => MapEntry(key, _decodeFirestoreValue(item)));
   }
 }

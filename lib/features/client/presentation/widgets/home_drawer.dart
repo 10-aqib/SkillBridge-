@@ -7,13 +7,10 @@ import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
-import 'package:skill_bridge/core/providers/language_provider.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:skill_bridge/core/utils/support_utils.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class HomeDrawer extends ConsumerWidget {
   const HomeDrawer({super.key});
@@ -25,7 +22,6 @@ class HomeDrawer extends ConsumerWidget {
     final email = user?.email ?? '';
     final photoUrl = user?.photoUrl;
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
 
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
@@ -90,51 +86,59 @@ class HomeDrawer extends ConsumerWidget {
               ),
             ),
 
-            // ── Theme Mode Toggle ────────────────────────────────────────────
+            // ── Appearance Selector (Light / Dark / System) ─────────────────
             Padding(
-              padding: const EdgeInsets.all(AppDimensions.md),
-              child: GestureDetector(
-                onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(
-                      isDark ? ThemeMode.light : ThemeMode.dark,
-                    ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: context.borderColor),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isDark
-                            ? Icons.light_mode_rounded
-                            : Icons.dark_mode_outlined,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        isDark ? 'Dark Mode' : 'Light Mode',
-                        style: TextStyle(
-                          color: context.textColor,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.md, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2, bottom: 6),
+                    child: Text(
+                      'Appearance',
+                      style: AppTextStyles.labelStatus.copyWith(
+                          color: context.mutedColor,
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const Spacer(),
-                      Switch.adaptive(
-                        value: isDark,
-                        activeColor: AppColors.primary,
-                        onChanged: (val) {
-                          ref.read(themeModeProvider.notifier).setThemeMode(
-                                val ? ThemeMode.dark : ThemeMode.light,
-                              );
-                        },
-                      ),
-                    ],
+                          letterSpacing: 0.4),
+                    ),
                   ),
-                ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: context.surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: context.borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        _AppearanceOption(
+                          icon: Icons.light_mode_rounded,
+                          label: 'Light',
+                          selected: themeMode == ThemeMode.light,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.light),
+                        ),
+                        _AppearanceOption(
+                          icon: Icons.dark_mode_outlined,
+                          label: 'Dark',
+                          selected: themeMode == ThemeMode.dark,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.dark),
+                        ),
+                        _AppearanceOption(
+                          icon: Icons.brightness_auto_rounded,
+                          label: 'System',
+                          selected: themeMode == ThemeMode.system,
+                          onTap: () => ref
+                              .read(themeModeProvider.notifier)
+                              .setThemeMode(ThemeMode.system),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -165,19 +169,11 @@ class HomeDrawer extends ConsumerWidget {
                     const Divider(indent: 16, endIndent: 16),
                   ],
                   _DrawerTile(
-                    icon: Icons.home_rounded,
-                    title: 'Home',
+                    icon: Icons.settings_outlined,
+                    title: 'Settings',
                     onTap: () {
                       context.pop();
-                      context.go(RouteNames.clientHomePath);
-                    },
-                  ),
-                  _DrawerTile(
-                    icon: Icons.work_outline_rounded,
-                    title: 'My Jobs',
-                    onTap: () {
-                      context.pop();
-                      context.go(RouteNames.clientJobsPath);
+                      context.push(RouteNames.clientSettingsPath);
                     },
                   ),
                   _DrawerTile(
@@ -307,6 +303,68 @@ class _DrawerTile extends StatelessWidget {
       trailing: Icon(Icons.arrow_forward_ios_rounded,
           size: 13, color: context.mutedColor),
       onTap: onTap,
+    );
+  }
+}
+
+/// Three-state appearance toggle chip used inside the drawer.
+class _AppearanceOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _AppearanceOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Semantics(
+        label: '$label appearance mode${selected ? ", selected" : ""}',
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected
+                      ? AppColors.primary
+                      : context.mutedColor,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: AppTextStyles.labelStatus.copyWith(
+                    color: selected
+                        ? AppColors.primary
+                        : context.mutedColor,
+                    fontWeight:
+                        selected ? FontWeight.w700 : FontWeight.w400,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

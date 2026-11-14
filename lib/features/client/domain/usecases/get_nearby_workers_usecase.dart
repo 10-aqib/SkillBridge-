@@ -7,7 +7,7 @@ class GetNearbyWorkersUseCase {
   GetNearbyWorkersUseCase(this._repository);
 
   Stream<List<NearbyWorkerEntity>> call(GeoPointLocation userLocation, {double maxDistanceKm = 5.0}) {
-    return _repository.getWorkersStream().map((users) {
+    return _repository.getNearbyWorkersStream(userLocation.latitude, userLocation.longitude, maxDistanceKm).map((users) {
       final workers = <NearbyWorkerEntity>[];
 
       for (var user in users) {
@@ -23,20 +23,18 @@ class GetNearbyWorkersUseCase {
         
         final distKm = userLocation.distanceTo(workerLoc);
 
-        if (distKm <= maxDistanceKm) {
-          workers.add(
-            NearbyWorkerEntity(
-              workerId: user.uid,
-              name: user.displayName,
-              category: user.workerProfile?.categoryName ?? 'Worker',
-              hourlyRate: user.workerProfile?.hourlyRate ?? 0.0,
-              rating: user.rating,
-              profilePicture: user.photoUrl,
-              location: workerLoc,
-              distanceKm: distKm,
-            ),
-          );
-        }
+        workers.add(
+          NearbyWorkerEntity(
+            workerId: user.uid,
+            name: user.displayName,
+            category: user.workerProfile?.categoryName ?? 'Worker',
+            hourlyRate: user.workerProfile?.hourlyRate ?? 0.0,
+            rating: user.rating,
+            profilePicture: user.photoUrl,
+            location: workerLoc,
+            distanceKm: distKm,
+          ),
+        );
       }
 
       // Sort by distance

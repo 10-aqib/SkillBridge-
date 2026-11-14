@@ -1,7 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/app_router.dart';
+import 'package:skill_bridge/features/notifications/presentation/notification_routes.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 
 /// Handles Firebase Cloud Messaging registration and message routing.
@@ -48,10 +54,12 @@ class PushNotificationService {
       iOS: initSettingsIOS,
     );
     await _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: (response) {
-      if (response.payload != null) {
-        // Handle local notification tap
-        Logger.i('Local Notification tapped: ${response.payload}');
-      }
+      final raw = response.payload;
+      if (raw == null) return;
+      try {
+        final data = jsonDecode(raw);
+        if (data is Map<String, dynamic>) _routeFromPayload(data);
+      } catch (_) {}
     });
 
     await _localNotifications
@@ -99,7 +107,7 @@ class PushNotificationService {
               priority: Priority.high,
             ),
           ),
-          payload: message.data.toString(),
+          payload: jsonEncode(message.data),
         );
       }
     });
@@ -118,11 +126,18 @@ class PushNotificationService {
     }
   }
 
-  /// Override this hook to integrate with your GoRouter navigation.
-  void _routeFromPayload(Map<String, dynamic> data) {
-    // Example payload keys: { "screen": "contract", "id": "abc123" }
-    // Navigation is deferred to the app's router once the widget tree is ready.
-    Logger.i('Notification payload: $data');
+  /// Opens the conversation or contract a tapped notification is about
+  /// (payload {chatId} or {contractId}, set by the trusted functions). When
+  /// the app was just launched, waits briefly for the router.
+  void _routeFromPayload(Map<String, dynamic> data, [int attempt = 0]) {
+    final route = notificationRouteFor(data);
+    if (route == null) return;
+    final context = navigatorKey.currentContext;
+    if (context == null) {
+      if (attempt < 20) Timer(const Duration(milliseconds: 300), () => _routeFromPayload(data, attempt + 1));
+      return;
+    }
+    GoRouter.of(context).push(route);
   }
 
   // ── Topic helpers ──

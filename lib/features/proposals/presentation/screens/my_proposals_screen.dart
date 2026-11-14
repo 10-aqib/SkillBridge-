@@ -1,154 +1,124 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/enums/proposal_status.dart';
-import 'package:skill_bridge/features/proposals/presentation/providers/proposal_providers.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
-import 'package:skill_bridge/shared/widgets/app_error_widget.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/client/presentation/providers/worker_profile_provider.dart';
+import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
+import 'package:skill_bridge/features/proposals/data/datasources/proposal_remote_datasource.dart';
+import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
+import 'package:skill_bridge/features/proposals/presentation/providers/proposal_providers.dart';
+import 'package:skill_bridge/features/proposals/presentation/widgets/proposal_ui.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist My Proposals Screen
-class MyProposalsScreen extends ConsumerWidget {
-  MyProposalsScreen({super.key});
+enum MyProposalsTab { pending, accepted, notSelected, withdrawn }
+
+MyProposalsTab myProposalsTabOf(ProposalStatus s) => switch (s) {
+      ProposalStatus.pending => MyProposalsTab.pending,
+      ProposalStatus.accepted => MyProposalsTab.accepted,
+      ProposalStatus.rejected => MyProposalsTab.notSelected,
+      ProposalStatus.withdrawn => MyProposalsTab.withdrawn,
+    };
+
+/// The signed-in worker's proposals, grouped by status.
+class MyProposalsScreen extends ConsumerStatefulWidget {
+  const MyProposalsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final proposalsAsync = ref.watch(workerProposalsStreamProvider);
+  ConsumerState<MyProposalsScreen> createState() => _MyProposalsScreenState();
+}
+
+class _MyProposalsScreenState extends ConsumerState<MyProposalsScreen> {
+  MyProposalsTab _tab = MyProposalsTab.pending;
+
+  // The first load opens on a tab that has something in it.
+  bool _tabChosen = false;
+
+  String _tabLabel(MyProposalsTab t, int n) {
+    final l = context.l10n;
+    final name = switch (t) {
+      MyProposalsTab.pending => l.proposalStatusPending,
+      MyProposalsTab.accepted => l.proposalStatusAccepted,
+      MyProposalsTab.notSelected => l.proposalTabNotSelected,
+      MyProposalsTab.withdrawn => l.proposalStatusWithdrawn,
+    };
+    return '$name · $n';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final edge = SbLayout.edge(context);
+    final proposals = ref.watch(workerProposalsStreamProvider);
 
     return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: context.surfaceColor,
-        elevation: 0,
-        title: Text(
-          AppL10n.select(context, en: 'My Proposals', ur: 'میری تجاویز'),
-          style: AppTextStyles.heading3.copyWith(color: context.textColor),
+      appBar: AppBar(title: Text(l.myProposalsTitle)),
+      body: proposals.when(
+        loading: () => ListView(
+          padding: EdgeInsets.all(edge),
+          children: const [JobCardSkeleton(), SizedBox(height: SbSpace.s3), JobCardSkeleton()],
         ),
-      ),
-      body: proposalsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        error: (_, _) => SbStateView(
+          kind: SbStateKind.error,
+          title: l.myProposalsLoadError,
+          message: l.errNetwork,
+          actionLabel: l.tryAgain,
+          onAction: () => ref.invalidate(workerProposalsStreamProvider),
         ),
-        error: (err, stack) => AppErrorWidget(
-          errorMessage: err.toString(),
-          onRetry: () => ref.invalidate(workerProposalsStreamProvider),
-        ),
-        data: (proposals) {
-          if (proposals.isEmpty) {
-            return AppEmptyState(
-              title: AppL10n.select(context, en: 'No Proposals Yet', ur: 'کوئی تجویز نہیں'),
-              description:
-                  'Browse open jobs and submit proposals to get hired.',
-              icon: Icons.description_outlined,
+        data: (all) {
+          if (all.isEmpty) {
+            return SbStateView(
+              kind: SbStateKind.empty,
+              title: l.myProposalsEmptyTitle,
+              message: l.myProposalsEmptyBody,
+              actionLabel: l.myProposalsFindWork,
+              onAction: () => context.go(RouteNames.workerJobFeedPath),
             );
           }
-
-          return ListView.builder(
-            padding: EdgeInsets.all(AppDimensions.lg),
-            itemCount: proposals.length,
-            itemBuilder: (context, index) {
-              final p = proposals[index];
-              return Padding(
-                padding: EdgeInsets.only(bottom: AppDimensions.md),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                  onTap: () => context.push(
-                    RouteNames.proposalDetailsPath,
-                    extra: p,
-                  ),
-                  child: AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    shadow: AppShadows.level1,
-                    leftAccentColor: p.status == ProposalStatus.accepted
-                        ? AppColors.successGreen
-                        : (p.status == ProposalStatus.pending
-                            ? AppColors.primary
-                            : null),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                p.jobTitle,
-                                style: AppTextStyles.heading3.copyWith(
-                                  color: context.textColor,
-                                ),
-                              ),
+          final counts = {for (final t in MyProposalsTab.values) t: all.where((p) => myProposalsTabOf(p.status) == t).length};
+          if (!_tabChosen) {
+            _tabChosen = true;
+            if (counts[_tab] == 0) _tab = MyProposalsTab.values.firstWhere((t) => counts[t]! > 0);
+          }
+          final shown = all.where((p) => myProposalsTabOf(p.status) == _tab).toList();
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(workerProposalsStreamProvider),
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s8),
+              children: [
+                SbReadableWidth(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: [
+                        for (final t in MyProposalsTab.values)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: SbSpace.s2),
+                            child: ChoiceChip(
+                              label: Text(_tabLabel(t, counts[t]!)),
+                              selected: _tab == t,
+                              onSelected: (_) => setState(() => _tab = t),
                             ),
-                            const SizedBox(width: 8),
-                            _ProposalStatusBadge(status: p.status),
-                          ],
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          p.coverLetter,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.bodyPrimary.copyWith(
-                            color: context.mutedColor,
                           ),
-                        ),
-                        SizedBox(height: AppDimensions.md),
-                        Divider(
-                            height: 1, color: context.borderColor),
-                        const SizedBox(height: AppDimensions.md),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppL10n.select(context, en: 'Proposed Rate', ur: 'مجوزہ ریٹ'),
-                                  style: AppTextStyles.labelCaption.copyWith(
-                                    color: context.mutedColor,
-                                  ),
-                                ),
-                                Text(
-                                  'Rs. ${p.proposedRate.toInt()} / ${p.rateType}',
-                                  style: AppTextStyles.dataNumeric.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.blueTint,
-                                borderRadius: BorderRadius.circular(
-                                    AppDimensions.radiusSm),
-                              ),
-                              child: Text(
-                                p.estimatedDuration,
-                                style: AppTextStyles.labelCaption.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ]),
                     ),
-                  ),
+                    const SizedBox(height: SbSpace.s4),
+                    if (shown.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: SbSpace.s8),
+                        child: Text(l.myProposalsTabEmpty, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+                      ),
+                    for (final p in shown) ...[
+                      MyProposalCard(proposal: p),
+                      const SizedBox(height: SbSpace.s3),
+                    ],
+                  ]),
                 ),
-              ).animate().fade(delay: (70 * index).ms, duration: 400.ms);
-            },
+              ],
+            ),
           );
         },
       ),
@@ -156,33 +126,122 @@ class MyProposalsScreen extends ConsumerWidget {
   }
 }
 
-class _ProposalStatusBadge extends StatelessWidget {
-  final ProposalStatus status;
-  const _ProposalStatusBadge({required this.status});
+/// One proposal in the worker's list: the job, the client's public name and
+/// photo, the price, when it was sent, and where both the proposal and the job
+/// stand now.
+class MyProposalCard extends ConsumerStatefulWidget {
+  const MyProposalCard({super.key, required this.proposal});
+  final ProposalEntity proposal;
+
+  @override
+  ConsumerState<MyProposalCard> createState() => _MyProposalCardState();
+}
+
+class _MyProposalCardState extends ConsumerState<MyProposalCard> {
+  bool _busy = false;
+
+  ProposalEntity get p => widget.proposal;
+
+  Future<void> _withdraw() async {
+    final l = context.l10n;
+    final ok = await showSbConfirmSheet(
+      context,
+      title: l.proposalWithdrawTitle,
+      message: l.proposalWithdrawBody,
+      confirmLabel: l.proposalWithdraw,
+      cancelLabel: l.cancel,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    // The card leaves this tab once withdrawn, so keep the messenger to confirm.
+    final messenger = ScaffoldMessenger.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    void say(String text, {bool error = false}) => messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(text),
+        backgroundColor: error ? scheme.error : scheme.primary,
+        behavior: SnackBarBehavior.floating,
+      ));
+    setState(() => _busy = true);
+    try {
+      await ref.read(proposalRemoteDataSourceProvider).withdrawProposal(p.id);
+      say(l.proposalWithdrawn);
+    } catch (e) {
+      say(proposalFailureOf(e) == ProposalFailure.network ? l.errNetwork : l.proposalActionFailed, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      ProposalStatus.pending => (AppL10n.select(context, en: 'Pending', ur: 'زیر التوا'), AppColors.warningOrange),
-      ProposalStatus.accepted => (AppL10n.select(context, en: 'Accepted', ur: 'منظور'), AppColors.successGreen),
-      ProposalStatus.rejected => (AppL10n.select(context, en: 'Rejected', ur: 'مسترد'), AppColors.errorRed),
-      ProposalStatus.withdrawn => (AppL10n.select(context, en: 'Withdrawn', ur: 'واپس'), context.mutedColor),
-    };
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final client = ref.watch(workerProfileProvider(p.clientId)).value;
+    final jobAsync = ref.watch(jobByIdProvider(p.jobId));
+    final job = jobAsync.hasError ? null : jobAsync.value;
+    final clientName = (client?.formattedDisplayName ?? job?.clientName ?? '').trim();
+    final date = DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag());
+    void open() => context.push(RouteNames.proposalDetailsLocation(p.id), extra: p);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.labelCaption.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+    return Material(
+      color: c.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SbRadius.card), side: BorderSide(color: c.border)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: open,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(SbSpace.s4, SbSpace.s4, SbSpace.s4, SbSpace.s2),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Wrap(spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+              ProposalStatusBadge(proposal: p),
+              // Once a job is no longer public only its owner and the hired
+              // worker can read it; others see the status copied to the proposal.
+              if (job != null || p.jobStatus != null) JobStatusBadge(status: p.jobStatusOr(job?.status)),
+            ]),
+            const SizedBox(height: SbSpace.s2),
+            Text(p.jobTitle, style: t.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: SbSpace.s2),
+            if (clientName.isNotEmpty)
+              Row(children: [
+                SbAvatar(name: clientName, imageUrl: client?.photoUrl ?? job?.clientPhotoUrl, size: 28),
+                const SizedBox(width: SbSpace.s2),
+                Expanded(
+                  child: Text(
+                    [clientName, if ((client?.city ?? job?.city ?? '').isNotEmpty) client?.city ?? job!.city].join(' · '),
+                    style: t.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ]),
+            const SizedBox(height: SbSpace.s2),
+            Row(children: [
+              Expanded(child: Text(proposalPriceLabel(l, p), style: SbTypography.numeric(t.titleSmall!))),
+              Text(l.proposalSentOn(date.format(p.createdAt)), style: t.bodySmall),
+            ]),
+            if (p.closedBecauseFilled) ...[
+              const SizedBox(height: SbSpace.s2),
+              Text(l.proposalFilledNotice, style: t.bodySmall!.copyWith(color: c.textSecondary)),
+            ],
+            const Divider(height: SbSpace.s5),
+            Wrap(spacing: SbSpace.s1, alignment: WrapAlignment.end, children: [
+              if (p.status == ProposalStatus.pending)
+                TextButton.icon(
+                  icon: Icon(Icons.undo_rounded, size: 18, color: c.error),
+                  label: Text(l.proposalWithdraw, style: TextStyle(color: c.error)),
+                  onPressed: _busy ? null : _withdraw,
+                ),
+              if (job != null)
+                TextButton(
+                  onPressed: () => context.push(RouteNames.jobDetailsLocation(p.jobId), extra: job),
+                  child: Text(l.proposalViewJob),
+                ),
+              TextButton(onPressed: open, child: Text(l.proposalView)),
+            ]),
+          ]),
         ),
       ),
     );

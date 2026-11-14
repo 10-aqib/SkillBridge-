@@ -1,414 +1,267 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
-import 'package:skill_bridge/features/reviews/data/datasources/review_remote_datasource.dart';
-import 'package:skill_bridge/core/utils/formatters.dart';
-import 'package:skill_bridge/shared/widgets/app_avatar.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:skill_bridge/shared/widgets/app_chip.dart';
-import 'package:skill_bridge/shared/widgets/rating_badge.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/auth/data/models/user_model.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
+import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
+import 'package:skill_bridge/features/client/presentation/screens/worker_profile_detail_screen.dart' show workerRateLabel;
+import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
+import 'package:skill_bridge/shared/widgets/profile/profile_sections.dart';
+import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
 
-/// Guild Modernist Worker Profile Screen (b2_worker_profile)
+/// What makes a worker profile convincing to clients, in the order to fix it.
+class ProfileCompleteness {
+  ProfileCompleteness(this.user);
+  final UserEntity user;
+
+  List<(bool done, String key)> get items {
+    final p = user.workerProfile;
+    return [
+      ((user.photoUrl ?? '').isNotEmpty, 'photo'),
+      (p != null && p.headline.isNotEmpty && p.bio.isNotEmpty && p.categoryId.isNotEmpty, 'work'),
+      (p != null && p.skills.isNotEmpty, 'skills'),
+      (p != null && (p.hourlyRate > 0 || p.dailyRate > 0), 'rate'),
+      (p != null && (p.city.isNotEmpty || p.location != null), 'area'),
+      (p != null && p.portfolioImages.isNotEmpty, 'photos'),
+      (p != null && (p.isVerified || p.verificationStatus == 'pending'), 'verify'),
+    ];
+  }
+
+  double get ratio => items.where((i) => i.$1).length / items.length;
+  String? get nextKey => items.where((i) => !i.$1).map((i) => i.$2).firstOrNull;
+}
+
 class WorkerProfileScreen extends ConsumerWidget {
-  WorkerProfileScreen({super.key});
+  const WorkerProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
     final user = ref.watch(currentUserProvider);
+    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final p = user.workerProfile;
+    final edge = SbLayout.edge(context);
+    void editStep(int step) => context.push('${RouteNames.workerProfileSetupPath}?step=$step');
 
     return Scaffold(
-      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: context.surfaceColor,
-        elevation: 0,
-        title: Text(
-          'Worker Profile',
-          style: AppTextStyles.heading3.copyWith(
-            color: context.textColor,
-          ),
-        ),
+        title: Text(l.profile),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings_outlined, color: context.textColor),
+            tooltip: l.publicProfilePreview,
+            icon: const Icon(Icons.visibility_outlined),
+            onPressed: () => context.pushNamed(RouteNames.publicWorkerProfileName, pathParameters: {'workerId': user.uid}),
+          ),
+          IconButton(
+            tooltip: l.settings,
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push(RouteNames.workerSettingsPath),
           ),
         ],
       ),
-      body: user == null
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: AppDimensions.sm),
-                  AppAvatar(
-                    name: user.formattedDisplayName,
-                    imageUrl: user.photoUrl,
-                    size: 100,
-                  ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-                  SizedBox(height: AppDimensions.md),
-                  Text(
-                    user.formattedDisplayName,
-                    style: AppTextStyles.heading2.copyWith(
-                      color: context.textColor,
-                    ),
-                  ).animate().fade(delay: 100.ms, duration: 400.ms),
-                  const SizedBox(height: 4),
-                  Text(
-                    (user.workerProfile?.headline != null &&
-                            user.workerProfile!.headline.isNotEmpty)
-                        ? user.workerProfile!.headline
-                        : ((user.workerProfile?.categoryName != null &&
-                                user.workerProfile!.categoryName.isNotEmpty)
-                            ? user.workerProfile!.categoryName
-                            : 'Service Provider'),
-                    style: AppTextStyles.bodyStrong.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ).animate().fade(delay: 150.ms, duration: 400.ms),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${user.city ?? user.workerProfile?.city ?? 'Islamabad, Pakistan'} • ',
-                        style: AppTextStyles.bodyPrimary.copyWith(
-                          color: context.mutedColor,
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(edge, SbSpace.s2, edge, SbSpace.s8),
+        children: [
+          SbReadableWidth(
+            maxWidth: 680,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Center(child: ProfilePhotoPicker(user: user, size: 104)),
+              const SizedBox(height: SbSpace.s3),
+              Text(user.displayName.isEmpty ? l.profileNoName : user.formattedDisplayName,
+                  style: t.headlineSmall, textAlign: TextAlign.center),
+              if (p != null && p.headline.isNotEmpty)
+                Text(p.headline, style: t.bodyLarge!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
+              const SizedBox(height: SbSpace.s3),
+              Wrap(alignment: WrapAlignment.center, spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+                if (p?.isVerified == true) SbStatusBadge.verified(label: l.verificationBadge)
+                else if (p?.verificationStatus == 'pending') SbStatusBadge.pending(label: l.verificationPendingShort),
+              ]),
+              const SizedBox(height: SbSpace.s4),
+              _CompletenessCard(user: user, onFix: editStep),
+              const SizedBox(height: SbSpace.s4),
+              if (p != null) ...[
+                _AvailabilityCard(user: user),
+                const SizedBox(height: SbSpace.s4),
+              ],
+              EmailVerificationCard(user: user),
+              if (!user.isEmailVerified) const SizedBox(height: SbSpace.s4),
+              ProfileSection(
+                title: l.workerSetupStepWork,
+                actionLabel: l.edit,
+                onAction: () => editStep(2),
+                child: p == null
+                    ? Text(l.workerProfileNotStarted, style: t.bodyMedium!.copyWith(color: c.textSecondary))
+                    : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        ProfileInfoRow(icon: Icons.work_outline_rounded, label: l.category, value: p.categoryName),
+                        ProfileInfoRow(
+                          icon: Icons.timeline_outlined,
+                          label: l.experience,
+                          value: p.experience > 0 ? l.yearsExperience(p.experience) : null,
                         ),
-                      ),
-                      RatingBadge(
-                        rating: user.rating,
-                        reviewCount: user.totalReviews,
-                      ),
-                    ],
-                  ).animate().fade(delay: 200.ms, duration: 400.ms),
-                  const SizedBox(height: 10),
-                  if (user.isCnicVerified) ...[
-                    GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Row(
-                            children: [
-                              const Icon(Icons.verified_rounded, color: Color(0xFF006622)),
-                              const SizedBox(width: 8),
-                              const Text('NADRA Verified'),
-                            ],
+                        if (p.skills.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: SbSpace.s2),
+                            child: Wrap(spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+                              for (final s in p.skills) Chip(label: Text(s)),
+                            ]),
                           ),
-                          content: const Text(
-                            'This worker\'s National Identity Card (CNIC) and live biometric selfie have been verified against NADRA records for in-home safety and trust.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006622).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF006622), width: 1.2),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF006622)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'NADRA CNIC Verified',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: const Color(0xFF006622),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ).animate().fade(delay: 220.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.xl),
-                  ],
-
-                  // ── Hourly Rate Card (Navy Theme + JetBrains Mono) ────────
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.navy,
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusLg),
-                      boxShadow: AppShadows.level2,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Hourly Rate',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: context.surfaceColor,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatPkr((user.workerProfile?.hourlyRate != null && user.workerProfile!.hourlyRate > 0) ? user.workerProfile!.hourlyRate : 1500)}/hr',
-                          style: AppTextStyles.dataNumericLg.copyWith(
-                            color: AppColors.amber,
-                            fontSize: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 250.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  if (user.workerProfile?.bio != null &&
-                      user.workerProfile!.bio.isNotEmpty) ...[
-                    AppCard(
-                      padding: const EdgeInsets.all(AppDimensions.md),
-                      shadow: AppShadows.level2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'About Me',
-                            style: AppTextStyles.heading3.copyWith(
-                              color: context.textColor,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.sm),
-                          Text(
-                            user.workerProfile!.bio,
-                            style: AppTextStyles.bodyPrimary.copyWith(
-                              color: context.textColor,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fade(delay: 275.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                    const SizedBox(height: AppDimensions.lg),
-                  ],
-
-                  // ── Skills Card ───────────────────────────────────────────
-                  AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    shadow: AppShadows.level2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Skills & Expertise',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.md),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: (user.workerProfile?.skills != null &&
-                                  user.workerProfile!.skills.isNotEmpty)
-                              ? user.workerProfile!.skills
-                                  .map((skill) =>
-                                      AppChip(label: skill, isSelected: true))
-                                  .toList()
-                              : [
-                                  AppChip(
-                                    label: user.workerProfile?.categoryName
-                                                .isNotEmpty ==
-                                            true
-                                        ? user.workerProfile!.categoryName
-                                        : 'General Maintenance',
-                                    isSelected: true,
-                                  ),
-                                ],
-                        ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 300.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // ── Details Card (Languages & Response Time) ───────────────
-                  AppCard(
-                    padding: EdgeInsets.all(AppDimensions.md),
-                    shadow: AppShadows.level2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Additional Details',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.md),
-                        if (user.workerProfile?.languages != null &&
-                            user.workerProfile!.languages.isNotEmpty)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.language_rounded,
-                                  color: AppColors.primary, size: 20),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Languages: ${user.workerProfile!.languages.join(', ')}',
-                                  style: AppTextStyles.bodyPrimary.copyWith(
-                                    color: context.textColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 12),
-                        if (user.workerProfile?.responseTime != null && user.workerProfile!.responseTime!.isNotEmpty)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.timer_outlined,
-                                  color: AppColors.primary, size: 20),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Response Time: ${user.workerProfile!.responseTime}',
-                                  style: AppTextStyles.bodyPrimary.copyWith(
-                                    color: context.textColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.timer_outlined,
-                                  color: context.mutedColor, size: 20),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Response Time: Not available yet',
-                                  style: AppTextStyles.bodyPrimary.copyWith(
-                                    color: context.mutedColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 310.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // ── Reviews Card ──────────────────────────────────────────
-                  AppCard(
-                    padding: EdgeInsets.all(AppDimensions.md),
-                    shadow: AppShadows.level2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Recent Reviews',
-                          style: AppTextStyles.heading3.copyWith(
-                            color: context.textColor,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.md),
-                        ref.watch(userReviewsStreamProvider(user.uid)).when(
-                              data: (reviews) {
-                                if (reviews.isEmpty) {
-                                  return Text(
-                                    'No reviews yet',
-                                    style: AppTextStyles.bodyPrimary.copyWith(
-                                      color: context.mutedColor,
-                                    ),
-                                  );
-                                }
-                                return ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: reviews.length,
-                                  separatorBuilder: (context, index) =>
-                                      const Divider(height: 24),
-                                  itemBuilder: (context, index) {
-                                    final r = reviews[index];
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              r.reviewerName,
-                                              style: AppTextStyles.bodyStrong
-                                                  .copyWith(
-                                                color: context.textColor,
-                                              ),
-                                            ),
-                                            Text(
-                                              '★ ${r.rating.toStringAsFixed(1)}',
-                                              style: AppTextStyles.bodyStrong
-                                                  .copyWith(
-                                                color: AppColors.amber,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          r.comment,
-                                          style: AppTextStyles.bodyPrimary
-                                              .copyWith(
-                                            color: context.mutedColor,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              loading: () => const Center(
-                                  child: CircularProgressIndicator()),
-                              error: (e, _) => Text(
-                                'Could not load reviews',
-                                style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 325.ms, duration: 500.ms).slideY(begin: 0.1, end: 0),
-                  SizedBox(height: AppDimensions.space48),
-
-                  // ── Edit Profile Button ───────────────────────────────────
-                  AppButton(
-                    text: 'Edit Worker Profile',
-                    onPressed: () {
-                      context.push(RouteNames.workerProfileSetupPath);
-                    },
-                    width: double.infinity,
-                  ).animate().fade(delay: 350.ms, duration: 500.ms),
-                ],
+                        if (p.bio.isNotEmpty) Text(p.bio, style: t.bodyMedium),
+                      ]),
               ),
-            ),
+              const SizedBox(height: SbSpace.s4),
+              ProfileSection(
+                title: l.workerSetupStepRates,
+                actionLabel: l.edit,
+                onAction: () => editStep(3),
+                child: Column(children: [
+                  ProfileInfoRow(icon: Icons.payments_outlined, label: l.workerProfileRate, value: p == null ? null : workerRateLabel(context, p)),
+                  ProfileInfoRow(
+                    icon: Icons.near_me_outlined,
+                    label: l.publicProfileServiceArea,
+                    value: (p == null || p.city.isEmpty) ? null : l.publicProfileAreaValue(p.city, p.serviceRadius.round()),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: SbSpace.s4),
+              ProfileSection(title: l.workerSetupStepPhotos, child: PortfolioManager(user: user)),
+              const SizedBox(height: SbSpace.s4),
+              ProfileSection(
+                title: l.verificationTitle,
+                actionLabel: p?.isVerified == true ? null : l.verificationOpen,
+                onAction: () => context.push(RouteNames.workerVerificationPath),
+                child: Text(
+                  p?.isVerified == true
+                      ? l.verificationVerifiedBody
+                      : (p?.verificationStatus == 'pending' ? l.verificationPendingBody : l.verificationIntroBody),
+                  style: t.bodyMedium,
+                ),
+              ),
+              const SizedBox(height: SbSpace.s4),
+              ReviewsSection(userId: user.uid),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletenessCard extends StatelessWidget {
+  const _CompletenessCard({required this.user, required this.onFix});
+  final UserEntity user;
+  final void Function(int step) onFix;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final comp = ProfileCompleteness(user);
+    final pct = (comp.ratio * 100).round();
+    final next = comp.nextKey;
+    if (next == null) return const SizedBox.shrink();
+    final (String text, VoidCallback action) = switch (next) {
+      'photo' => (l.completeAddPhoto, () => onFix(1)),
+      'work' => (l.completeAddWork, () => onFix(2)),
+      'skills' => (l.completeAddSkills, () => onFix(2)),
+      'rate' => (l.completeAddRate, () => onFix(3)),
+      'area' => (l.completeAddArea, () => onFix(3)),
+      'photos' => (l.completeAddPhotos, () => onFix(4)),
+      _ => (l.completeVerify, () => context.push(RouteNames.workerVerificationPath)),
+    };
+    return Container(
+      padding: const EdgeInsets.all(SbSpace.s4),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border.all(color: c.border),
+        borderRadius: BorderRadius.circular(SbRadius.card),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(child: Text(l.completeTitle(pct), style: t.titleSmall)),
+          TextButton(onPressed: action, child: Text(l.completeFix)),
+        ]),
+        Semantics(
+          value: '$pct%',
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(SbRadius.full),
+            child: LinearProgressIndicator(value: comp.ratio, minHeight: 6),
+          ),
+        ),
+        const SizedBox(height: SbSpace.s2),
+        Text(text, style: t.bodySmall),
+      ]),
+    );
+  }
+}
+
+/// available / busy / offline — saved immediately to workerProfile.availability.
+class _AvailabilityCard extends ConsumerStatefulWidget {
+  const _AvailabilityCard({required this.user});
+  final UserEntity user;
+
+  @override
+  ConsumerState<_AvailabilityCard> createState() => _AvailabilityCardState();
+}
+
+class _AvailabilityCardState extends ConsumerState<_AvailabilityCard> {
+  bool _saving = false;
+
+  Future<void> _set(String value) async {
+    final p = widget.user.workerProfile;
+    if (p == null || p.availability == value || _saving) return;
+    setState(() => _saving = true);
+    final map = WorkerProfileModel.fromEntity(p).toMap()..['availability'] = value;
+    final result = await ref.read(updateUserProfileUseCaseProvider).call(uid: widget.user.uid, data: {'workerProfile': map});
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (result.isLeft()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.profileSaveFailed), backgroundColor: context.sb.error),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final current = widget.user.workerProfile?.availability ?? 'available';
+    return ProfileSection(
+      title: l.availability,
+      subtitle: l.availabilityHelp,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Icons only when there's room: on phones they squeezed "Available"
+        // onto two lines.
+        LayoutBuilder(builder: (context, box) {
+          final icons = box.maxWidth >= 420;
+          return SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'available', label: Text(l.available), icon: icons ? const Icon(Icons.check_circle_outline_rounded) : null),
+              ButtonSegment(value: 'busy', label: Text(l.busy), icon: icons ? const Icon(Icons.schedule_rounded) : null),
+              ButtonSegment(value: 'offline', label: Text(l.offline), icon: icons ? const Icon(Icons.do_not_disturb_on_outlined) : null),
+            ],
+            selected: {current},
+            showSelectedIcon: false,
+            onSelectionChanged: _saving ? null : (s) => _set(s.first),
+          );
+        }),
+        if (_saving) ...[const SizedBox(height: SbSpace.s2), const LinearProgressIndicator()],
+        const SizedBox(height: SbSpace.s2),
+        Text(
+          switch (current) {
+            'busy' => l.availabilityBusyNote,
+            'offline' => l.availabilityOfflineNote,
+            _ => l.availabilityAvailableNote,
+          },
+          style: t.bodySmall,
+        ),
+      ]),
     );
   }
 }

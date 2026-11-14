@@ -47,7 +47,8 @@ class BookingPaymentSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<BookingPaymentSheet> createState() => _BookingPaymentSheetState();
+  ConsumerState<BookingPaymentSheet> createState() =>
+      _BookingPaymentSheetState();
 }
 
 class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
@@ -97,24 +98,26 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
       }
 
       final ds = ref.read(contractRemoteDataSourceProvider);
-      await ds.createDirectContract(
-        clientId: currentUser.uid,
-        clientName: currentUser.displayName,
-        clientPhotoUrl: currentUser.photoUrl,
-        workerId: widget.workerId,
-        workerName: widget.workerName,
-        workerPhotoUrl: null,
-        categoryName: widget.categoryName,
-        hourlyRatePkr: widget.hourlyRatePkr,
-        hours: _hours,
-        totalAmount: _totalAmount,
-        address: _addressController.text.trim(),
-        city: _selectedCity,
-        date: _selectedDate,
-        timeSlot: _selectedTimeSlot,
-        phone: _phoneController.text.trim(),
-        paymentMethod: _selectedPaymentMethod,
-      );
+      await ds
+          .createDirectContract(
+            clientId: currentUser.uid,
+            clientName: currentUser.displayName,
+            clientPhotoUrl: currentUser.photoUrl,
+            workerId: widget.workerId,
+            workerName: widget.workerName,
+            workerPhotoUrl: null,
+            categoryName: widget.categoryName,
+            hourlyRatePkr: widget.hourlyRatePkr,
+            hours: _hours,
+            totalAmount: _totalAmount,
+            address: _addressController.text.trim(),
+            city: _selectedCity,
+            date: _selectedDate,
+            timeSlot: _selectedTimeSlot,
+            phone: _phoneController.text.trim(),
+            paymentMethod: _selectedPaymentMethod,
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -155,7 +158,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cities = PakistanConstants.cities.where((c) => c['name'] != 'All Cities').toList();
+    final cities = PakistanConstants.cities
+        .where((c) => c['name'] != 'All Cities')
+        .toList();
     final paymentMethods = PakistanConstants.paymentMethods;
 
     return Container(
@@ -163,7 +168,8 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
         left: AppDimensions.space20,
         right: AppDimensions.space20,
         top: AppDimensions.space20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.space20,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom + AppDimensions.space20,
       ),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -205,7 +211,11 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                           ),
                         ),
                         Text(
-                          AppL10n.select(context, en: '${widget.workerName}', ur: '${widget.categoryName}'),
+                          AppL10n.select(
+                            context,
+                            en: '${widget.workerName}',
+                            ur: '${widget.categoryName}',
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyMedium.copyWith(
@@ -223,7 +233,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: context.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusSm,
+                      ),
                     ),
                     child: Text(
                       '${Formatters.formatPkr(widget.hourlyRatePkr)}/hr',
@@ -298,7 +310,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                           context: context,
                           initialDate: _selectedDate,
                           firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 30),
+                          ),
                         );
                         if (date != null) setState(() => _selectedDate = date);
                       },
@@ -306,11 +320,17 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                       color: context.colorScheme.surfaceContainerHighest,
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today, size: 18, color: context.colorScheme.primary),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: context.colorScheme.primary,
+                          ),
                           const SizedBox(width: AppDimensions.space8),
                           Text(
                             '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                            style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -323,7 +343,10 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                 initialValue: _selectedTimeSlot,
                 decoration: const InputDecoration(
                   labelText: 'Time Slot',
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
                 items: _timeSlots.map((slot) {
                   return DropdownMenuItem(value: slot, child: Text(slot));
@@ -376,12 +399,16 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                   final id = method['id'] as String;
                   final isSelected = _selectedPaymentMethod == id;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: AppDimensions.space8),
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.space8,
+                    ),
                     child: AppCard(
                       onTap: () => setState(() => _selectedPaymentMethod = id),
                       padding: const EdgeInsets.all(AppDimensions.space12),
                       color: isSelected
-                          ? context.colorScheme.primaryContainer.withValues(alpha: 0.4)
+                          ? context.colorScheme.primaryContainer.withValues(
+                              alpha: 0.4,
+                            )
                           : context.colorScheme.surfaceContainer,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +426,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                                 child: Text(
                                   method['name'] as String,
                                   style: AppTextStyles.bodyLarge.copyWith(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
@@ -410,7 +439,8 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                                 ),
                             ],
                           ),
-                          if (isSelected && (method['requiresPhone'] == true)) ...[
+                          if (isSelected &&
+                              (method['requiresPhone'] == true)) ...[
                             const SizedBox(height: AppDimensions.space12),
                             AppTextField(
                               controller: _phoneController,
@@ -422,7 +452,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                           if (isSelected && method['details'] != null) ...[
                             const SizedBox(height: AppDimensions.space8),
                             Container(
-                              padding: const EdgeInsets.all(AppDimensions.space12),
+                              padding: const EdgeInsets.all(
+                                AppDimensions.space12,
+                              ),
                               decoration: BoxDecoration(
                                 color: context.colorScheme.surface,
                                 borderRadius: BorderRadius.circular(8),
@@ -443,30 +475,46 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                                           size: 32,
                                           color: Color(0xFF006622),
                                         ),
-                                        const SizedBox(width: AppDimensions.space8),
+                                        const SizedBox(
+                                          width: AppDimensions.space8,
+                                        ),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                AppL10n.select(context, en: '100% Escrow Protected', ur: 'محفوظ ادائیگی'),
-                                                style: AppTextStyles.labelSmall.copyWith(
-                                                  color: const Color(0xFF006622),
-                                                  fontWeight: FontWeight.bold,
+                                                AppL10n.select(
+                                                  context,
+                                                  en: '100% Escrow Protected',
+                                                  ur: 'محفوظ ادائیگی',
                                                 ),
+                                                style: AppTextStyles.labelSmall
+                                                    .copyWith(
+                                                      color: const Color(
+                                                        0xFF006622,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                               ),
                                               Text(
                                                 'Scan with any banking app in Pakistan',
-                                                style: AppTextStyles.bodySmall.copyWith(
-                                                  color: context.colorScheme.onSurfaceVariant,
-                                                ),
+                                                style: AppTextStyles.bodySmall
+                                                    .copyWith(
+                                                      color: context
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                                    ),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: AppDimensions.space8),
+                                    const SizedBox(
+                                      height: AppDimensions.space8,
+                                    ),
                                   ],
                                   Text(
                                     method['details'] as String,
@@ -534,7 +582,9 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
                       children: [
                         Text(
                           'Total Payable (PKR)',
-                          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                          style: AppTextStyles.titleMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           Formatters.formatPkr(_totalAmount),
@@ -552,7 +602,11 @@ class _BookingPaymentSheetState extends ConsumerState<BookingPaymentSheet> {
 
               // ── Confirm CTA ────────────────────────────────────────────────
               AppButton(
-                text: AppL10n.select(context, en: 'Request Booking', ur: '${Formatters.formatPkr(_totalAmount)}'),
+                text: AppL10n.select(
+                  context,
+                  en: 'Request Booking',
+                  ur: '${Formatters.formatPkr(_totalAmount)}',
+                ),
                 onPressed: _confirmBooking,
                 isLoading: _isSubmitting,
               ),

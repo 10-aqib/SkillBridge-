@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/providers/firebase_providers.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/providers/analytics_providers.dart';
+import 'package:skill_bridge/core/services/location_tracking_service.dart';
 import 'package:skill_bridge/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:skill_bridge/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
@@ -45,7 +46,15 @@ final registerWithEmailUseCaseProvider =
 });
 
 final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
-  return SignOutUseCase(ref.watch(authRepositoryProvider));
+  return SignOutUseCase(
+    ref.watch(authRepositoryProvider),
+    // A position shared for a contract is removed before signing out, so it
+    // never lingers for the client (offline: gives up after a few seconds).
+    beforeSignOut: () => ref
+        .read(liveLocationControllerProvider.notifier)
+        .stop()
+        .timeout(const Duration(seconds: 3), onTimeout: () {}),
+  );
 });
 
 final sendPasswordResetEmailUseCaseProvider =
@@ -68,6 +77,20 @@ final updateUserRoleUseCaseProvider = Provider<UpdateUserRoleUseCase>((ref) {
 final updateUserProfileUseCaseProvider =
     Provider<UpdateUserProfileUseCase>((ref) {
   return UpdateUserProfileUseCase(ref.watch(authRepositoryProvider));
+});
+
+final completeProfileUseCaseProvider = Provider<CompleteProfileUseCase>((ref) {
+  return CompleteProfileUseCase(ref.watch(authRepositoryProvider));
+});
+
+final sendEmailVerificationUseCaseProvider =
+    Provider<SendEmailVerificationUseCase>((ref) {
+  return SendEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+});
+
+final refreshEmailVerificationUseCaseProvider =
+    Provider<RefreshEmailVerificationUseCase>((ref) {
+  return RefreshEmailVerificationUseCase(ref.watch(authRepositoryProvider));
 });
 
 // ── Auth State Stream ─────────────────────────────────────────────────────────

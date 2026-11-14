@@ -18,7 +18,7 @@
 	<string>skill_bridge</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
+<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
@@ -67,6 +67,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SkillBridge uses your location to enable live service tracking between clients and service providers.</string>
+	<string>SkillBridge uses your location while the app is open to show where you are on the map, give turn-by-turn directions to a job, and, only when you choose to share it, show your live position to the client of your active job.</string>
 </dict>
 </plist>

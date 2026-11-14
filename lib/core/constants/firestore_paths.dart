@@ -1,5 +1,13 @@
 class FirestorePaths {
   static const String users = 'users';
+
+  /// Public view of users/{uid} (no phone, email or addresses). Written only
+  /// by Cloud Functions; read this for anyone other than the signed-in user.
+  static const String publicProfiles = 'publicProfiles';
+
+  /// A worker's live position, readable by the clients of their active jobs.
+  /// Written only by Cloud Functions.
+  static const String liveLocations = 'liveLocations';
   static const String categories = 'categories';
   static const String skills = 'skills';
   static const String jobs = 'jobs';

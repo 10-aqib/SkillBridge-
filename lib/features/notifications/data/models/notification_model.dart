@@ -10,18 +10,23 @@ class NotificationModel extends NotificationEntity {
     super.payload,
     required super.createdAt,
     super.isRead,
+    super.type,
   });
 
   factory NotificationModel.fromSnapshot(DocumentSnapshot snap) {
-    final data = snap.data() as Map<String, dynamic>;
+    final data = (snap.data() as Map<String, dynamic>?) ?? {};
+    final created = data['createdAt'];
+    final payload = data['payload'];
     return NotificationModel(
       id: snap.id,
-      userId: data['userId'] as String,
-      title: data['title'] as String,
-      body: data['body'] as String,
-      payload: data['payload'] as Map<String, dynamic>?,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      userId: (data['userId'] ?? '').toString(),
+      title: (data['title'] ?? '').toString(),
+      body: (data['body'] ?? '').toString(),
+      payload: payload is Map ? Map<String, dynamic>.from(payload) : null,
+      // A pending server time reads as now until confirmed.
+      createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
       isRead: data['isRead'] as bool? ?? false,
+      type: (data['type'] ?? '').toString(),
     );
   }
 

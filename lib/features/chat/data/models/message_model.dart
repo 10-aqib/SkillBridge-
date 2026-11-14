@@ -13,6 +13,12 @@ class MessageEntity {
   final bool isRead;
   final DateTime createdAt;
 
+  /// Storage paths of photos (chats/{chatId}/{senderId}/{messageId}/…).
+  final List<String> attachments;
+
+  /// Written on this device but not yet confirmed by the server.
+  final bool isPending;
+
   const MessageEntity({
     required this.id,
     required this.chatId,
@@ -23,6 +29,8 @@ class MessageEntity {
     required this.type,
     required this.isRead,
     required this.createdAt,
+    this.attachments = const [],
+    this.isPending = false,
   });
 }
 
@@ -37,37 +45,44 @@ class MessageModel extends MessageEntity {
     required super.type,
     required super.isRead,
     required super.createdAt,
+    super.attachments,
+    super.isPending,
   });
 
-  factory MessageModel.fromSnapshot(DocumentSnapshot doc) {
-    final data = (doc.data() as Map<String, dynamic>?) ?? {};
+  factory MessageModel.fromSnapshot(DocumentSnapshot doc) => MessageModel.fromMap(
+        doc.id,
+        (doc.data() as Map<String, dynamic>?) ?? {},
+        isPending: doc.metadata.hasPendingWrites,
+      );
 
-    DateTime createdAt = DateTime.now();
-    final rawTimestamp = data['createdAt'];
-    if (rawTimestamp is Timestamp) {
-      createdAt = rawTimestamp.toDate();
-    } else if (rawTimestamp is int) {
-      createdAt = DateTime.fromMillisecondsSinceEpoch(rawTimestamp);
-    } else if (rawTimestamp is String) {
-      createdAt = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
-    }
-
+  factory MessageModel.fromMap(String id, Map<String, dynamic> data, {bool isPending = false}) {
+    final raw = data['createdAt'];
+    final createdAt = raw is Timestamp
+        ? raw.toDate()
+        : raw is int
+            ? DateTime.fromMillisecondsSinceEpoch(raw)
+            : raw is String
+                ? DateTime.tryParse(raw) ?? DateTime.now()
+                // Pending server time: shown as "now" until confirmed.
+                : DateTime.now();
+    final rawAttachments = data['attachments'];
     return MessageModel(
-      id: doc.id,
+      id: id,
       chatId: (data['chatId'] ?? '').toString(),
       senderId: (data['senderId'] ?? '').toString(),
       senderName: (data['senderName'] ?? '').toString(),
       senderPhotoUrl: data['senderPhotoUrl']?.toString(),
       content: (data['content'] ?? '').toString(),
-      type: MessageType.values.firstWhere(
-        (e) => e.name == (data['type'] ?? 'text'),
-        orElse: () => MessageType.text,
-      ),
-      isRead: data['isRead'] ?? false,
+      type: MessageType.values.firstWhere((e) => e.name == (data['type'] ?? 'text'), orElse: () => MessageType.text),
+      isRead: data['isRead'] == true,
       createdAt: createdAt,
+      attachments: rawAttachments is Iterable ? rawAttachments.map((e) => e.toString()).toList() : const [],
+      isPending: isPending,
     );
   }
 
+  /// The document the security rules accept: own sender id, server time,
+  /// unread, and photos only in the sender's folder for this message.
   Map<String, dynamic> toMap() {
     return {
       'chatId': chatId,
@@ -76,8 +91,9 @@ class MessageModel extends MessageEntity {
       'senderPhotoUrl': senderPhotoUrl,
       'content': content,
       'type': type.name,
-      'isRead': isRead,
+      'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
+      if (type == MessageType.image) 'attachments': attachments,
     };
   }
 }

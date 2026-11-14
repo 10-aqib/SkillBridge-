@@ -29,7 +29,10 @@ class NetworkFailure extends Failure {
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure(super.message);
+  /// Firebase/app error code (e.g. 'invalid-credential', 'needs-role'), used by
+  /// the UI to show a localized message. Null for older call sites.
+  final String? code;
+  const AuthFailure(super.message, [this.code]);
 }
 
 class ValidationFailure extends Failure {

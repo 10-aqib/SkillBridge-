@@ -1,230 +1,158 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
-import 'package:skill_bridge/core/errors/app_exception.dart';
+import 'package:skill_bridge/core/enums/proposal_status.dart';
+import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
 import 'package:skill_bridge/features/proposals/data/models/proposal_model.dart';
+import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
+
+/// Why a proposal action failed, for a clear message.
+enum ProposalFailure { alreadySent, jobUnavailable, notAllowed, network, other }
+
+class ProposalException implements Exception {
+  const ProposalException(this.reason);
+  final ProposalFailure reason;
+  @override
+  String toString() => 'ProposalException($reason)';
+}
+
+ProposalFailure proposalFailureOf(Object e) {
+  if (e is ProposalException) return e.reason;
+  if (e is FirebaseException) {
+    return switch (e.code) {
+      'permission-denied' => ProposalFailure.notAllowed,
+      'unavailable' || 'deadline-exceeded' || 'network-request-failed' => ProposalFailure.network,
+      'not-found' => ProposalFailure.jobUnavailable,
+      _ => ProposalFailure.other,
+    };
+  }
+  return ProposalFailure.other;
+}
 
 abstract class ProposalRemoteDataSource {
-  Future<String> submitProposal(ProposalModel proposal);
-  Future<void> updateProposalStatus(String proposalId, String status);
-  Future<void> acceptProposal({
-    required String proposalId,
-    required String jobId,
-    required String workerId,
-    required String workerName,
+  /// Sends a new proposal, or re-sends [existing] if it was withdrawn.
+  Future<String> submitProposal(ProposalModel proposal, {ProposalEntity? existing});
+  Future<void> withdrawProposal(String proposalId);
+  Future<void> markViewed(String proposalId);
+  Future<void> rejectProposal(String proposalId);
+
+  /// Hires the worker through the trusted acceptProposalCall function: in one
+  /// server transaction it accepts this proposal, assigns the job, closes the
+  /// other pending proposals and creates the contract and job chat. Returns
+  /// the contract id; repeating the call returns the same contract.
+  Future<String> acceptProposal({
+    required ProposalEntity proposal,
+    required JobEntity job,
+    required String clientName,
+    String? clientPhotoUrl,
   });
-  Stream<List<ProposalModel>> getProposalsForJob(String jobId);
+
+  /// The client's view of a job's proposals.
+  Stream<List<ProposalModel>> getProposalsForJob(String jobId, String clientId);
   Stream<List<ProposalModel>> getProposalsByWorker(String workerId);
+  Stream<ProposalModel?> watchProposal(String proposalId);
 }
 
 class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions? _functions;
 
-  ProposalRemoteDataSourceImpl(this._firestore);
+  ProposalRemoteDataSourceImpl(this._firestore, [this._functions]);
+
+  CollectionReference<Map<String, dynamic>> get _proposals => _firestore.collection(FirestorePaths.proposals);
 
   @override
-  Future<String> submitProposal(ProposalModel proposal) async {
+  Future<String> submitProposal(ProposalModel proposal, {ProposalEntity? existing}) async {
+    final id = ProposalEntity.idFor(proposal.jobId, proposal.workerId);
+    if (existing != null && existing.status != ProposalStatus.withdrawn) {
+      throw const ProposalException(ProposalFailure.alreadySent);
+    }
+    final ref = _proposals.doc(id);
+    final batch = _firestore.batch();
+    if (existing != null) {
+      batch.update(ref, proposal.toResubmitMap());
+    } else {
+      // A second create for the same id is refused by the rules (no duplicates).
+      batch.set(ref, proposal.toCreateMap());
+    }
+    batch.set(_firestore.collection(FirestorePaths.notifications).doc(), {
+      'userId': proposal.clientId,
+      'title': 'New Proposal Received',
+      'body': '${proposal.workerName} sent a proposal for "${proposal.jobTitle}".',
+      'payload': {'jobId': proposal.jobId, 'proposalId': id},
+      'createdAt': FieldValue.serverTimestamp(),
+      'isRead': false,
+    });
     try {
-      final batch = _firestore.batch();
-      final proposalRef =
-          _firestore.collection(FirestorePaths.proposals).doc();
-
-      batch.set(proposalRef, proposal.toMap());
-
-      final jobRef =
-          _firestore.collection(FirestorePaths.jobs).doc(proposal.jobId);
-      batch.update(jobRef, {'totalProposals': FieldValue.increment(1)});
-
-      // Create in-app notification for the client (FYP Spec 2.1.10 / B8)
-      if (proposal.clientId.isNotEmpty) {
-        final notifRef = _firestore.collection('notifications').doc();
-        batch.set(notifRef, {
-          'userId': proposal.clientId,
-          'title': 'New Proposal Received',
-          'body':
-              '${proposal.workerName} submitted a proposal for "${proposal.jobTitle}".',
-          'payload': {'jobId': proposal.jobId, 'proposalId': proposalRef.id},
-          'createdAt': FieldValue.serverTimestamp(),
-          'isRead': false,
-        });
+      await batch.commit().timeout(const Duration(seconds: 20));
+      return id;
+    } on FirebaseException catch (e) {
+      // Refused: the job closed or filled, or a proposal already exists.
+      if (e.code == 'permission-denied') {
+        throw ProposalException(existing == null ? ProposalFailure.jobUnavailable : ProposalFailure.notAllowed);
       }
-
-      await batch.commit();
-      return proposalRef.id;
-    } catch (e) {
-      throw ServerException('Failed to submit proposal: $e');
+      rethrow;
     }
   }
 
   @override
-  Future<void> updateProposalStatus(String proposalId, String status) async {
-    try {
-      await _firestore
-          .collection(FirestorePaths.proposals)
-          .doc(proposalId)
-          .update({'status': status, 'updatedAt': FieldValue.serverTimestamp()});
-    } catch (e) {
-      throw ServerException('Failed to update proposal status: $e');
-    }
-  }
+  Future<void> withdrawProposal(String proposalId) => _proposals.doc(proposalId).update({
+        'status': ProposalStatus.withdrawn.value,
+        'withdrawnAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
   @override
-  Future<void> acceptProposal({
-    required String proposalId,
-    required String jobId,
-    required String workerId,
-    required String workerName,
+  Future<void> markViewed(String proposalId) =>
+      _proposals.doc(proposalId).update({'viewedAt': FieldValue.serverTimestamp()});
+
+  @override
+  Future<void> rejectProposal(String proposalId) => _proposals.doc(proposalId).update({
+        'status': ProposalStatus.rejected.value,
+        'closedReason': 'client',
+        'decidedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+  @override
+  Future<String> acceptProposal({
+    required ProposalEntity proposal,
+    required JobEntity job,
+    required String clientName,
+    String? clientPhotoUrl,
   }) async {
     try {
-      final batch = _firestore.batch();
-
-      // 1. Accept the chosen proposal
-      final acceptedRef =
-          _firestore.collection(FirestorePaths.proposals).doc(proposalId);
-      batch.update(acceptedRef, {
-        'status': 'accepted',
-        'updatedAt': FieldValue.serverTimestamp(),
+      final result = await (_functions ?? FirebaseFunctions.instance)
+          .httpsCallable('acceptProposalCall')
+          .call<Map<String, dynamic>>({'proposalId': proposal.id});
+      return (result.data['contractId'] as String?) ?? proposal.id;
+    } on FirebaseFunctionsException catch (e) {
+      throw ProposalException(switch (e.code) {
+        // The job is no longer open, or the proposal is no longer pending.
+        'failed-precondition' || 'not-found' => ProposalFailure.jobUnavailable,
+        'permission-denied' || 'unauthenticated' => ProposalFailure.notAllowed,
+        'unavailable' || 'deadline-exceeded' => ProposalFailure.network,
+        _ => ProposalFailure.other,
       });
-
-      // 2. Query all other proposals for this job and reject them
-      final otherProposals = await _firestore
-          .collection(FirestorePaths.proposals)
-          .where('jobId', isEqualTo: jobId)
-          .get();
-
-      for (var doc in otherProposals.docs) {
-        if (doc.id != proposalId) {
-          batch.update(doc.reference, {
-            'status': 'rejected',
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      // 3. Atomically update job status to 'assigned' and assign worker
-      final jobRef = _firestore.collection(FirestorePaths.jobs).doc(jobId);
-      batch.update(jobRef, {
-        'status': 'assigned',
-        'selectedWorkerId': workerId,
-        'selectedWorkerName': workerName,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 4. Create Contract with 10% Flat Rate Commission (FYP Spec 2.1.7 / B6)
-      final proposalDoc = await _firestore
-          .collection(FirestorePaths.proposals)
-          .doc(proposalId)
-          .get();
-      final jobDoc =
-          await _firestore.collection(FirestorePaths.jobs).doc(jobId).get();
-
-      final proposalData = proposalDoc.data() ?? {};
-      final jobData = jobDoc.data() ?? {};
-
-      final double rate = (proposalData['proposedRate'] ?? 0.0).toDouble();
-      final double commission = (rate * 0.10).roundToDouble(); // 10% Flat Rate
-      final double workerEarnings = rate - commission;
-
-      final contractRef =
-          _firestore.collection(FirestorePaths.contracts).doc();
-      batch.set(contractRef, {
-        'jobId': jobId,
-        'jobTitle': proposalData['jobTitle'] ?? jobData['title'] ?? '',
-        'proposalId': proposalId,
-        'clientId': proposalData['clientId'] ?? jobData['clientId'] ?? '',
-        'clientName': jobData['clientName'] ?? '',
-        'clientPhotoUrl': jobData['clientPhotoUrl'],
-        'workerId': workerId,
-        'workerName': workerName,
-        'workerPhotoUrl': proposalData['workerPhotoUrl'],
-        'agreedRate': rate,
-        'rateType': proposalData['rateType'] ?? 'fixed',
-        'totalAmount': rate,
-        'commissionRate': 0.10,
-        'commissionAmount': commission,
-        'workerEarnings': workerEarnings,
-        'paymentStatus': 'unpaid',
-        'paymentMethod': 'jazzcash',
-        'status': 'active',
-        'startDate': FieldValue.serverTimestamp(),
-        'clientReviewed': false,
-        'workerReviewed': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 5. Create in-app notification for the worker (FYP Spec 2.1.10 / B8)
-      final notifRef = _firestore.collection('notifications').doc();
-      batch.set(notifRef, {
-        'userId': workerId,
-        'title': 'Proposal Accepted! 🎉',
-        'body':
-            'Your proposal for "${proposalData['jobTitle'] ?? jobData['title'] ?? ''}" was accepted!',
-        'payload': {'jobId': jobId, 'proposalId': proposalId},
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
-
-      // 6. Create or update chat thread between Client & Worker (FYP Spec 2.1.9 / B8)
-      final clientId = proposalData['clientId'] ?? jobData['clientId'] ?? '';
-      final clientName = jobData['clientName'] ?? 'Client';
-      if (clientId.toString().isNotEmpty) {
-        final chatRef = _firestore.collection(FirestorePaths.chats).doc();
-        batch.set(chatRef, {
-          'participantIds': [clientId, workerId],
-          'participantNames': {
-            clientId: clientName,
-            workerId: workerName,
-          },
-          'participantPhotos': {
-            clientId: jobData['clientPhotoUrl'],
-            workerId: proposalData['workerPhotoUrl'],
-          },
-          'lastMessage':
-              'Proposal accepted! You can now message each other',
-          'lastMessageSenderId': clientId,
-          'lastMessageAt': FieldValue.serverTimestamp(),
-          'unreadCount': {
-            clientId: 0,
-            workerId: 1,
-          },
-          'relatedJobId': jobId,
-          'relatedJobTitle':
-              proposalData['jobTitle'] ?? jobData['title'] ?? '',
-        });
-      }
-
-      await batch.commit();
-    } catch (e) {
-      throw ServerException('Failed to accept proposal and assign job: $e');
     }
   }
 
-  @override
-  Stream<List<ProposalModel>> getProposalsForJob(String jobId) {
-    return _firestore
-        .collection(FirestorePaths.proposals)
-        .where('jobId', isEqualTo: jobId)
-        .snapshots()
-        .map((snapshot) {
-      final list =
-          snapshot.docs.map((doc) => ProposalModel.fromSnapshot(doc)).toList();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    });
-  }
+  List<ProposalModel> _sorted(QuerySnapshot<Map<String, dynamic>> s) =>
+      s.docs.map(ProposalModel.fromSnapshot).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
-  Stream<List<ProposalModel>> getProposalsByWorker(String workerId) {
-    return _firestore
-        .collection(FirestorePaths.proposals)
-        .where('workerId', isEqualTo: workerId)
-        .snapshots()
-        .map((snapshot) {
-      final list =
-          snapshot.docs.map((doc) => ProposalModel.fromSnapshot(doc)).toList();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    });
-  }
+  Stream<List<ProposalModel>> getProposalsForJob(String jobId, String clientId) => _proposals
+      .where('jobId', isEqualTo: jobId)
+      // Required by the rules: clients read only proposals sent to them.
+      .where('clientId', isEqualTo: clientId)
+      .snapshots()
+      .map(_sorted);
+
+  @override
+  Stream<List<ProposalModel>> getProposalsByWorker(String workerId) =>
+      _proposals.where('workerId', isEqualTo: workerId).snapshots().map(_sorted);
+
+  @override
+  Stream<ProposalModel?> watchProposal(String proposalId) =>
+      _proposals.doc(proposalId).snapshots().map((d) => d.exists ? ProposalModel.fromSnapshot(d) : null);
 }

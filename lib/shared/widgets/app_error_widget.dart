@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/generated/l10n/app_localizations.dart';
+import 'package:skill_bridge/shared/design_system/sb_state_view.dart';
 
+/// Legacy error-state API, rendered by [SbStateView] (error kind): distinct
+/// icon and tone from empty states, announced as a live region, retry kept.
 class AppErrorWidget extends StatelessWidget {
   final String errorMessage;
   final VoidCallback? onRetry;
@@ -15,53 +16,16 @@ class AppErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
+    // Existing ARB keys (English + Urdu); falls back if no localizations above.
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.space24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.space16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.error.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.space20),
-            Text(
-              'Oops! Something went wrong',
-              style: AppTextStyles.titleLarge.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.space8),
-            Text(
-              errorMessage,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: AppDimensions.space24),
-              AppButton(
-                text: 'Try Again',
-                onPressed: onRetry!,
-                width: 150,
-                backgroundColor: theme.colorScheme.error,
-                textColor: theme.colorScheme.onError,
-              ),
-            ],
-          ],
+        child: SbStateView(
+          kind: SbStateKind.error,
+          title: l10n?.somethingWentWrong ?? 'Something went wrong',
+          message: errorMessage,
+          actionLabel: onRetry != null ? (l10n?.tryAgain ?? 'Try Again') : null,
+          onAction: onRetry,
         ),
       ),
     );

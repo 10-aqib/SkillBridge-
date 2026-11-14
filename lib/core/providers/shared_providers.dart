@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/network/network_info.dart';
+import 'package:skill_bridge/core/providers/firebase_providers.dart';
 import 'package:skill_bridge/core/services/hive_service.dart';
+import 'package:skill_bridge/core/services/offline_outbox_service.dart';
 
 final connectivityProvider = Provider<Connectivity>((ref) {
   return Connectivity();
@@ -10,8 +13,36 @@ final connectivityProvider = Provider<Connectivity>((ref) {
 
 final networkInfoProvider = Provider<NetworkInfo>((ref) {
   final connectivity = ref.watch(connectivityProvider);
-  return NetworkInfoImpl(connectivity);
+  final firestore = ref.watch(firestoreProvider);
+  return NetworkInfoImpl(
+    connectivity,
+    internetProbe: () async {
+      await firestore
+          .collection('categories')
+          .limit(1)
+          .get(const GetOptions(source: Source.server));
+      return true;
+    },
+  );
 });
+
+final pendingOutboxCountProvider = StreamProvider<int>((ref) {
+  return OfflineOutboxService.watchPendingCount();
+});
+
+final connectivityStatusProvider = StreamProvider<bool>((ref) {
+  final networkInfo = ref.watch(networkInfoProvider);
+  return _watchConnectivityStatus(networkInfo);
+});
+
+Stream<bool> _watchConnectivityStatus(NetworkInfo networkInfo) async* {
+  try {
+    yield await networkInfo.isConnected;
+  } catch (_) {
+    yield false;
+  }
+  yield* networkInfo.onConnectivityChanged;
+}
 
 final hiveServiceProvider = Provider<HiveService>((ref) {
   return HiveService();
@@ -46,6 +77,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
       final val = hive.settingsBox.get(_key) as String?;
       if (val == 'dark') return ThemeMode.dark;
       if (val == 'light') return ThemeMode.light;
+      if (val == 'system') return ThemeMode.system;
     } catch (_) {}
     return ThemeMode.light;
   }

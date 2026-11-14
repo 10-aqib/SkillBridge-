@@ -41,9 +41,18 @@ dependencies:
   url_launcher: ^6.3.1
   path_provider: ^2.1.5
   uuid: ^4.5.1
-  google_maps_flutter: ^2.18.0
   geolocator: ^13.0.2
   share_plus: ^10.1.4
+  # Used directly by the map, routing and search services (was transitive).
+  http: ^1.6.0
+
+  # ── Maps & navigation (OpenStreetMap stack; no API key) ──
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  flutter_tts: ^4.2.5
+  # 1.6.1+ needs win32 6, which share_plus 10 doesn't allow; 1.6.0 is the
+  # newest that resolves without touching share_plus.
+  wakelock_plus: ^1.5.2
 
   # ── Firebase ──
   firebase_core: ^4.12.1
@@ -56,8 +65,8 @@ dependencies:
   firebase_app_check: ^0.4.5+2
   flutter_local_notifications: ^18.0.1
   dartz: ^0.10.1
-  flutter_dotenv: ^6.0.1
   google_sign_in: ^7.2.0
+  cloud_functions: ^6.5.1
 
 dev_dependencies:
   flutter_test:
@@ -75,4 +84,9 @@ flutter:
 
   assets:
     - assets/images/
-    - .env
+    # Noto Sans + Noto Nastaliq Urdu (SIL OFL 1.1, see assets/fonts/OFL.txt).
+    # google_fonts loads these locally instead of downloading at runtime.
+    - assets/fonts/
+    # .env is intentionally NOT an asset: assets are plain files inside every
+    # APK/IPA and are served publicly on web. Build-time values come from
+    # `--dart-define-from-file=.env` instead (see .env.example).

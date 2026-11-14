@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:skill_bridge/core/enums/job_status.dart';
 import 'package:skill_bridge/core/enums/job_type.dart';
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
+import 'package:skill_bridge/features/jobs/domain/job_search.dart';
 
 class JobModel extends JobEntity {
   const JobModel({
@@ -35,13 +36,17 @@ class JobModel extends JobEntity {
     required super.createdAt,
     required super.updatedAt,
     super.isPaid = false,
+    super.searchKeywords = const [],
   });
 
   factory JobModel.fromSnapshot(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return JobModel.fromMap(doc.id, data);
+  }
 
+  factory JobModel.fromMap(String id, Map<String, dynamic> data) {
     return JobModel(
-      id: doc.id,
+      id: id,
       clientId: data['clientId'] ?? '',
       clientName: data['clientName'] ?? '',
       clientPhotoUrl: data['clientPhotoUrl'],
@@ -77,8 +82,51 @@ class JobModel extends JobEntity {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isPaid: data['isPaid'] ?? false,
+      searchKeywords: List<String>.from(data['searchKeywords'] ?? const []),
     );
   }
+
+  /// Derived fields kept in step with the content: search keywords and the
+  /// budget band used by the job feed filters.
+  Map<String, dynamic> get derivedFields => {
+        'searchKeywords': JobSearchIndex.keywordsFor(
+          title: title,
+          categoryName: categoryName,
+          categoryId: categoryId,
+          skills: requiredSkills,
+          description: description,
+          city: city,
+        ),
+        'budgetBand': BudgetBand.forJob(budgetMin, budgetMax).id,
+      };
+
+  /// New job: server timestamps (rules require createdAt == request.time).
+  Map<String, dynamic> toCreateMap() => {
+        ...toMap(),
+        ...derivedFields,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+  /// Fields a client may change when editing an open job. Ownership, status,
+  /// assignment, proposal count and payment are never sent.
+  Map<String, dynamic> toEditMap() => {
+        'title': title,
+        'description': description,
+        'categoryId': categoryId,
+        'categoryName': categoryName,
+        'requiredSkills': requiredSkills,
+        'budgetMin': budgetMin,
+        'budgetMax': budgetMax,
+        'budgetType': budgetType,
+        'address': address,
+        'city': city,
+        'urgency': urgency,
+        'images': images,
+        'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
+        ...derivedFields,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
   Map<String, dynamic> toMap() {
     return {
@@ -97,7 +145,8 @@ class JobModel extends JobEntity {
       'location': location,
       if (geohash != null) 'geohash': geohash,
       if (locationAccuracy != null) 'locationAccuracy': locationAccuracy,
-      if (locationUpdatedAt != null) 'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
+      if (locationUpdatedAt != null)
+        'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
       'address': address,
       'city': city,
       'status': status.value,

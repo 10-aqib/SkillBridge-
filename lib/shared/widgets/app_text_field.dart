@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/shared/design_system/sb_text_field.dart';
 
-/// Guild Modernist Form Field Component (12px radius, Inter typography)
+/// Legacy form field API, rendered by [SbTextField] (persistent label above
+/// the input, token borders, merged label semantics). Adds the password
+/// visibility toggle this API has always had.
 class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String labelText;
@@ -50,61 +50,34 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.labelText.isNotEmpty) ...[
-          Text(
-            widget.labelText,
-            style: AppTextStyles.labelCaption.copyWith(
-              color: context.textColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+    final suffix = widget.isPassword
+        ? IconButton(
+            icon: Icon(
+              _obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+              size: 20,
             ),
-          ),
-          const SizedBox(height: 6),
-        ],
-        TextFormField(
-          controller: widget.controller,
-          obscureText: widget.isPassword ? _obscureText : false,
-          keyboardType: widget.keyboardType,
-          textInputAction: widget.textInputAction,
-          onFieldSubmitted: widget.onSubmitted,
-          onChanged: widget.onChanged,
-          validator: widget.validator,
-          inputFormatters: widget.inputFormatters,
-          maxLines: widget.maxLines,
-          readOnly: widget.readOnly,
-          onTap: widget.onTap,
-          style: AppTextStyles.bodyPrimary.copyWith(
-            color: context.textColor,
-          ),
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            prefixIcon: widget.prefixIcon != null
-                ? Icon(
-                    widget.prefixIcon,
-                    size: 20,
-                    color: context.mutedColor,
-                  )
-                : null,
-            suffixIcon: widget.isPassword
-                ? IconButton(
-                    icon: Icon(
-                    _obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    size: 20,
-                    color: context.mutedColor,
-                  ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureText = !_obscureText;
-                      });
-                    },
-                  )
-                : widget.suffixIcon,
-          ),
-        ),
-      ],
+            onPressed: () => setState(() => _obscureText = !_obscureText),
+          )
+        : widget.suffixIcon;
+
+    return SbTextField(
+      label: widget.labelText,
+      controller: widget.controller,
+      hint: widget.hintText,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      inputFormatters: widget.inputFormatters,
+      obscureText: widget.isPassword && _obscureText,
+      readOnly: widget.readOnly,
+      maxLines: widget.maxLines,
+      prefixIcon: widget.prefixIcon,
+      suffix: suffix,
+      onChanged: widget.onChanged,
+      onSubmitted: widget.onSubmitted,
+      onTap: widget.onTap,
+      // Legacy forms validate on submit; keep that behaviour.
+      autovalidateMode: AutovalidateMode.disabled,
     );
   }
 }

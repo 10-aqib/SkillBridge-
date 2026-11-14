@@ -29,6 +29,16 @@ class GeoPointLocation {
   static double _degreesToRadians(double degrees) {
     return degrees * pi / 180;
   }
+
+  // Value equality: NearbyWorkerParams (a provider family key) compares
+  // locations, so the same place must be equal, or every rebuild restarts
+  // the nearby-workers stream (Navigation phase 5 fix).
+  @override
+  bool operator ==(Object other) =>
+      other is GeoPointLocation && other.latitude == latitude && other.longitude == longitude;
+
+  @override
+  int get hashCode => Object.hash(latitude, longitude);
 }
 
 class NearbyWorkerEntity {

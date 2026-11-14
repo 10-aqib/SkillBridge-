@@ -17,6 +17,18 @@ class RouteNames {
   static const String roleSelectionName = 'roleSelection';
   static const String roleSelectionPath = '/role-selection';
 
+  static const String welcomeName = 'welcome';
+  static const String welcomePath = '/welcome';
+
+  static const String clientOnboardingName = 'clientOnboarding';
+  static const String clientOnboardingPath = '/client/onboarding';
+
+  static const String clientEditProfileName = 'clientEditProfile';
+  static const String clientEditProfilePath = '/client/profile/edit';
+
+  static const String workerVerificationName = 'workerVerification';
+  static const String workerVerificationPath = '/worker/verification';
+
   // Client Shell
   static const String clientHomeName = 'clientHome';
   static const String clientHomePath = '/client/home';
@@ -41,6 +53,30 @@ class RouteNames {
 
   static const String clientJobDetailsName = 'clientJobDetails';
   static const String clientJobDetailsPath = '/client/jobs/:jobId';
+
+  /// Shared job details (clients and workers), loaded by id.
+  static const String jobDetailsName = 'jobDetails';
+  static const String jobDetailsPath = '/jobs/:jobId';
+  static String jobDetailsLocation(String jobId) => '/jobs/$jobId';
+
+  /// Edit an open job (owner only).
+  static const String jobEditName = 'jobEdit';
+  static const String jobEditPath = '/jobs/:jobId/edit';
+  static String jobEditLocation(String jobId) => '/jobs/$jobId/edit';
+
+  // Worker sends (or re-sends) a proposal for a job.
+  static const String jobProposeName = 'jobPropose';
+  static const String jobProposePath = '/jobs/:jobId/propose';
+  static String jobProposeLocation(String jobId) => '/jobs/$jobId/propose';
+
+  // Client reviews the proposals received for one of their jobs.
+  static const String jobProposalsName = 'jobProposals';
+  static const String jobProposalsPath = '/jobs/:jobId/proposals';
+  static String jobProposalsLocation(String jobId) => '/jobs/$jobId/proposals';
+
+  /// Worker job discovery feed.
+  static const String workerJobFeedName = 'workerJobFeed';
+  static const String workerJobFeedPath = '/worker/jobs';
 
   static const String clientContractsName = 'clientContracts';
   static const String clientContractsPath = '/client/contracts';
@@ -78,6 +114,27 @@ class RouteNames {
 
   static const String proposalDetailsName = 'proposalDetails';
   static const String proposalDetailsPath = '/proposals/:proposalId';
+  static String proposalDetailsLocation(String proposalId) => '/proposals/$proposalId';
+
+  // One contract, for its client or worker (Phase 4A).
+  static const String contractDetailsName = 'contractDetails';
+  static const String contractDetailsPath = '/contracts/:contractId';
+  static String contractDetailsLocation(String contractId) => '/contracts/$contractId';
+
+  // The hired worker submits the work for review.
+  static const String contractSubmitName = 'contractSubmit';
+  static const String contractSubmitPath = '/contracts/:contractId/submit';
+  static String contractSubmitLocation(String contractId) => '/contracts/$contractId/submit';
+
+  // Navigation phase 9: the hired worker's directions to the job, and the
+  // client's live map of the worker. Both check the signed-in party.
+  static const String contractNavigateName = 'contractNavigate';
+  static const String contractNavigatePath = '/contracts/:contractId/navigate';
+  static String contractNavigateLocation(String contractId) => '/contracts/$contractId/navigate';
+
+  static const String contractTrackName = 'contractTrack';
+  static const String contractTrackPath = '/contracts/:contractId/track';
+  static String contractTrackLocation(String contractId) => '/contracts/$contractId/track';
 
   static const String workerContractsName = 'workerContracts';
   static const String workerContractsPath = '/worker/contracts';
@@ -94,6 +151,7 @@ class RouteNames {
 
   static const String chatRoomName = 'chatRoom';
   static const String chatRoomPath = '/chat/:chatId';
+  static String chatRoomLocation(String chatId) => '/chat/$chatId';
 
   static const String publicWorkerProfileName = 'publicWorkerProfile';
   static const String publicWorkerProfilePath = '/worker-profile/:workerId';

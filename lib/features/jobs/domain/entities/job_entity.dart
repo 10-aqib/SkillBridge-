@@ -34,6 +34,12 @@ class JobEntity {
   final DateTime updatedAt;
   final bool isPaid;
 
+  /// Search tokens (see JobSearchIndex); empty for jobs created before search.
+  final List<String> searchKeywords;
+
+  /// Open and not a direct request to one worker: listed in the job feed.
+  bool get isPublicOpen => status == JobStatus.open && (selectedWorkerId == null || selectedWorkerId!.isEmpty);
+
   const JobEntity({
     required this.id,
     required this.clientId,
@@ -65,5 +71,6 @@ class JobEntity {
     required this.createdAt,
     required this.updatedAt,
     this.isPaid = false,
+    this.searchKeywords = const [],
   });
 }

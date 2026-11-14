@@ -1,4 +1,5 @@
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import type { DocumentData } from 'firebase-admin/firestore';
 
 export class UsersService {
   /**
@@ -9,7 +10,7 @@ export class UsersService {
     
     // Fetch only the users returned from auth to prevent downloading the whole collection
     const uids = listUsersResult.users.map(u => u.uid);
-    let firestoreUsers = new Map();
+    const firestoreUsers = new Map<string, DocumentData>();
     
     if (uids.length > 0) {
       // Chunk uids in batches of 30 for 'in' query limit
@@ -37,12 +38,12 @@ export class UsersService {
         uid: userRecord.uid,
         email: userRecord.email || '',
         displayName: userRecord.displayName || fsData.displayName || 'Unknown',
-        role: fsData.role || 'client',
+        role: fsData.role || 'unassigned',
         disabled: userRecord.disabled,
         isActive: fsData.isActive ?? true,
-        createdAt: userRecord.metadata.creationTime || (fsData.createdAt ? new Date(fsData.createdAt).toISOString() : new Date().toISOString()),
+        createdAt: userRecord.metadata.creationTime || (fsData.createdAt ? new Date(fsData.createdAt).toISOString() : ''),
       };
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   }
 
   /**
@@ -56,7 +57,7 @@ export class UsersService {
         .orderBy('createdAt', 'desc')
         .limit(limit)
         .get();
-    } catch (e: any) {
+    } catch {
       // Fallback in case Firestore composite index is still building or missing
       snapshot = await adminDb.collection('users')
         .where('role', '==', 'worker')
@@ -78,7 +79,7 @@ export class UsersService {
         city: profile.city || data.city || 'Not specified',
         rating: data.rating || profile.averageRating || 0,
         completedJobs: profile.totalJobsCompleted || data.totalJobsCompleted || 0,
-        createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString()) : new Date().toISOString(),
+        createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString()) : '',
       };
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
@@ -101,7 +102,7 @@ export class UsersService {
     // Write audit log
     await adminDb.collection('auditLogs').add({
       action: isVerified ? 'WORKER_VERIFIED' : 'WORKER_UNVERIFIED',
-      adminId: adminUid,
+      actorId: adminUid,
       targetId: uid,
       timestamp: new Date(),
     });

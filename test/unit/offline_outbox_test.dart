@@ -2,15 +2,20 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:skill_bridge/core/services/offline_outbox_service.dart';
+import 'package:skill_bridge/core/services/offline_cache_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   group('OfflineOutboxService', () {
     late Directory tempDir;
 
     setUpAll(() async {
-      tempDir = await Directory.systemTemp.createTemp('skillbridge_outbox_test');
+      tempDir = await Directory.systemTemp.createTemp(
+        'skillbridge_outbox_test',
+      );
       Hive.init(tempDir.path);
       await Hive.openBox<String>('skillbridge_offline_outbox');
+      await Hive.openBox('skillbridge_offline_cache');
     });
 
     tearDownAll(() async {
@@ -56,5 +61,22 @@ void main() {
       await OfflineOutboxService.clear();
       expect(OfflineOutboxService.pendingCount(), equals(0));
     });
+
+    test(
+      'offline cache preserves map coordinates and Firestore timestamps',
+      () async {
+        final timestamp = Timestamp.fromDate(DateTime.utc(2026, 11, 3));
+        await OfflineCacheService.save('map:worker:test', {
+          'location': const GeoPoint(33.6844, 73.0479),
+          'updatedAt': timestamp,
+        });
+
+        final cached =
+            OfflineCacheService.readDecoded('map:worker:test')
+                as Map<String, dynamic>;
+        expect(cached['location'], const GeoPoint(33.6844, 73.0479));
+        expect(cached['updatedAt'], timestamp);
+      },
+    );
   });
 }

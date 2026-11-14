@@ -8,7 +8,7 @@ class LoginWithGoogleUseCase {
 
   const LoginWithGoogleUseCase(this._repository);
 
-  Future<Either<Failure, UserEntity>> call({required String role}) {
+  Future<Either<Failure, UserEntity>> call({String? role}) {
     return _repository.loginWithGoogle(role: role);
   }
 }

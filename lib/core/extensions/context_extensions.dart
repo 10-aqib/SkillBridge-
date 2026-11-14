@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
+import 'package:skill_bridge/config/theme/sb/sb_tokens.dart';
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 extension ContextExtensions on BuildContext {
@@ -8,15 +8,17 @@ extension ContextExtensions on BuildContext {
   ColorScheme get colorScheme => theme.colorScheme;
   TextTheme get textTheme => theme.textTheme;
   bool get isDark => theme.brightness == Brightness.dark;
-  Color get scaffoldBg => isDark ? AppColors.darkBg : AppColors.backgroundGray;
-  Color get surfaceColor => isDark ? AppColors.darkCard : AppColors.surfaceWhite;
-  Color get textColor => isDark ? AppColors.darkText : AppColors.onSurface;
-  Color get mutedColor => isDark ? AppColors.darkMuted : AppColors.onSurfaceVariant;
-  Color get borderColor => isDark ? AppColors.darkLine : AppColors.outlineVariant;
+  // Themed colours come from the active SkillBridge token set (SbColors), so
+  // they are correct in light and dark. Prefer `context.sb.<role>` in new code.
+  Color get scaffoldBg => sb.canvas;
+  Color get surfaceColor => sb.surface;
+  Color get textColor => sb.text;
+  Color get mutedColor => sb.textSecondary;
+  Color get borderColor => sb.border;
 
   /// Accent for icons/indicators sitting on a themed surface. Do NOT use as a
-  /// fill that white text sits on — use [AppColors.primary] directly there.
-  Color get accentColor => isDark ? AppColors.inversePrimary : AppColors.primary;
+  /// fill that white text sits on — use the light-theme primary there.
+  Color get accentColor => sb.primary;
 
   // Directionality shortcut, for layout mirroring.
   bool get isRtl => Directionality.of(this) == TextDirection.rtl;

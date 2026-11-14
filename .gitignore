@@ -48,6 +48,7 @@ app.*.map.json
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # Firebase
 google-services.json
@@ -57,3 +58,4 @@ firebase_app_id_file.json
 # Generated code (optional but recommended to keep diffs clean)
 # *.g.dart
 # *.freezed.dart
+ios/Flutter/GoogleMaps.local.xcconfig

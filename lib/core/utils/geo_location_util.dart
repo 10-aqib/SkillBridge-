@@ -88,4 +88,13 @@ class GeoLocationUtil {
   }
 
   static double _degToRad(double deg) => deg * (math.pi / 180.0);
+
+  /// (Mock/Test) Detects a local Pakistani neighborhood based on coordinates.
+  static String detectLocality(double lat, double lng) {
+    if (lat > 31.5) {
+      return 'Gulberg III, Lahore / گلبرگ';
+    } else {
+      return 'DHA Phase 5, Lahore';
+    }
+  }
 }

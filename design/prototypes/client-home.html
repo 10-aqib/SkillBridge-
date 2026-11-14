@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Client Home Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="assets/sb.css">
+</head>
+<body class="board">
+<div class="board-head">
+  <h1>1 · Client home</h1>
+  <p>Search and location come first, then category shortcuts, the client's own job status, and trusted workers nearby. One restrained "Post a job" action. Sample content for layout only — the app renders real Firestore data.</p>
+</div>
+
+<template id="screen-en">
+  <div class="statusbar"><span>9:41</span><span class="icons"><span class="ms">signal_cellular_alt</span><span class="ms">wifi</span><span class="ms">battery_full</span></span></div>
+  <div class="scroll">
+    <div class="appbar">
+      <div class="grow">
+        <div class="t-caption">Your location</div>
+        <div class="loc-chip t-title-sm"><span class="ms s18" style="color:var(--primary)">location_on</span>G-11, Islamabad<span class="ms s20 muted">expand_more</span></div>
+      </div>
+      <button class="icon-btn" aria-label="Notifications, 2 unread"><span class="ms">notifications</span><span class="dot-badge">2</span></button>
+    </div>
+
+    <div class="pad" style="padding-top:8px">
+      <div class="t-headline">What do you need done?</div>
+      <div class="sb-input" style="margin-top:14px"><span class="ms s20">search</span>Search a service or worker</div>
+    </div>
+
+    <div class="pad" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin-top:20px">
+      <div style="text-align:center"><div class="cat-tile cat-ink" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">bolt</span></div><div class="t-label-sm" style="margin-top:6px">Electrician</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-teal" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">plumbing</span></div><div class="t-label-sm" style="margin-top:6px">Plumber</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-amber" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">ac_unit</span></div><div class="t-label-sm" style="margin-top:6px">AC repair</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-plum" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">carpenter</span></div><div class="t-label-sm" style="margin-top:6px">Carpenter</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-amber" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">format_paint</span></div><div class="t-label-sm" style="margin-top:6px">Painter</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-teal" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">cleaning_services</span></div><div class="t-label-sm" style="margin-top:6px">Cleaning</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-clay" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">construction</span></div><div class="t-label-sm" style="margin-top:6px">Mason</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-slate" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">apps</span></div><div class="t-label-sm" style="margin-top:6px">All services</div></div>
+    </div>
+
+    <div class="section-h"><div class="grow t-title">Your jobs</div><button class="sb-btn quiet compact">View all</button></div>
+    <div class="pad">
+      <div class="card p">
+        <div class="row">
+          <div class="cat-tile cat-ink"><span class="ms s20">bolt</span></div>
+          <div class="grow"><div class="t-title-sm ellipsis">Ceiling fan installation</div><div class="t-caption">Posted yesterday · G-11</div></div>
+          <span class="badge tone-warning"><span class="ms">schedule</span>Open</span>
+        </div>
+        <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div class="grow t-body"><b class="num">3</b> <span class="muted">proposals to review</span></div>
+          <button class="sb-btn secondary compact">Review<span class="ms s18 mirror">chevron_right</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-h"><div class="grow"><div class="t-title">Trusted workers near you</div></div><button class="sb-btn quiet compact">See all</button></div>
+    <div class="pad stack">
+      <div class="card sb-worker">
+        <div class="avatar">IQ</div>
+        <div class="grow">
+          <div class="name"><span class="t-title ellipsis">Imran Qureshi</span><span class="ms fill verified" aria-label="Verified">verified</span></div>
+          <div class="muted">Electrician · 9 yrs</div>
+          <div class="meta"><span><span class="ms fill s16 star">star</span><span class="rating-num num">4.8</span>&nbsp;(37)</span><span><span class="ms s14">near_me</span>≈ 2 km</span></div>
+          <div class="rate-row"><span class="grow t-label num">Rs 800 / hour</span><span class="badge dense tone-success"><span class="pip"></span>Available</span></div>
+        </div>
+      </div>
+      <div class="card sb-worker">
+        <div class="avatar teal">NB</div>
+        <div class="grow">
+          <div class="name"><span class="t-title ellipsis">Nadia Bibi</span></div>
+          <div class="muted">Home cleaning</div>
+          <div class="meta"><span>New profile · no reviews yet</span><span><span class="ms s14">near_me</span>≈ 4 km</span></div>
+          <div class="rate-row"><span class="grow t-label">Rate on request</span><span class="badge dense tone-neutral"><span class="ms">do_not_disturb_on</span>Busy today</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pad" style="margin-top:20px">
+      <div class="card p row" style="background:var(--accent-sub);border-color:transparent">
+        <div class="grow"><div class="t-title-sm" style="color:var(--on-accent-sub)">Not sure who to pick?</div><div class="t-body" style="color:var(--on-accent-sub)">Post a job and workers send you quotes.</div></div>
+        <button class="sb-btn primary compact"><span class="ms s18">add</span>Post a job</button>
+      </div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <div class="dest on"><div class="pill"><span class="ms fill">home</span></div>Home</div>
+    <div class="dest"><div class="pill"><span class="ms">work</span></div>My jobs</div>
+    <div class="dest"><div class="pill"><span class="ms">chat_bubble</span><span class="nb">2</span></div>Chats</div>
+    <div class="dest"><div class="pill"><span class="ms">person</span></div>Profile</div>
+  </nav>
+</template>
+
+<template id="screen-ur">
+  <div class="statusbar"><span>9:41</span><span class="icons"><span class="ms">signal_cellular_alt</span><span class="ms">wifi</span><span class="ms">battery_full</span></span></div>
+  <div class="scroll">
+    <div class="appbar">
+      <div class="grow">
+        <div class="t-caption">آپ کا مقام</div>
+        <div class="loc-chip t-title-sm"><span class="ms s18" style="color:var(--primary)">location_on</span>جی-11، اسلام آباد<span class="ms s20 muted">expand_more</span></div>
+      </div>
+      <button class="icon-btn"><span class="ms">notifications</span><span class="dot-badge">2</span></button>
+    </div>
+    <div class="pad">
+      <div class="t-headline">آپ کو کیا کام کروانا ہے؟</div>
+      <div class="sb-input" style="margin-top:8px"><span class="ms s20">search</span>سروس یا کاریگر تلاش کریں</div>
+    </div>
+    <div class="pad" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px 8px;margin-top:16px">
+      <div style="text-align:center"><div class="cat-tile cat-ink" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">bolt</span></div><div class="t-label-sm">الیکٹریشن</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-teal" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">plumbing</span></div><div class="t-label-sm">پلمبر</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-amber" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">ac_unit</span></div><div class="t-label-sm">اے سی مرمت</div></div>
+      <div style="text-align:center"><div class="cat-tile cat-slate" style="margin:0 auto;width:56px;height:56px;border-radius:12px"><span class="ms">apps</span></div><div class="t-label-sm">تمام سروسز</div></div>
+    </div>
+    <div class="section-h"><div class="grow t-title">آپ کے کام</div><button class="sb-btn quiet compact">سب دیکھیں</button></div>
+    <div class="pad">
+      <div class="card p">
+        <div class="row">
+          <div class="cat-tile cat-ink"><span class="ms s20">bolt</span></div>
+          <div class="grow"><div class="t-title-sm ellipsis">چھت کا پنکھا لگوانا</div><div class="t-caption">کل پوسٹ کیا · جی-11</div></div>
+          <span class="badge tone-warning"><span class="ms">schedule</span>کھلا</span>
+        </div>
+        <div class="row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div class="grow t-body"><b class="num">3</b> <span class="muted">تجاویز دیکھنی ہیں</span></div>
+          <button class="sb-btn secondary compact">دیکھیں<span class="ms s18 mirror">chevron_right</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="section-h"><div class="grow t-title">قریبی قابلِ اعتماد کاریگر</div><button class="sb-btn quiet compact">سب</button></div>
+    <div class="pad stack">
+      <div class="card sb-worker">
+        <div class="avatar">IQ</div>
+        <div class="grow">
+          <div class="name"><span class="t-title ellipsis">عمران قریشی</span><span class="ms fill verified">verified</span></div>
+          <div class="muted t-body">الیکٹریشن · 9 سال</div>
+          <div class="meta"><span><span class="ms fill s16 star">star</span><span class="rating-num num">4.8</span>&nbsp;(37)</span><span><span class="ms s14">near_me</span>≈ 2 کلومیٹر</span></div>
+          <div class="rate-row"><span class="grow t-label num">Rs 800 / گھنٹہ</span><span class="badge dense tone-success"><span class="pip"></span>دستیاب</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <div class="dest on"><div class="pill"><span class="ms fill">home</span></div>ہوم</div>
+    <div class="dest"><div class="pill"><span class="ms">work</span></div>میرے کام</div>
+    <div class="dest"><div class="pill"><span class="ms">chat_bubble</span><span class="nb">2</span></div>چیٹ</div>
+    <div class="dest"><div class="pill"><span class="ms">person</span></div>پروفائل</div>
+  </nav>
+</template>
+
+<div class="frames" id="frames"></div>
+<script src="assets/frames.js"></script>
+<script>
+  renderFrames([
+    { tpl: 'screen-en', theme: 'light', label: 'Light · English · full scroll', height: 1240 },
+    { tpl: 'screen-en', theme: 'dark', label: 'Dark · English · full scroll', height: 1240 },
+    { tpl: 'screen-ur', theme: 'light', label: 'Light · Urdu (RTL)', rtl: true, height: 1240 },
+  ]);
+</script>
+</body>
+</html>

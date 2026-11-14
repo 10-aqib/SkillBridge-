@@ -1,245 +1,119 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/core/providers/firebase_providers.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_roles.dart';
+import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
+import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
+import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:skill_bridge/features/auth/presentation/widgets/role_choice_card.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist Role Selection Screen (a2_role_selection)
-/// Features 16px Level 2 cards with 4px left color-coded accent borders
+/// Finishes sign-up for a signed-in Firebase account that has no SkillBridge
+/// role yet (new Google account, interrupted registration, or a legacy profile
+/// saved with an empty role). Once saved, the router moves on automatically.
 class RoleSelectionScreen extends ConsumerStatefulWidget {
   const RoleSelectionScreen({super.key});
 
   @override
-  ConsumerState<RoleSelectionScreen> createState() =>
-      _RoleSelectionScreenState();
+  ConsumerState<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
 }
 
 class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
-  String _selectedRole = 'client';
-  bool _isLoading = false;
+  String? _role;
+  bool _showRequired = false;
+  bool _signingOut = false;
 
-  void _onRoleSelected() async {
-    setState(() => _isLoading = true);
-    final user = ref.read(currentUserProvider);
-    if (user == null) {
-      setState(() => _isLoading = false);
+  Future<void> _useDifferentAccount() async {
+    setState(() => _signingOut = true);
+    await ref.read(signOutUseCaseProvider).call();
+    if (mounted) context.go(RouteNames.welcomePath);
+  }
+
+  void _continue() {
+    if (_role == null) {
+      setState(() => _showRequired = true);
       return;
     }
+    ref.read(completeProfileViewModelProvider.notifier).complete(role: _role!);
+  }
 
-    final result = await ref
-        .read(updateUserRoleUseCaseProvider)
-        .call(uid: user.uid, role: _selectedRole);
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final state = ref.watch(completeProfileViewModelProvider);
+    final firebaseUser = ref.watch(firebaseAuthProvider).currentUser;
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      result.fold(
-        (failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(failure.message),
-              backgroundColor: AppColors.errorRed,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        (_) {
-          // The authStateProvider will emit the updated user role and
-          // router will automatically redirect to the correct home screen.
-        },
+    if (firebaseUser == null) {
+      // Nobody is signed in (e.g. opened directly): nothing to finish here.
+      return AuthScaffold(
+        child: SbStateView(
+          kind: SbStateKind.permission,
+          title: l.roleSelectSignedOutTitle,
+          message: l.roleSelectSignedOutBody,
+          actionLabel: l.welcomeSignIn,
+          onAction: () => context.go(RouteNames.welcomePath),
+        ),
       );
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.lg,
-            vertical: AppDimensions.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Header (Sora + Inter) ─────────────────────────────────────
-              Text(
-                'I am a...',
-                style: AppTextStyles.headlineLg.copyWith(
-                  color: context.textColor,
-                ),
-                textAlign: TextAlign.center,
-              ).animate().fade(duration: 500.ms).slideY(
-                    begin: 0.1,
-                    end: 0,
-                    curve: Curves.easeOutQuad,
-                  ),
-              const SizedBox(height: AppDimensions.sm),
-              Text(
-                AppL10n.select(context, en: 'Select your role in the Guild marketplace', ur: 'اپنا کردار منتخب کریں'),
-                style: AppTextStyles.bodyPrimary.copyWith(
-                  color: context.mutedColor,
-                ),
-                textAlign: TextAlign.center,
-              ).animate().fade(delay: 100.ms, duration: 500.ms),
-              const SizedBox(height: AppDimensions.xl),
-
-              // ── Role Cards (Guild Modernist 4px Left Accent) ─────────────
-              Expanded(
-                child: Column(
-                  children: [
-                    _RoleSelectionCard(
-                      title: AppL10n.select(context, en: 'Client', ur: 'کلائنٹ'),
-                      subtitle: 'I want to hire verified skilled pros for projects in Pakistan.',
-                      icon: Icons.business_center_rounded,
-                      accentColor: AppColors.tertiaryContainer, // Green accent
-                      iconBgColor: AppColors.tertiary.withValues(alpha: 0.12),
-                      iconColor: AppColors.tertiary,
-                      isSelected: _selectedRole == 'client',
-                      onTap: () => setState(() => _selectedRole = 'client'),
-                    ).animate().fade(delay: 150.ms, duration: 500.ms),
-                    const SizedBox(height: AppDimensions.md),
-                    _RoleSelectionCard(
-                      title: AppL10n.select(context, en: 'Worker', ur: 'کاریگر'),
-                      subtitle: 'I want to offer my trade skills, earn PKR, and build trust.',
-                      icon: Icons.handyman_rounded,
-                      accentColor: AppColors.primary, // Blue accent
-                      iconBgColor: AppColors.blueTint,
-                      iconColor: AppColors.primary,
-                      isSelected: _selectedRole == 'worker',
-                      onTap: () => setState(() => _selectedRole = 'worker'),
-                    ).animate().fade(delay: 200.ms, duration: 500.ms),
-                  ],
-                ),
-              ),
-
-              // ── Continue Button (52px Primary) ───────────────────────────
-              AppButton(
-                text: AppL10n.select(context, en: 'Continue', ur: 'آگے بڑھیں'),
-                onPressed: _isLoading ? null : _onRoleSelected,
-                isLoading: _isLoading,
-                width: double.infinity,
-              ).animate().fade(delay: 250.ms, duration: 500.ms),
-              const SizedBox(height: AppDimensions.md),
-            ],
-          ),
+    return AuthScaffold(
+      title: l.roleSelectTitle,
+      subtitle: l.roleSelectSubtitle,
+      footer: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SbButton(
+          label: l.continueText,
+          expand: true,
+          isLoading: state.isLoading || state.isDone,
+          loadingSemanticLabel: l.roleSelectSaving,
+          onPressed: _signingOut ? null : _continue,
         ),
-      ),
-    );
-  }
-}
-
-class _RoleSelectionCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accentColor;
-  final Color iconBgColor;
-  final Color iconColor;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _RoleSelectionCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accentColor,
-    required this.iconBgColor,
-    required this.iconColor,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: context.surfaceColor,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          boxShadow: isSelected ? AppShadows.level3 : AppShadows.level2,
-          border: Border.all(
-            color: isSelected ? accentColor : context.borderColor.withValues(alpha: 0.5),
-            width: isSelected ? 1.5 : 1,
-          ),
+        SbButton(
+          label: l.roleSelectDifferentAccount,
+          variant: SbButtonVariant.quiet,
+          expand: true,
+          isLoading: _signingOut,
+          onPressed: state.isLoading ? null : _useDifferentAccount,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 4px Left Accent Bar
-                Container(
-                  width: 4,
-                  color: accentColor,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.lg),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: iconBgColor,
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                          ),
-                          child: Icon(
-                            icon,
-                            color: iconColor,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimensions.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: AppTextStyles.heading3.copyWith(
-                                  color: context.textColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                subtitle,
-                                style: AppTextStyles.bodyPrimary.copyWith(
-                                  color: context.mutedColor,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isSelected)
-                          Icon(
-                            Icons.check_circle_rounded,
-                            color: accentColor,
-                            size: 24,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+      ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SbFailureBanner(failure: state.failure),
+        if (firebaseUser.email != null && firebaseUser.email!.isNotEmpty) ...[
+          Row(children: [
+            Icon(Icons.account_circle_outlined, color: c.textSecondary, size: 20),
+            const SizedBox(width: SbSpace.s2),
+            Expanded(
+              child: Text(l.roleSelectSignedInAs(firebaseUser.email!),
+                  style: t.bodyMedium!.copyWith(color: c.textSecondary)),
             ),
-          ),
+          ]),
+          const SizedBox(height: SbSpace.s4),
+        ],
+        RoleChoiceGroup(
+          value: _role ?? '',
+          enabled: !state.isLoading && !state.isDone,
+          onChanged: (r) => setState(() {
+            _role = r;
+            _showRequired = false;
+          }),
         ),
-      ),
+        if (_showRequired) ...[
+          const SizedBox(height: SbSpace.s3),
+          Semantics(
+            liveRegion: true,
+            child: Text(l.roleSelectRequired, style: t.bodySmall!.copyWith(color: c.error)),
+          ),
+        ],
+        const SizedBox(height: SbSpace.s4),
+        SbInlineBanner(message: l.roleSelectPermanentNote, tone: SbTone.info),
+      ]),
     );
   }
 }
+
+/// Kept for callers that only need the valid role list.
+const kSelectableRoles = UserRoles.selfService;

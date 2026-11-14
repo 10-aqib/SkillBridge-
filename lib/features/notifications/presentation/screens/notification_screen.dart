@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:skill_bridge/features/notifications/presentation/notification_routes.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_shadows.dart';
@@ -71,7 +72,7 @@ class _NotificationList extends ConsumerWidget {
       ),
       error: (e, _) => Center(
         child: Text(
-          'Could not load notifications: $e',
+          context.l10n.errNetwork,
           style:
               AppTextStyles.bodyPrimary.copyWith(color: AppColors.errorRed),
         ),
@@ -94,7 +95,7 @@ class _NotificationList extends ConsumerWidget {
             final notif = notifications[index];
             return _NotificationTile(
               notification: notif,
-              onTap: () => _onNotifTap(ref, notif),
+              onTap: () => _onNotifTap(context, ref, notif),
             ).animate().fade(delay: (60 * index).ms, duration: 350.ms);
           },
         );
@@ -102,11 +103,17 @@ class _NotificationList extends ConsumerWidget {
     );
   }
 
-  Future<void> _onNotifTap(WidgetRef ref, NotificationModel notif) async {
+  /// Marks it read and opens what it is about: the conversation for a
+  /// message, the contract for a contract update. The opened screen checks
+  /// access itself (the rules allow only the two members/parties).
+  Future<void> _onNotifTap(BuildContext context, WidgetRef ref, NotificationModel notif) async {
     if (!notif.isRead) {
       final datasource = ref.read(notificationRemoteDataSourceProvider);
-      await datasource.markAsRead(notif.id);
+      datasource.markAsRead(notif.id).catchError((_) {});
     }
+    if (!context.mounted) return;
+    final route = notificationRouteFor(notif.payload, type: notif.type);
+    if (route != null) context.push(route);
   }
 }
 
@@ -142,7 +149,7 @@ class _NotificationTile extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _iconForType(notification.payload?['type'] as String?),
+                _iconForType(notification.type),
                 size: 20,
                 color: isUnread
                     ? AppColors.primary
@@ -218,7 +225,19 @@ class _NotificationTile extends StatelessWidget {
       case 'review':
         return Icons.star_outline_rounded;
       case 'chat':
+      case 'message':
         return Icons.chat_bubble_outline_rounded;
+      case 'contract_created':
+      case 'work_started':
+      case 'address_shared':
+        return Icons.handshake_outlined;
+      case 'work_submitted':
+      case 'completion_confirmed':
+        return Icons.task_alt_rounded;
+      case 'revision_requested':
+        return Icons.replay_rounded;
+      case 'progress_update':
+        return Icons.update_rounded;
       case 'payment':
         return Icons.payments_outlined;
       default:

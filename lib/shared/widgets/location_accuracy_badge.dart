@@ -34,7 +34,6 @@ class LocationAccuracyBadge extends StatelessWidget {
         iconData = Icons.location_disabled;
         break;
       case LocationAccuracyLevel.unknown:
-      default:
         badgeColor = Colors.grey;
         label = 'Determining...';
         iconData = Icons.gps_off;

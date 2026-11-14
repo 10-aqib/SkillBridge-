@@ -1,15 +1,12 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist Splash Screen (a1_splash_screen)
-/// Features Navy mesh gradient, white 24px logo box with "S" lettermark, Sora wordmark
+/// Brief brand screen while the auth state loads. Signed-in people are moved
+/// on by the router; signed-out people continue to Welcome.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -24,115 +21,30 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToNext();
   }
 
-  void _navigateToNext() async {
-    // Wait for a short duration for branding
+  Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    if (mounted) {
-      context.go(RouteNames.loginPath);
-    }
+    if (mounted) context.go(RouteNames.welcomePath);
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF001E60),
-              AppColors.primary,
-              AppColors.primaryContainer,
-            ],
+      body: Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SbBrandMark(size: 72),
+          const SizedBox(height: SbSpace.s5),
+          Text('SkillBridge', style: t.headlineSmall!.copyWith(color: c.primary)),
+          const SizedBox(height: SbSpace.s2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: SbSpace.s8),
+            child: Text(context.l10n.appTagline,
+                style: t.bodyLarge!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
           ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // White 24px Logo Box with Lettermark
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: context.surfaceColor,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 24,
-                      offset: Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Text(
-                        'S',
-                        style: AppTextStyles.displayHero.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 14,
-                        right: 18,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: const BoxDecoration(
-                            color: AppColors.tertiary, // Skill Green
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            size: 10,
-                            color: AppColors.onTertiary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-                  .animate()
-                  .fade(duration: 700.ms)
-                  .scale(duration: 700.ms, curve: Curves.easeOutBack)
-                  .then(delay: 200.ms)
-                  .shimmer(duration: 1.seconds, color: AppColors.blueTint.withValues(alpha: 0.3)),
-              const SizedBox(height: AppDimensions.lg),
-              // Wordmark (Sora)
-              Text(
-                'Skill Bridge',
-                style: AppTextStyles.headlineLg.copyWith(
-                  color: context.surfaceColor,
-                  letterSpacing: 0.5,
-                ),
-              ).animate().fade(delay: 250.ms, duration: 600.ms).slideY(
-                    begin: 0.2,
-                    end: 0,
-                    curve: Curves.easeOutQuad,
-                  ),
-              const SizedBox(height: AppDimensions.sm),
-              // Bilingual Tagline (Inter)
-              Text(
-                AppL10n.select(context, en: 'Connecting Skills. Building Trust.', ur: 'ہنر کا اعتماد'),
-                style: AppTextStyles.bodyPrimary.copyWith(
-                  color: AppColors.onPrimaryContainer,
-                  fontSize: 14,
-                ),
-              ).animate().fade(delay: 450.ms, duration: 600.ms).slideY(
-                    begin: 0.2,
-                    end: 0,
-                    curve: Curves.easeOutQuad,
-                  ),
-            ],
-          ),
-        ),
+          const SizedBox(height: SbSpace.s8),
+          SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: c.primary)),
+        ]),
       ),
     );
   }

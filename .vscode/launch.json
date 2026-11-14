@@ -5,6 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // Build-time values (Maps key, App Check site key) come from .env.
+            // .env is not bundled into the app. See .env.example.
+            "name": "SkillBridge (debug)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "toolArgs": ["--dart-define-from-file=.env"]
+        },
+        {
+            "name": "SkillBridge (release)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "release",
+            "toolArgs": ["--dart-define-from-file=.env"]
+        },
+        {
             "type": "editor-browser",
             "request": "launch",
             "name": "Launch Integrated Browser against localhost",

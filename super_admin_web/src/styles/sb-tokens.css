@@ -1,0 +1,187 @@
+/*
+ * SkillBridge design tokens — admin web.
+ * Mirrors design/tokens/skillbridge.tokens.json (same values as the Flutter app).
+ * Run `node design/tools/check-contrast.mjs` from the repo root after changes.
+ *
+ * Use through Tailwind utilities generated below, e.g.
+ *   bg-sb-surface text-sb-text border-sb-border text-sb-text-secondary
+ *   bg-sb-primary text-sb-on-primary bg-sb-success-subtle text-sb-on-success-subtle
+ * Never hardcode hex values or Tailwind palette colours (slate-500, blue-50…) in screens.
+ *
+ * Phase 2A: the shadcn variables in globals.css now point at these tokens.
+ * Light/dark: add or remove the `dark` class on <html> (see ThemeToggle).
+ */
+
+:root {
+  --sb-canvas: #F7F8F6;
+  --sb-surface: #FFFFFF;
+  --sb-surface-sunken: #EEF1EE;
+  --sb-surface-raised: #FFFFFF;
+  --sb-text: #18232F;
+  --sb-text-secondary: #596779;
+  --sb-text-disabled: #8C97A3;
+  --sb-border: #DCE3E8;
+  --sb-border-strong: #B4C0CA;
+  --sb-border-input: #7D8995;
+  --sb-primary: #174A8B;
+  --sb-primary-hover: #123D73;
+  --sb-on-primary: #FFFFFF;
+  --sb-primary-subtle: #E7EEF7;
+  --sb-on-primary-subtle: #123D73;
+  --sb-accent: #E4A33A;
+  --sb-on-accent: #18232F;
+  --sb-accent-subtle: #FBF0DC;
+  --sb-on-accent-subtle: #6E4708;
+  --sb-success: #167A63;
+  --sb-on-success: #FFFFFF;
+  --sb-success-subtle: #E2F2ED;
+  --sb-on-success-subtle: #0E5545;
+  --sb-warning: #8A5A00;
+  --sb-warning-subtle: #FDF2DD;
+  --sb-on-warning-subtle: #6B4500;
+  --sb-error: #B42318;
+  --sb-on-error: #FFFFFF;
+  --sb-error-subtle: #FCE8E6;
+  --sb-on-error-subtle: #8F1C13;
+  --sb-focus-ring: #174A8B;
+  --sb-scrim: rgb(11 18 24 / 0.45);
+
+  /* Charts: ordered for colour-blind separation; always paired with labels/table. */
+  --sb-chart-1: #174A8B;
+  --sb-chart-2: #167A63;
+  --sb-chart-3: #E4A33A;
+  --sb-chart-4: #7F3418;
+  --sb-chart-5: #5B2C6F;
+  --sb-chart-6: #596779;
+
+  --sb-radius-xs: 4px;
+  --sb-radius-control: 8px;
+  --sb-radius-card: 12px;
+  --sb-radius-sheet: 20px;
+
+  --sb-shadow-overlay: 0 4px 16px rgb(11 18 24 / 0.10), 0 1px 3px rgb(11 18 24 / 0.08);
+
+  --sb-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sb-duration-fast: 120ms;
+  --sb-duration-base: 200ms;
+
+  --sb-font-sans: var(--font-noto-sans, "Noto Sans"), system-ui, "Segoe UI", sans-serif;
+  --sb-font-urdu: var(--font-noto-urdu, "Noto Nastaliq Urdu"), var(--font-noto-sans, "Noto Sans"), serif;
+}
+
+.dark {
+  --sb-canvas: #0F151B;
+  --sb-surface: #161E26;
+  --sb-surface-sunken: #0B1116;
+  --sb-surface-raised: #1D2731;
+  --sb-text: #E8EDF1;
+  --sb-text-secondary: #A4B1BE;
+  --sb-text-disabled: #6C7986;
+  --sb-border: #2A3642;
+  --sb-border-strong: #3D4B58;
+  --sb-border-input: #6E7B88;
+  --sb-primary: #8FB6EC;
+  --sb-primary-hover: #A9C7F1;
+  --sb-on-primary: #0C2747;
+  --sb-primary-subtle: #1A2D45;
+  --sb-on-primary-subtle: #C3D8F5;
+  --sb-accent: #F0B85A;
+  --sb-on-accent: #1F1606;
+  --sb-accent-subtle: #33270F;
+  --sb-on-accent-subtle: #F5CF8E;
+  --sb-success: #5CC4A6;
+  --sb-on-success: #06241C;
+  --sb-success-subtle: #12302A;
+  --sb-on-success-subtle: #8FDCC5;
+  --sb-warning: #E9B65C;
+  --sb-warning-subtle: #33270F;
+  --sb-on-warning-subtle: #F5CF8E;
+  --sb-error: #F2A39C;
+  --sb-on-error: #3D0B07;
+  --sb-error-subtle: #3A1714;
+  --sb-on-error-subtle: #F7C2BD;
+  --sb-focus-ring: #8FB6EC;
+  --sb-scrim: rgb(0 0 0 / 0.6);
+
+  --sb-chart-1: #8FB6EC;
+  --sb-chart-2: #5CC4A6;
+  --sb-chart-3: #F0B85A;
+  --sb-chart-4: #F0B9A3;
+  --sb-chart-5: #D9B8E6;
+  --sb-chart-6: #A4B1BE;
+
+  --sb-shadow-overlay: 0 4px 16px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+@theme inline {
+  --color-sb-canvas: var(--sb-canvas);
+  --color-sb-surface: var(--sb-surface);
+  --color-sb-surface-sunken: var(--sb-surface-sunken);
+  --color-sb-surface-raised: var(--sb-surface-raised);
+  --color-sb-text: var(--sb-text);
+  --color-sb-text-secondary: var(--sb-text-secondary);
+  --color-sb-text-disabled: var(--sb-text-disabled);
+  --color-sb-border: var(--sb-border);
+  --color-sb-border-strong: var(--sb-border-strong);
+  --color-sb-border-input: var(--sb-border-input);
+  --color-sb-primary: var(--sb-primary);
+  --color-sb-primary-hover: var(--sb-primary-hover);
+  --color-sb-on-primary: var(--sb-on-primary);
+  --color-sb-primary-subtle: var(--sb-primary-subtle);
+  --color-sb-on-primary-subtle: var(--sb-on-primary-subtle);
+  --color-sb-accent: var(--sb-accent);
+  --color-sb-on-accent: var(--sb-on-accent);
+  --color-sb-accent-subtle: var(--sb-accent-subtle);
+  --color-sb-on-accent-subtle: var(--sb-on-accent-subtle);
+  --color-sb-success: var(--sb-success);
+  --color-sb-on-success: var(--sb-on-success);
+  --color-sb-success-subtle: var(--sb-success-subtle);
+  --color-sb-on-success-subtle: var(--sb-on-success-subtle);
+  --color-sb-warning: var(--sb-warning);
+  --color-sb-warning-subtle: var(--sb-warning-subtle);
+  --color-sb-on-warning-subtle: var(--sb-on-warning-subtle);
+  --color-sb-error: var(--sb-error);
+  --color-sb-on-error: var(--sb-on-error);
+  --color-sb-error-subtle: var(--sb-error-subtle);
+  --color-sb-on-error-subtle: var(--sb-on-error-subtle);
+  --color-sb-focus: var(--sb-focus-ring);
+  --color-sb-chart-1: var(--sb-chart-1);
+  --color-sb-chart-2: var(--sb-chart-2);
+  --color-sb-chart-3: var(--sb-chart-3);
+  --color-sb-chart-4: var(--sb-chart-4);
+  --color-sb-chart-5: var(--sb-chart-5);
+  --color-sb-chart-6: var(--sb-chart-6);
+  --radius-sb-control: var(--sb-radius-control);
+  --radius-sb-card: var(--sb-radius-card);
+  --radius-sb-sheet: var(--sb-radius-sheet);
+  --shadow-sb-overlay: var(--sb-shadow-overlay);
+  --font-sb: var(--sb-font-sans);
+  --font-sb-urdu: var(--sb-font-urdu);
+}
+
+/* Visible keyboard focus for every SkillBridge component. */
+.sb-focus:focus-visible,
+[data-sb] :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--sb-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Urdu: Nastaliq needs taller lines and no letter-spacing. */
+:where([lang="ur"]) {
+  font-family: var(--sb-font-urdu);
+  line-height: 1.9;
+  letter-spacing: 0;
+}
+
+.sb-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sb] *,
+  [data-sb] *::before,
+  [data-sb] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

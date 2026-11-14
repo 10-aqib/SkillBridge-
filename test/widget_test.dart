@@ -1,37 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/features/auth/presentation/screens/splash_screen.dart';
 
+import 'helpers/test_app.dart';
+
 void main() {
-  testWidgets('SplashScreen displays Skill Bridge title and subtitle', (WidgetTester tester) async {
+  testWidgets('SplashScreen shows the SkillBridge brand and tagline, then continues', (
+    WidgetTester tester,
+  ) async {
+    final l = await englishStrings();
     final router = GoRouter(
       routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const SplashScreen(),
-        ),
-        GoRoute(
-          path: '/login',
-          builder: (context, state) => const SizedBox(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+        GoRoute(path: RouteNames.welcomePath, builder: (context, state) => const Text('WELCOME')),
       ],
     );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(
-          routerConfig: router,
-        ),
-      ),
-    );
+    await tester.pumpWidget(testRouterApp(router: router));
+    await tester.pump();
 
-    // Verify title and subtitle rendering on SplashScreen
-    expect(find.text('Skill Bridge'), findsOneWidget);
-    expect(find.text('Connecting Skills. Building Trust. • ہنر کا اعتماد'), findsOneWidget);
+    expect(find.text('SkillBridge'), findsOneWidget);
+    expect(find.text(l.appTagline), findsOneWidget);
 
-    // Advance timer past splash screen navigation delay (3s)
-    await tester.pumpAndSettle(const Duration(seconds: 4));
+    // Signed-out flow continues to Welcome after the brief brand moment.
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('WELCOME'), findsOneWidget);
   });
 }

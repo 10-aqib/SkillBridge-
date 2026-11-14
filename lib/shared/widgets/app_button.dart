@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
+import 'package:skill_bridge/config/theme/sb/sb_tokens.dart';
+import 'package:skill_bridge/shared/design_system/sb_button.dart';
 
 enum AppButtonType { solid, outline, text }
 
-/// Guild Modernist Button Component
-/// Supports primary (#003fb1), secondary outline, and success (#005438) variants
-/// 52px default height, 12px radius, Inter bodyStrong typography
+/// Legacy button API, rendered by [SbButton].
+///
+/// solid → primary, outline → secondary, text → quiet. An error-coloured
+/// background becomes the destructive variant. Any other custom colour is
+/// applied through a scoped token override so it still gets SbButton's sizing,
+/// loading and accessibility behaviour.
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -34,94 +36,55 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final sb = context.sb;
+    final scheme = Theme.of(context).colorScheme;
+    final isErrorColour = backgroundColor != null &&
+        (backgroundColor == scheme.error || backgroundColor == sb.error);
 
-    final defaultBg = type == AppButtonType.solid
-        ? (backgroundColor ?? theme.colorScheme.primary)
-        : Colors.transparent;
+    var variant = switch (type) {
+      AppButtonType.solid => SbButtonVariant.primary,
+      AppButtonType.outline => SbButtonVariant.secondary,
+      AppButtonType.text => SbButtonVariant.quiet,
+    };
+    if (type == AppButtonType.solid && isErrorColour) {
+      variant = SbButtonVariant.destructive;
+    }
 
-    final defaultTextCol = type == AppButtonType.solid
-        ? (textColor ?? theme.colorScheme.onPrimary)
-        : (textColor ?? theme.colorScheme.primary);
-
-    final border = type == AppButtonType.outline
-        ? BorderSide(color: backgroundColor ?? AppColors.primary, width: 1.5)
-        : BorderSide.none;
-
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(isSmall ? AppDimensions.radiusSm : AppDimensions.radiusMd),
+    final expand = width == double.infinity;
+    Widget button = SbButton(
+      label: text,
+      onPressed: onPressed,
+      variant: variant,
+      size: isSmall ? SbButtonSize.compact : SbButtonSize.regular,
+      icon: icon,
+      isLoading: isLoading,
+      expand: expand,
     );
 
-    final buttonHeight = isSmall ? 40.0 : 52.0; // 52px standard touch target per Guild Modernist
-    final padding = isSmall
-        ? const EdgeInsets.symmetric(horizontal: 14)
-        : const EdgeInsets.symmetric(horizontal: AppDimensions.md);
-
-    return SizedBox(
-      width: width,
-      height: buttonHeight,
-      child: type == AppButtonType.solid
-          ? ElevatedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: defaultBg,
-                foregroundColor: defaultTextCol,
-                shape: shape,
-                elevation: 1, // Subtle Level 2 elevation
-                padding: padding,
-                minimumSize: Size(0, buttonHeight),
-              ),
-              child: _buildChild(defaultTextCol),
-            )
-          : OutlinedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: defaultTextCol,
-                side: border,
-                shape: shape,
-                padding: padding,
-                minimumSize: Size(0, buttonHeight),
-              ),
-              child: _buildChild(defaultTextCol),
-            ),
-    );
-  }
-
-  Widget _buildChild(Color currentTextColor) {
-    if (isLoading) {
-      return SizedBox(
-        width: isSmall ? 16 : 20,
-        height: isSmall ? 16 : 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(currentTextColor),
+    // Custom colours (not the error case): override the tokens SbButton reads.
+    final customColours = !isErrorColour && (backgroundColor != null || textColor != null);
+    if (customColours) {
+      final theme = Theme.of(context);
+      final overridden = type == AppButtonType.solid
+          ? sb.copyWith(primary: backgroundColor, onPrimary: textColor)
+          : sb.copyWith(primary: textColor ?? backgroundColor);
+      button = Theme(
+        data: theme.copyWith(
+          extensions: [
+            ...theme.extensions.values.where((e) => e is! SbColors),
+            overridden,
+          ],
         ),
+        child: button,
       );
     }
 
-    final textStyle = isSmall
-        ? AppTextStyles.labelCaption.copyWith(color: currentTextColor, fontWeight: FontWeight.w600, fontSize: 13)
-        : AppTextStyles.bodyStrong.copyWith(color: currentTextColor);
-
-    final textWidget = Text(
-      text,
-      style: textStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-
-    if (icon != null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: isSmall ? 16 : 18, color: currentTextColor),
-          SizedBox(width: isSmall ? 6 : AppDimensions.sm),
-          Flexible(child: textWidget),
-        ],
-      );
+    if (width != null && !expand) {
+      return SizedBox(width: width, child: button);
     }
-
-    return textWidget;
+    if (expand) {
+      return SizedBox(width: double.infinity, child: button);
+    }
+    return button;
   }
 }

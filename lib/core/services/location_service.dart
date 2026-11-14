@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:skill_bridge/core/utils/geo_location_util.dart';
 
@@ -7,7 +9,8 @@ class LocationServiceException implements Exception {
   final bool isServiceDisabled;
   final bool isSettingsRequired;
 
-  LocationServiceException(this.message, {
+  LocationServiceException(
+    this.message, {
     this.isPermissionDenied = false,
     this.isServiceDisabled = false,
     this.isSettingsRequired = false,
@@ -56,7 +59,13 @@ class LocationService {
     LocationAccuracy accuracy = LocationAccuracy.high,
     Duration timeLimit = const Duration(seconds: 15),
   }) async {
-    await checkAndRequestPermission();
+    try {
+      await checkAndRequestPermission().timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw LocationServiceException(
+        'Location permission check timed out. Please retry.',
+      );
+    }
 
     try {
       return await Geolocator.getCurrentPosition(
@@ -64,7 +73,7 @@ class LocationService {
           accuracy: accuracy,
           timeLimit: timeLimit,
         ),
-      );
+      ).timeout(timeLimit + const Duration(seconds: 3));
     } catch (e) {
       throw LocationServiceException('Failed to get current location: $e');
     }

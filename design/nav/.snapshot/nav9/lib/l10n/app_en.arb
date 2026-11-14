@@ -1,0 +1,1917 @@
+{
+  "@@locale": "en",
+  "appName": "Skill Bridge",
+  "@appName": {
+    "description": "The application name"
+  },
+  "greeting": "Hello",
+  "@greeting": {
+    "description": "General greeting"
+  },
+  "greetingWithName": "Hello, {name} 👋",
+  "@greetingWithName": {
+    "description": "Greeting with user name",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeBack": "Welcome back",
+  "@welcomeBack": {
+    "description": "Welcome back message"
+  },
+  "login": "Login",
+  "signup": "Sign Up",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "fullName": "Full Name",
+  "phoneNumber": "Phone Number",
+  "forgotPassword": "Forgot Password?",
+  "resetPassword": "Reset Password",
+  "verifyOtp": "Verify OTP",
+  "resendOtp": "Resend OTP",
+  "continueText": "Continue",
+  "orContinueWith": "Or continue with",
+  "dontHaveAccount": "Don't have an account?",
+  "alreadyHaveAccount": "Already have an account?",
+  "selectRole": "Select Your Role",
+  "selectRoleSubtitle": "How do you want to use SkillBridge?",
+  "client": "Client",
+  "worker": "Worker",
+  "clientDescription": "I want to hire skilled workers for my jobs",
+  "workerDescription": "I want to offer my skills and find work",
+  "home": "Home",
+  "search": "Search",
+  "chats": "Chats",
+  "profile": "Profile",
+  "notifications": "Notifications",
+  "settings": "Settings",
+  "searchPlaceholder": "Search electrician, plumber...",
+  "allCategories": "All",
+  "topRatedNearYou": "Top rated near you",
+  "seeAll": "See all",
+  "verified": "Verified",
+  "yearsExperience": "{years} yrs experience",
+  "@yearsExperience": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "perHour": "/hr",
+  "perDay": "/day",
+  "fixed": "Fixed",
+  "postJob": "Post a Job",
+  "jobType": "Job Type",
+  "temporary": "Temporary",
+  "permanent": "Permanent",
+  "jobTitle": "Job Title",
+  "category": "Category",
+  "description": "Description",
+  "location": "Location",
+  "budget": "Budget (PKR)",
+  "budgetRange": "Budget Range",
+  "submitJob": "Post Job",
+  "urgency": "Urgency",
+  "normal": "Normal",
+  "urgent": "Urgent",
+  "myJobs": "My Jobs",
+  "activeJobs": "Active",
+  "completedJobs": "Completed",
+  "cancelledJobs": "Cancelled",
+  "openJobs": "Open",
+  "inProgress": "In Progress",
+  "proposals": "Proposals",
+  "submitProposal": "Submit Proposal",
+  "coverLetter": "Cover Letter",
+  "proposedRate": "Proposed Rate",
+  "estimatedDuration": "Estimated Duration",
+  "withdraw": "Withdraw",
+  "accept": "Accept",
+  "reject": "Reject",
+  "contracts": "Contracts",
+  "activeContracts": "Active",
+  "completedContracts": "Completed",
+  "contractDetails": "Contract Details",
+  "message": "Message",
+  "hireForJob": "Hire for a Job",
+  "typeMessage": "Type a message...",
+  "reviews": "Reviews",
+  "writeReview": "Write a Review",
+  "rating": "Rating",
+  "comment": "Comment",
+  "submitReview": "Submit Review",
+  "portfolio": "Portfolio",
+  "viewAll": "View all",
+  "skills": "Skills",
+  "about": "About",
+  "experience": "Experience",
+  "certifications": "Certifications",
+  "availability": "Availability",
+  "available": "Available",
+  "busy": "Busy",
+  "offline": "Offline",
+  "hourlyRate": "Hourly Rate",
+  "dailyRate": "Daily Rate",
+  "editProfile": "Edit Profile",
+  "payment": "Payment",
+  "payNow": "Pay Now",
+  "paymentHistory": "Payment History",
+  "jazzcash": "JazzCash",
+  "easypaisa": "EasyPaisa",
+  "nearbyWorkers": "Nearby Workers",
+  "filterResults": "Filter Results",
+  "sortBy": "Sort By",
+  "distance": "Distance",
+  "ratingFilter": "Rating",
+  "experienceFilter": "Experience",
+  "applyFilters": "Apply Filters",
+  "clearFilters": "Clear Filters",
+  "noResultsFound": "No results found",
+  "tryDifferentSearch": "Try a different search term",
+  "somethingWentWrong": "Something went wrong",
+  "tryAgain": "Try Again",
+  "noNotifications": "No notifications yet",
+  "noChats": "No conversations yet",
+  "noJobs": "No jobs found",
+  "logout": "Logout",
+  "logoutConfirmation": "Are you sure you want to logout?",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "save": "Save",
+  "edit": "Edit",
+  "done": "Done",
+  "close": "Close",
+  "yes": "Yes",
+  "no": "No",
+  "ok": "OK",
+  "loading": "Loading...",
+  "currency": "PKR",
+  "currencySymbol": "Rs",
+  "currencyFormat": "Rs {amount}",
+  "@currencyFormat": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Language",
+  "darkMode": "Dark Mode",
+  "customerSupport": "Customer Support",
+  "chatOnWhatsApp": "Chat on WhatsApp",
+  "whatsappNotInstalled": "WhatsApp is not installed.",
+  "termsAndConditions": "Terms & Conditions",
+  "termsContent": "By using SkillBridge, you agree to our terms of service.\n\n1. Users must provide accurate information.\n2. Payments must be processed through the app or directly as agreed.\n3. SkillBridge is not liable for disputes between workers and clients.\n4. Respect and professionalism are required at all times.",
+  "viewReceivedProposals": "View Received Proposals ({count})",
+  "@viewReceivedProposals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "receivedProposals": "Received Proposals",
+  "appTagline": "Local expertise, made easier to trust.",
+  "authContinueWithGoogle": "Continue with Google",
+  "authOr": "or",
+  "authEmailHint": "name@example.com",
+  "authShowPassword": "Show password",
+  "authHidePassword": "Hide password",
+  "onboardingStepOf": "Step {step} of {total} · {label}",
+  "@onboardingStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "validationEmailRequired": "Enter your email address.",
+  "validationEmailInvalid": "Enter a valid email, like name@example.com.",
+  "validationPasswordRequired": "Enter your password.",
+  "validationPasswordWeak": "Use at least 8 characters, including a number.",
+  "validationPasswordMismatch": "Passwords don't match.",
+  "validationNameRequired": "Enter your full name.",
+  "validationNameLength": "Name must be 2–60 characters.",
+  "validationPhoneInvalid": "Enter a Pakistani mobile number, like 300 1234567.",
+  "errInvalidCredential": "Email or password is incorrect.",
+  "errEmailInUse": "An account with this email already exists. Sign in instead.",
+  "errUserDisabled": "This account has been disabled. Contact support.",
+  "errSuspended": "Your account is suspended. Contact support.",
+  "errTooManyRequests": "Too many attempts. Wait a few minutes and try again.",
+  "errNetwork": "No connection. Check your internet and try again.",
+  "errTimeout": "This is taking too long. Check your connection and try again.",
+  "errAccountExistsDifferent": "This email is registered with a different sign-in method.",
+  "errOperationNotAllowed": "This sign-in method isn't available right now.",
+  "errRoleLocked": "This account already has a role.",
+  "errSignInAgain": "Please sign in again to continue.",
+  "errGeneric": "Something went wrong. Please try again.",
+  "welcomeTitle": "Find trusted local help, or get hired for your skills",
+  "welcomeCreateAccount": "Create an account",
+  "welcomeSignIn": "I already have an account",
+  "welcomePointTrust": "Verified profiles and real reviews",
+  "welcomePointNearby": "Skilled workers near you, across Pakistan",
+  "welcomePointChat": "Chat and agree the price before booking",
+  "welcomeTermsPrefix": "By continuing you agree to our",
+  "loginTitle": "Welcome back",
+  "loginSubtitle": "Sign in to continue to SkillBridge.",
+  "loginForgotPassword": "Forgot password?",
+  "loginButton": "Sign in",
+  "loginSigningIn": "Signing in",
+  "loginNoAccount": "New to SkillBridge?",
+  "signupTitleClient": "Create a client account",
+  "signupTitleWorker": "Create a worker account",
+  "signupSubtitleClient": "Hire trusted workers near you.",
+  "signupSubtitleWorker": "Get found by clients near you.",
+  "signupRoleQuestion": "I want to",
+  "roleClientTitle": "Hire workers",
+  "roleClientDesc": "Post jobs and book trusted people nearby.",
+  "roleWorkerTitle": "Find work",
+  "roleWorkerDesc": "Offer your skills and get hired for jobs.",
+  "signupNameLabel": "Full name",
+  "signupNameHint": "e.g. Tariq Mahmood",
+  "signupPhoneLabel": "Mobile number",
+  "signupPhoneHint": "300 1234567",
+  "signupPhoneHelp": "Used so clients and workers can reach you.",
+  "signupPasswordHelp": "At least 8 characters, including a number.",
+  "signupConfirmPasswordLabel": "Confirm password",
+  "signupAgree": "I agree to the Terms & Conditions",
+  "signupReadTerms": "Read",
+  "signupAgreeRequired": "Please accept the Terms & Conditions to continue.",
+  "signupButton": "Create account",
+  "signupCreating": "Creating your account",
+  "signupHaveAccount": "Already have an account?",
+  "roleSelectTitle": "How will you use SkillBridge?",
+  "roleSelectSubtitle": "Choose one to finish setting up your account.",
+  "roleSelectSaving": "Saving",
+  "roleSelectDifferentAccount": "Use a different account",
+  "roleSelectSignedInAs": "Signed in as {email}",
+  "@roleSelectSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "roleSelectRequired": "Choose client or worker to continue.",
+  "roleSelectPermanentNote": "This can't be changed later, so pick the one that fits you.",
+  "roleSelectSignedOutTitle": "You are not signed in",
+  "roleSelectSignedOutBody": "Sign in or create an account to continue.",
+  "forgotTitle": "Reset your password",
+  "forgotSubtitle": "Enter the email you signed up with and we'll send you a reset link.",
+  "forgotSend": "Send reset link",
+  "forgotSending": "Sending",
+  "forgotSentTitle": "Check your email",
+  "forgotSentBody": "If an account exists for {email}, a reset link is on its way. Open it, choose a new password, then sign in.",
+  "@forgotSentBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotSentTip": "Can't find it? Check your spam folder.",
+  "forgotResend": "Resend link",
+  "forgotResendIn": "Resend in {seconds}s",
+  "@forgotResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "forgotBackToSignIn": "Back to sign in",
+  "forgotDifferentEmail": "Use a different email",
+  "otpTitle": "Verify your phone",
+  "otpSubtitle": "Enter the 6-digit code we sent to {phone}.",
+  "@otpSubtitle": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "otpCodeLabel": "Verification code",
+  "otpVerify": "Verify",
+  "otpResend": "Resend code",
+  "otpSent": "Code sent.",
+  "otpError": "That code didn't work. Check it or request a new one.",
+  "otpVerified": "Phone number verified.",
+  "mediaTakePhoto": "Take a photo",
+  "mediaChooseFromGallery": "Choose from gallery",
+  "mediaPickerUnavailable": "Couldn't open the camera or gallery.",
+  "mediaTooLarge": "That file is over 5 MB. Choose a smaller one.",
+  "mediaUnsupportedType": "Use a JPG, PNG or WebP image.",
+  "mediaPermissionDenied": "You don't have permission to upload this file.",
+  "mediaUploadFailed": "Upload failed. Check your connection and try again.",
+  "profileSaveFailed": "Couldn't save your profile. Please try again.",
+  "profilePhotoUpdated": "Profile photo updated.",
+  "profileChangePhoto": "Change profile photo",
+  "portfolioAdd": "Add photo",
+  "portfolioAdded": "Photo added to your work.",
+  "portfolioRemove": "Remove photo",
+  "portfolioRemoveTitle": "Remove this photo?",
+  "portfolioRemoveBody": "It will no longer appear on your public profile.",
+  "portfolioRemoved": "Photo removed.",
+  "portfolioCount": "{count} of {max} photos",
+  "@portfolioCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioNeedsProfile": "Finish your professional details first, then add work photos.",
+  "verifyEmailTitle": "Verify your email",
+  "verifyEmailBody": "We sent a link to {email}. Verifying helps protect your account.",
+  "@verifyEmailBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailResend": "Resend email",
+  "verifyEmailSent": "Verification email sent.",
+  "verifyEmailCheck": "I've verified",
+  "verifyEmailStillPending": "Not verified yet. Open the link in the email, then try again.",
+  "availabilityHelp": "Clients see this on your profile.",
+  "availabilityAvailableNote": "Clients can find and message you for new work.",
+  "availabilityBusyNote": "Shown as busy. Clients can still message you.",
+  "availabilityOfflineNote": "Shown as offline until you switch back.",
+  "onboardingStepYou": "You",
+  "onboardingStepContact": "Contact",
+  "onboardingStepLocation": "Location",
+  "onboardingSkip": "Skip for now",
+  "onboardingSkipStep": "Skip this step",
+  "onboardingFinish": "Finish",
+  "onboardingPhotoHint": "A clear photo helps workers recognise you.",
+  "clientOnboardingYouTitle": "Tell us about you",
+  "clientOnboardingYouBody": "Add your name and a photo.",
+  "clientOnboardingContactTitle": "How can workers reach you?",
+  "clientOnboardingContactBody": "Your number is shared only with workers you hire.",
+  "clientOnboardingPhoneHelp": "You can change this later in your profile.",
+  "clientOnboardingLocationTitle": "Where do you need help?",
+  "clientOnboardingLocationBody": "We use your city to show workers near you.",
+  "completeTitle": "Profile {percent}% complete",
+  "@completeTitle": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "completeFix": "Complete",
+  "completeAddPhoto": "Add a profile photo so clients can recognise you.",
+  "completeAddWork": "Add your title, trade and a short description.",
+  "completeAddSkills": "Add the skills clients search for.",
+  "completeAddRate": "Add an hourly or daily rate.",
+  "completeAddArea": "Set the area you work in.",
+  "completeAddPhotos": "Add photos of your work.",
+  "completeVerify": "Verify your identity to earn the Verified badge.",
+  "profileAreaLabel": "Area or neighbourhood",
+  "profileAreaHint": "e.g. G-11, Islamabad",
+  "profileAreaHelp": "Don't enter your house number. Exact addresses are shared only for booked jobs.",
+  "profileCityLabel": "City",
+  "profileCityHint": "Select your city",
+  "profileContactDetails": "Contact details",
+  "profileEmailReadOnly": "Your email is your sign-in and can’t be changed here.",
+  "profileHires": "Hires",
+  "profileJobsPosted": "Jobs posted",
+  "profileLocationLabel": "Location",
+  "profileNoName": "Add your name",
+  "profileNoReviews": "No reviews yet",
+  "profileNoReviewsBody": "Reviews appear here after completed jobs.",
+  "profileNotAdded": "Not added",
+  "profileOptional": "(optional)",
+  "profileReviewsCount": "{count, plural, =1{1 review} other{{count} reviews}}",
+  "@profileReviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileReviewsError": "Reviews couldn't load",
+  "profileSaved": "Profile saved.",
+  "profileVerifyPhone": "Verify",
+  "publicProfileTitle": "Worker profile",
+  "publicProfileLoadError": "This profile couldn't load",
+  "publicProfileNotFound": "Profile not available",
+  "publicProfileNotFoundBody": "This worker may have removed their profile.",
+  "publicProfileOwnPreview": "This is how clients see your profile.",
+  "publicProfilePreview": "See public profile",
+  "publicProfileWorkTab": "Work photos",
+  "publicProfileNew": "New",
+  "publicProfileJobsDone": "Jobs done",
+  "publicProfileMemberSince": "Member since",
+  "publicProfilePriceNote": "Final price is agreed in chat before booking.",
+  "publicProfileNoBio": "No description added yet.",
+  "publicProfileServiceArea": "Service area",
+  "publicProfileAreaValue": "{city} · within {km} km",
+  "@publicProfileAreaValue": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      },
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "publicProfileAreaPrivacy": "Approximate area. Exact locations are shared only for booked jobs.",
+  "publicProfileNoPhotos": "No work photos yet",
+  "publicProfilePhotoN": "Work photo {n} of {total}",
+  "@publicProfilePhotoN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "publicProfileRequestBooking": "Request booking",
+  "publicProfileRatingReviews": "Rating & reviews",
+  "publicProfileRecentReviews": "Recent reviews",
+  "rateHourly": "{price} / hour",
+  "@rateHourly": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "rateDaily": "{price} / day",
+  "@rateDaily": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "rateOnRequest": "Rate on request",
+  "reportProfile": "Report profile",
+  "reportProfileTitle": "Why are you reporting this profile?",
+  "reportReasonSafety": "Safety concern",
+  "reportReasonMisleading": "Misleading profile or credentials",
+  "reportReasonConduct": "Inappropriate conduct",
+  "reportReasonOther": "Something else",
+  "reportSubmitted": "Report sent. Our team will review it.",
+  "reportFailed": "Couldn't send the report. Please try again.",
+  "reviewsSortRecent": "Most recent",
+  "reviewsSortHighest": "Highest rating",
+  "reviewsSortLowest": "Lowest rating",
+  "reviewsHelpful": "Helpful ({count})",
+  "@reviewsHelpful": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewsReplyFrom": "Reply from {name}",
+  "@reviewsReplyFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewsReplyTitle": "Reply to review",
+  "reviewsReplyHint": "Write a polite, helpful reply…",
+  "reviewsReplySubmit": "Post reply",
+  "settingsAppearance": "Appearance",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystem": "System",
+  "settingsHelp": "Help & legal",
+  "settingsSupportBody": "Chat with us on WhatsApp or email.",
+  "settingsAccount": "Account",
+  "signOut": "Sign out",
+  "signOutConfirmTitle": "Sign out of SkillBridge?",
+  "signOutConfirmBody": "You'll need to sign in again to see your jobs and messages.",
+  "verificationTitle": "Identity verification",
+  "verificationBadge": "ID verified",
+  "verificationOpen": "Open",
+  "verificationLoadError": "Verification status couldn't load",
+  "verificationIntroTitle": "Get the Verified badge",
+  "verificationIntroBody": "Verified workers show clients their identity was checked by SkillBridge.",
+  "verificationPendingTitle": "Under review",
+  "verificationPendingShort": "Verification pending",
+  "verificationPendingBody": "Our team is reviewing your documents. You will be notified when it’s done.",
+  "verificationVerifiedTitle": "You are verified",
+  "verificationVerifiedBody": "Clients see the Verified badge on your profile.",
+  "verificationRejectedTitle": "Not approved",
+  "verificationRejectedBody": "We couldn't verify these documents. Please submit clear photos again.",
+  "verificationCnicOnFile": "CNIC: {cnic}",
+  "@verificationCnicOnFile": {
+    "placeholders": {
+      "cnic": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationDocsOnFile": "{count, plural, =1{1 document} other{{count} documents}}",
+  "@verificationDocsOnFile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "verificationSubmittedOn": "Submitted {date}",
+  "@verificationSubmittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "verificationUpdate": "Update submission",
+  "verificationCnicLabel": "CNIC number",
+  "verificationCnicHelp": "Kept private. Only SkillBridge staff can see it.",
+  "verificationCnicInvalid": "Enter 13 digits, like 35202-1234567-1.",
+  "verificationDocsTitle": "Documents",
+  "verificationDocsHelp": "Clear photos, all four corners visible. Max 5 MB each.",
+  "verificationDocFront": "CNIC — front",
+  "verificationDocBack": "CNIC — back",
+  "verificationDocExtra": "Trade certificate",
+  "verificationRequired": "Required",
+  "verificationUpload": "Upload",
+  "verificationReplace": "Replace",
+  "verificationUploaded": "Uploaded",
+  "verificationUploading": "Uploading… {percent}%",
+  "@verificationUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "verificationDocMissing": "Upload this document.",
+  "verificationConsent": "These documents are mine, and SkillBridge staff may review them to verify my identity.",
+  "verificationConsentRequired": "Please confirm to continue.",
+  "verificationSubmit": "Submit for review",
+  "verificationSubmitted": "Submitted. We’ll let you know once it’s reviewed.",
+  "verificationSubmitFailed": "Couldn't submit. Check your connection and try again.",
+  "verificationPrivacyNote": "Your CNIC and documents are stored privately. They never appear on your public profile.",
+  "verificationLegacyNotice": "An older version saved your CNIC on your public profile. You can remove that copy.",
+  "verificationLegacyRemove": "Remove from public profile",
+  "verificationLegacyRemoveTitle": "Remove CNIC from your public profile?",
+  "verificationLegacyRemoveBody": "This deletes the old public copy only. Submit your CNIC below to keep it private.",
+  "verificationLegacyRemoved": "Removed from your public profile.",
+  "workerProfileNotStarted": "Not set up yet.",
+  "workerProfileRate": "Rate",
+  "workerSetupStepWork": "Your work",
+  "workerSetupStepRates": "Rates & area",
+  "workerSetupStepPhotos": "Work photos",
+  "workerSetupStepVerify": "Verification",
+  "workerSetupYouTitle": "Let clients know who you are",
+  "workerSetupYouBody": "A real photo and name build trust.",
+  "workerSetupPhotoHint": "Use a clear photo of your face.",
+  "workerSetupPhoneHelp": "Clients you work with can call you on this number.",
+  "workerSetupWorkTitle": "What do you do?",
+  "workerSetupWorkBody": "Clients search by trade and skills.",
+  "workerSetupHeadlineLabel": "Professional title",
+  "workerSetupHeadlineHint": "e.g. Certified electrician, 9 years",
+  "workerSetupHeadlineRequired": "Add a title of at least 8 characters.",
+  "workerSetupCategoryRequired": "Choose your main trade.",
+  "workerSetupSkillsRequired": "Choose or add at least one skill.",
+  "workerSetupAddSkill": "Add another skill",
+  "workerSetupAddSkillHint": "e.g. Solar wiring",
+  "workerSetupAdd": "Add",
+  "workerSetupExperienceLabel": "Years of experience",
+  "workerSetupExperienceInvalid": "Enter a number from 0 to 60.",
+  "workerSetupBioLabel": "About your work",
+  "workerSetupBioHint": "What you do best, tools you bring, areas you cover…",
+  "workerSetupBioRequired": "Write at least 30 characters.",
+  "workerSetupLanguages": "Languages",
+  "workerSetupRatesTitle": "Rates and service area",
+  "workerSetupRatesBody": "Clients see your rate before contacting you.",
+  "workerSetupRateInvalid": "Enter an amount above zero, or leave it empty.",
+  "workerSetupRateNote": "Leave both empty to show “Rate on request”.",
+  "workerSetupServiceArea": "Where you work",
+  "workerSetupNoLocation": "No location set",
+  "workerSetupPickLocation": "Set on map",
+  "workerSetupAreaRequired": "Set your location or choose a city.",
+  "workerSetupRadius": "Travel up to {km} km",
+  "@workerSetupRadius": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "workerSetupLocationPrivacy": "Clients see your city and travel distance, not your address.",
+  "workerSetupPhotosTitle": "Show your work",
+  "workerSetupPhotosBody": "Photos of real jobs help clients choose you.",
+  "workerSetupVerifyTitle": "Get verified",
+  "workerSetupVerifyBody": "Optional, and it can be done later.",
+  "workerSetupVerifyPoint1": "Clients trust verified workers more.",
+  "workerSetupVerifyPoint2": "Your CNIC stays private — only staff see it.",
+  "workerSetupVerifyPoint3": "It takes about two minutes.",
+  "workerSetupVerifyNow": "Verify my identity",
+  "workerSetupSaveContinue": "Save & continue",
+  "jobBand15kTo50k": "Rs 15,000 – 50,000",
+  "jobBand2kTo5k": "Rs 2,000 – 5,000",
+  "jobBand5kTo15k": "Rs 5,000 – 15,000",
+  "jobBandOver50k": "Rs 50,000+",
+  "jobBandUnder2k": "Under Rs 2,000",
+  "jobBudget": "Budget",
+  "jobBudgetFixedPrice": "{amount} · Fixed price",
+  "@jobBudgetFixedPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "jobBudgetNotSet": "Budget on request",
+  "jobBudgetPerDay": "{amount} / day",
+  "@jobBudgetPerDay": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "jobBudgetPerHour": "{amount} / hour",
+  "@jobBudgetPerHour": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "jobBudgetTypeDaily": "Per day",
+  "jobBudgetTypeFixed": "Fixed price",
+  "jobBudgetTypeHourly": "Per hour",
+  "jobCannotEditBody": "Only open jobs you posted can be edited.",
+  "jobCannotEditTitle": "This job can't be edited",
+  "jobClientEmailVerified": "Email verified",
+  "jobClientFallback": "SkillBridge client",
+  "jobClose": "Close job",
+  "jobCloseBody": "Workers will no longer see it. It stays in your history and you can reopen it later.",
+  "jobCloseTitle": "Close this job?",
+  "jobClosed": "Job closed.",
+  "jobClosedNotice": "This job is closed. Workers can no longer find it.",
+  "jobConfirmBody": "Workers in {city} will be able to find it. You can edit or close it later.",
+  "@jobConfirmBody": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "jobConfirmDirectBody": "{name} will get your request and can accept or decline it.",
+  "@jobConfirmDirectBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobConfirmDirectTitle": "Send this request to {name}?",
+  "@jobConfirmDirectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobConfirmKeepEditing": "Keep editing",
+  "jobConfirmPublish": "Publish job",
+  "jobConfirmSend": "Send request",
+  "jobConfirmTitle": "Publish this job?",
+  "jobDescription": "Description",
+  "jobDetailsTitle": "Job details",
+  "jobDirectRequestLabel": "Requested from",
+  "jobDirectTo": "Request to {name}",
+  "@jobDirectTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobEdit": "Edit",
+  "jobFeedBudget": "Budget",
+  "jobFeedClearAll": "Clear all",
+  "jobFeedClearSearch": "Clear search",
+  "jobFeedEmptyBody": "When clients post jobs, they will appear here. Pull down to check again.",
+  "jobFeedEmptyTitle": "No open jobs yet",
+  "jobFeedEnd": "You've seen all matching jobs.",
+  "jobFeedErrorIndex": "Search for this combination is being set up. Try fewer filters for now.",
+  "jobFeedErrorPermission": "Your account can't browse jobs right now.",
+  "jobFeedErrorTitle": "Couldn't load jobs",
+  "jobFeedFilters": "Filters",
+  "jobFeedLoadMore": "Load more",
+  "jobFeedLoadMoreFailed": "Couldn't load more. Tap to try again.",
+  "jobFeedNoMatchBody": "Try another word, or remove a filter.",
+  "jobFeedNoMatchTitle": "No jobs match",
+  "jobFeedPosted": "Posted",
+  "jobFeedRemoveFilter": "Remove {label}",
+  "@jobFeedRemoveFilter": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFeedSearchHint": "Search jobs, e.g. wiring, plumber",
+  "jobFeedSearching": "Searching…",
+  "jobFeedShowResults": "Show results",
+  "jobFeedShowing": "{count, plural, =0{No jobs} =1{1 job} other{{count} jobs}}",
+  "@jobFeedShowing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "jobFeedSkillsNeedCategory": "Choose a category to filter by skills.",
+  "jobFeedSort": "Sort",
+  "jobFeedTitle": "Find work",
+  "jobFormAreaHint": "e.g. Gulberg III",
+  "jobFormBudgetHelp": "Leave “Up to” empty for a single amount. Final price is agreed with the worker.",
+  "jobFormBudgetMaxInvalid": "“Up to” must be at least the first amount.",
+  "jobFormBudgetMaxLabel": "Up to",
+  "jobFormBudgetMinLabel": "Amount",
+  "jobFormBudgetRequired": "Enter an amount above 0.",
+  "jobFormBudgetTooHigh": "Enter up to Rs 10,000,000.",
+  "jobFormBudgetTypeLabel": "How will you pay?",
+  "jobFormCategoryLabel": "Category",
+  "jobFormCategoryRequired": "Choose a category.",
+  "jobFormCityRequired": "Choose your city.",
+  "jobFormDescriptionHint": "What needs doing, what you've noticed, and anything the worker should bring.",
+  "jobFormDescriptionLabel": "Describe the work",
+  "jobFormDescriptionRequired": "Add at least 30 characters so workers understand the job.",
+  "jobFormDirectNote": "Only {name} will see this request.",
+  "@jobFormDirectNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFormFixErrors": "Please fix the highlighted fields.",
+  "jobFormPhotosHelp": "Optional. Up to {max} clear photos of the problem.",
+  "@jobFormPhotosHelp": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "jobFormPreferredDateAdd": "Add a preferred date (optional)",
+  "jobFormPreferredDateClear": "Remove date",
+  "jobFormPreferredDateValue": "Preferred: {date}",
+  "@jobFormPreferredDateValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFormRequiredNote": "Fields marked * are required.",
+  "jobFormReview": "Review and publish",
+  "jobFormSaveChanges": "Save changes",
+  "jobFormSectionBudget": "Budget",
+  "jobFormSectionPhotos": "Photos",
+  "jobFormSectionWhat": "What do you need?",
+  "jobFormSectionWhen": "When",
+  "jobFormSectionWhere": "Where",
+  "jobFormSkillAdd": "Add",
+  "jobFormSkillAddHint": "e.g. Gas leak check",
+  "jobFormSkillAddLabel": "Another skill",
+  "jobFormSkillsHelp": "Pick the skills the job needs (up to {max}).",
+  "@jobFormSkillsHelp": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "jobFormSkillsLabel": "Skills needed",
+  "jobFormSkillsMax": "You can add up to 10 skills.",
+  "jobFormTitleDirect": "Request {name}",
+  "@jobFormTitleDirect": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFormTitleEdit": "Edit job",
+  "jobFormTitleHint": "e.g. Fix two kitchen sockets",
+  "jobFormTitleLabel": "Job title",
+  "jobFormTitleNew": "Post a job",
+  "jobFormTitleRequired": "Add a title of at least 10 characters.",
+  "jobLoadError": "Couldn't load this job",
+  "jobMemberSince": "Member since {date}",
+  "@jobMemberSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "jobMessageClient": "Message client",
+  "jobMessageFailed": "Couldn't open the chat. Please try again.",
+  "jobNoProposalsYet": "No proposals yet",
+  "jobNotClient": "Only client accounts can post jobs.",
+  "jobOwnerPanelTitle": "Your job",
+  "jobPostedAnyTime": "Any time",
+  "jobPostedBy": "Posted by",
+  "jobPostedDaysAgo": "Posted {days} days ago",
+  "@jobPostedDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "jobPostedLast24h": "Last 24 hours",
+  "jobPostedLast30Days": "Last 30 days",
+  "jobPostedLast3Days": "Last 3 days",
+  "jobPostedLast7Days": "Last 7 days",
+  "jobPostedOn": "Posted {date}",
+  "@jobPostedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "jobPostedToday": "Posted today",
+  "jobPostedYesterday": "Posted yesterday",
+  "jobPreferredOn": "Preferred {date}",
+  "@jobPreferredOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "jobProposalsCount": "{count, plural, =1{1 proposal} other{{count} proposals}}",
+  "@jobProposalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "jobPublishFailed": "Couldn't publish the job. Check your connection and try again.",
+  "jobPublished": "Job published. Workers can now find it.",
+  "jobQueuedOffline": "You're offline. The job is saved on this phone and will publish when you're back online.",
+  "jobReopen": "Reopen",
+  "jobReopenBody": "Workers will be able to find it again.",
+  "jobReopenTitle": "Reopen this job?",
+  "jobReopened": "Job reopened.",
+  "jobReport": "Report job",
+  "jobReportInappropriate": "Inappropriate content",
+  "jobReportMisleading": "Misleading or fake job",
+  "jobReportScam": "Scam or fraud",
+  "jobReportTitle": "Why are you reporting this job?",
+  "jobSaved": "Changes saved.",
+  "jobSortBudgetHigh": "Budget: high to low",
+  "jobSortBudgetLow": "Budget: low to high",
+  "jobSortNewest": "Newest",
+  "jobSortOldest": "Oldest",
+  "jobStatusAssigned": "Assigned",
+  "jobStatusClosed": "Closed",
+  "jobStatusCompleted": "Completed",
+  "jobStatusInProgress": "In progress",
+  "jobStatusOpen": "Open",
+  "jobSuspended": "Your account is suspended, so you can't post jobs.",
+  "jobSuspendedNotice": "Your account is suspended. You can view jobs but not act on them.",
+  "jobUnavailableBody": "It may have been closed or filled.",
+  "jobUnavailableTitle": "This job is no longer available",
+  "jobUrgencyFlexible": "Flexible",
+  "jobUrgencyImmediate": "Urgent",
+  "jobUrgencyThreeDays": "Within 3 days",
+  "jobView": "View",
+  "myJobsEmptyBody": "Post a job and nearby workers will be able to find it.",
+  "myJobsEmptyTitle": "You haven't posted a job yet",
+  "myJobsLoadError": "Couldn't load your jobs",
+  "myJobsTabActive": "Active",
+  "myJobsTabEmpty": "No jobs here.",
+  "myJobsTitle": "My jobs",
+  "jobSortBudgetWithin": "{sort} · {type}",
+  "@jobSortBudgetWithin": {
+    "placeholders": {
+      "sort": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "jobFeedBudgetSortNote": "Budget order compares jobs of one pay type at a time.",
+  "myProposalsTitle": "My proposals",
+  "myProposalsLoadError": "Couldn't load your proposals",
+  "myProposalsEmptyTitle": "No proposals yet",
+  "myProposalsEmptyBody": "Find an open job and send your price and a short note to the client.",
+  "myProposalsFindWork": "Find work",
+  "myProposalsTabEmpty": "No proposals here.",
+  "proposalStatusPending": "Pending",
+  "proposalStatusViewed": "Viewed",
+  "proposalStatusAccepted": "Accepted",
+  "proposalStatusFilled": "Job filled",
+  "proposalStatusDeclined": "Declined",
+  "proposalStatusWithdrawn": "Withdrawn",
+  "proposalTabActive": "Active",
+  "proposalTabNotSelected": "Not selected",
+  "proposalRating": "★ {rating} ({count} reviews)",
+  "@proposalRating": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proposalExperience": "{years} yrs experience",
+  "@proposalExperience": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "proposalViewProfile": "View profile",
+  "proposalFormTitle": "Send a proposal",
+  "proposalFormTitleAgain": "Send proposal again",
+  "proposalOnlyWorkers": "Only workers can send proposals",
+  "proposalOnlyWorkersBody": "Sign in with a worker account to apply for jobs.",
+  "proposalSuspended": "Your account is suspended",
+  "proposalOwnJob": "This is your job",
+  "proposalOwnJobBody": "You can't send a proposal for a job you posted.",
+  "proposalAlreadySentTitle": "You already sent a proposal",
+  "proposalAlreadySentBody": "One proposal per job. You can view it, or withdraw it while it's pending.",
+  "proposalView": "View proposal",
+  "proposalJobClosedTitle": "This job isn't taking proposals",
+  "proposalJobClosedBody": "The job was filled, closed or changed. Look for other open jobs.",
+  "proposalConfirmTitle": "Send this proposal?",
+  "proposalConfirmBody": "The client will see your price, timing, note and public profile. You can withdraw it while it's pending.",
+  "proposalSend": "Send proposal",
+  "proposalSendAgain": "Send again",
+  "proposalSendCta": "Send a proposal",
+  "proposalSent": "Proposal sent",
+  "proposalSendFailed": "Couldn't send your proposal. Try again.",
+  "proposalDurationSameDay": "Same day",
+  "proposalDuration1to2": "1–2 days",
+  "proposalDuration3to5": "3–5 days",
+  "proposalDurationWeek": "About a week",
+  "proposalDuration2Weeks": "2 weeks or more",
+  "proposalReview": "Review and send",
+  "proposalClientBudget": "Client's budget: {budget}",
+  "@proposalClientBudget": {
+    "placeholders": {
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalResendNote": "You withdrew your earlier proposal. Sending again puts it back in the client's list.",
+  "proposalPriceSection": "Your price",
+  "proposalPriceLabel": "Price (Rs)",
+  "proposalDurationLabel": "How long it will take",
+  "proposalDurationField": "Estimated time",
+  "proposalDurationHint": "e.g. 2 days",
+  "proposalDurationRequired": "Say how long the work will take",
+  "proposalCoverLabel": "Note to the client",
+  "proposalCoverHint": "Your experience with this kind of work, and how you'd do it",
+  "proposalCoverRequired": "Write at least 30 characters",
+  "proposalProfileNote": "Your public profile (photo, skills, work photos, reviews) is shared with this proposal.",
+  "proposalDetailsTitle": "Proposal",
+  "proposalUnavailableTitle": "Proposal not available",
+  "proposalUnavailableBody": "It may have been removed, or this account can't see it.",
+  "proposalAcceptUnavailable": "This job or proposal changed. Refresh and try again.",
+  "proposalActionFailed": "Couldn't update the proposal. Try again.",
+  "proposalWithdraw": "Withdraw",
+  "proposalWithdrawTitle": "Withdraw this proposal?",
+  "proposalWithdrawBody": "The client will no longer see it. You can send it again while the job is open.",
+  "proposalWithdrawn": "Proposal withdrawn",
+  "proposalDecline": "Decline",
+  "proposalDeclineTitle": "Decline {name}'s proposal?",
+  "@proposalDeclineTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalDeclineBody": "They'll see it was not selected. This can't be undone.",
+  "proposalDeclined": "Proposal declined",
+  "proposalAccept": "Accept and hire",
+  "proposalAcceptTitle": "Hire {name}?",
+  "@proposalAcceptTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalAcceptBody": "The job is assigned to them, a contract is created at this price and the other proposals are closed. No payment is taken in the app.",
+  "proposalAccepted": "Proposal accepted. Contract created.",
+  "proposalAcceptedNotice": "Accepted. The contract is in Contracts; agree how and when to pay in chat.",
+  "proposalMessageWorker": "Message worker",
+  "proposalViewJob": "View job",
+  "proposalJobNotOpenNotice": "This job is no longer open, so proposals can't be accepted.",
+  "proposalFilledNotice": "The client hired someone else for this job.",
+  "proposalAboutWorker": "About the worker",
+  "proposalHistory": "History",
+  "proposalSentOn": "Sent {date}",
+  "@proposalSentOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalViewedOn": "Viewed by the client {date}",
+  "@proposalViewedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalAcceptedOn": "Accepted {date}",
+  "@proposalAcceptedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalClosedOn": "Closed {date}",
+  "@proposalClosedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalWithdrawnOn": "Withdrawn {date}",
+  "@proposalWithdrawnOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "proposalViewMine": "View your proposal",
+  "proposalYourStatus": "Your proposal:",
+  "receivedProposalsTitle": "Proposals",
+  "receivedProposalsLoadError": "Couldn't load proposals",
+  "receivedProposalsEmptyTitle": "No proposals yet",
+  "receivedProposalsEmptyBody": "Workers who apply will appear here.",
+  "receivedProposalsCount": "{count, plural, =0{No proposals} =1{1 proposal} other{{count} proposals}}",
+  "@receivedProposalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proposalsViewReceived": "{count, plural, =0{View proposals} other{View proposals ({count})}}",
+  "@proposalsViewReceived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proposalSortTooltip": "Sort proposals",
+  "proposalSortNewest": "Newest first",
+  "proposalSortOldest": "Oldest first",
+  "proposalSortPrice": "Lowest price",
+  "proposalPriceSortNote": "Prices are compared within the same rate type (fixed, per day, per hour).",
+  "proposalCompare": "Compare",
+  "proposalCompareTitle": "Compare proposals",
+  "proposalReviewAction": "Review",
+  "proposalRateFixed": "Fixed price",
+  "proposalRateDaily": "Per day",
+  "proposalRateHourly": "Per hour",
+  "proposalYourBudget": "Your budget: {budget}",
+  "@proposalYourBudget": {
+    "placeholders": {
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "jobHiredLabel": "Hired",
+  "contractsTitle": "Contracts",
+  "contractsLoadError": "Couldn't load your contracts",
+  "contractsEmptyTitle": "No contracts yet",
+  "contractsEmptyClient": "When you hire a worker, the contract appears here.",
+  "contractsEmptyWorker": "When a client hires you, the contract appears here.",
+  "contractsTabRequests": "Requests",
+  "contractsTabActive": "Active",
+  "contractsTabCompleted": "Completed",
+  "contractsTabCancelled": "Cancelled",
+  "contractsTabEmpty": "No contracts here.",
+  "contractStageRequested": "Booking request",
+  "contractStageNotStarted": "Not started",
+  "contractStageInProgress": "In progress",
+  "contractStageSubmitted": "Awaiting review",
+  "contractStageCompleted": "Completed",
+  "contractStageCancelled": "Cancelled",
+  "contractStageDeclined": "Declined",
+  "contractCreatedOn": "Created {date}",
+  "@contractCreatedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractNextClientRequested": "Waiting for the worker to answer your request.",
+  "contractNextWorkerRequested": "Accept or decline this booking request.",
+  "contractNextClientNotStarted": "Waiting for the worker to start.",
+  "contractNextWorkerNotStarted": "Start the work when you begin.",
+  "contractNextClientInProgress": "The worker is on it. You'll review the work when it is submitted.",
+  "contractNextClientSubmitted": "The work was submitted. Review it and confirm completion.",
+  "contractNextWorkerSubmitted": "Submitted. Waiting for the client to confirm.",
+  "contractProgressStarted": "Work started {date}",
+  "@contractProgressStarted": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractProgressCompleted": "Completed {date}",
+  "@contractProgressCompleted": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractProgressCancelled": "Cancelled {date}",
+  "@contractProgressCancelled": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractDetailsTitle": "Contract",
+  "contractUnavailableTitle": "Contract not available",
+  "contractUnavailableBody": "Only the client and the hired worker can see a contract.",
+  "contractAgreedPrice": "Agreed price",
+  "contractPaymentNote": "Payment is agreed between you and is not processed in the app.",
+  "contractWorkSection": "The work",
+  "contractArea": "Area",
+  "contractExactAddress": "Exact address",
+  "contractAddressNotShared": "The client hasn't shared it yet.",
+  "contractShareAddress": "Share the exact address",
+  "contractUpdateAddress": "Change the address",
+  "contractShareAddressBody": "Only the hired worker will see it, on this contract. Your public job shows just the area.",
+  "contractShareAddressAction": "Share with the worker",
+  "contractAddressTooShort": "Enter the full address",
+  "contractAddressShared": "Address shared with the worker",
+  "contractYourWorker": "Your worker",
+  "contractYourClient": "Your client",
+  "contractTrackWorker": "Track the worker",
+  "contractTrackTitle": "Worker location",
+  "contractTrackNote": "Shown only while the worker chooses to share it, and only to you.",
+  "contractHistory": "History",
+  "contractEventRequested": "Booking requested",
+  "contractEventRequestAccepted": "Request accepted by the worker",
+  "contractEventRequestDeclined": "Request declined by the worker",
+  "contractEventProposalAccepted": "Proposal accepted",
+  "contractEventCreated": "Contract created",
+  "contractEventAddressShared": "Exact address shared",
+  "contractEventStarted": "Work started",
+  "contractEventSubmitted": "Work submitted for review",
+  "contractEventCompleted": "Completion confirmed by the client",
+  "contractEventCancelledByClient": "Cancelled by the client",
+  "contractEventCancelledByWorker": "Cancelled by the worker",
+  "contractStart": "Start work",
+  "contractStartTitle": "Start the work now?",
+  "contractStartBody": "The client will see that work has started. Do this when you begin the job.",
+  "contractStarted": "Work started",
+  "contractSubmit": "Submit work",
+  "contractSubmitTitle": "Submit work",
+  "contractSubmitBody": "The client will review it and either confirm completion or ask for changes. What you send is kept with the contract.",
+  "contractSubmitExplainer": "Describe what you did. Photos help the client check the work.",
+  "contractSubmitNote": "What was done",
+  "contractSubmitNoteHint": "e.g. Replaced both sockets and tested the circuit",
+  "contractSubmitNoteRequired": "Write at least 10 characters",
+  "contractSubmitPhotos": "Photos (optional, up to {count})",
+  "@contractSubmitPhotos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractSubmitPhotosNote": "Only you and the client can see them.",
+  "contractAddPhoto": "Add photo",
+  "contractRemovePhoto": "Remove photo",
+  "contractPhotoTooLarge": "That photo is over 5 MB",
+  "contractUploading": "Uploading photo {current} of {total}…",
+  "@contractUploading": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "contractSubmitReview": "Review and submit",
+  "contractSubmitted": "Work submitted for review",
+  "contractSubmitFailed": "Couldn't submit the work. Try again.",
+  "contractOnlyWorkerSubmits": "Only the hired worker can submit the work.",
+  "contractAlreadySubmitted": "The work was already submitted.",
+  "contractStartFirst": "Start the work before submitting it.",
+  "contractSubmittedWork": "Submitted work",
+  "contractReviewWork": "Review the work",
+  "contractSubmittedOn": "Submitted {date}",
+  "@contractSubmittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractEvidencePhoto": "Work photo {number}",
+  "@contractEvidencePhoto": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "contractConfirm": "Confirm completion",
+  "contractConfirmTitle": "Confirm the work is complete?",
+  "contractConfirmBody": "The contract and job are marked completed and you can both leave a review. This can't be undone.",
+  "contractConfirmed": "Completion confirmed",
+  "contractNoRevisionNote": "If something isn't right, message the worker before confirming.",
+  "contractCompletedNotice": "This contract is complete.",
+  "contractWriteReview": "Write a review",
+  "contractRequestAccept": "Accept request",
+  "contractRequestAcceptTitle": "Accept this booking?",
+  "contractRequestAcceptBody": "The contract becomes active. Start the work when you begin.",
+  "contractRequestAccepted": "Booking accepted",
+  "contractRequestDecline": "Decline",
+  "contractRequestDeclineTitle": "Decline this booking?",
+  "contractRequestDeclineBody": "The client will be told. This can't be undone.",
+  "contractRequestDeclined": "Booking declined",
+  "contractDeclinedNotice": "The worker declined this booking request.",
+  "contractCancel": "Cancel contract",
+  "contractWithdrawRequest": "Withdraw request",
+  "contractCancelTitle": "Cancel this contract?",
+  "contractCancelBody": "The other person is told, and the reason is kept in the contract history. This can't be undone.",
+  "contractCancelNote": "Add a note (optional)",
+  "contractKeep": "Keep the contract",
+  "contractCancelled": "Contract cancelled",
+  "contractCancelledNotice": "Cancelled by the {role}: {reason}",
+  "@contractCancelledNotice": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "contractRoleClient": "client",
+  "contractRoleWorker": "worker",
+  "contractCancelReasonSchedule": "Schedule conflict",
+  "contractCancelReasonNotNeeded": "No longer needed",
+  "contractCancelReasonAgreed": "Agreed with the other person",
+  "contractCancelReasonSafety": "Safety concern",
+  "contractCancelReasonOther": "Other",
+  "contractActionChanged": "This contract changed. Check its current status.",
+  "contractActionNotAllowed": "You can't do that on this contract.",
+  "contractActionFailed": "Couldn't update the contract. Try again.",
+  "contractCardTitle": "Contract",
+  "contractCardBody": "Start, submit and confirm the work on the contract.",
+  "contractNoneForJob": "No contract was found for this job.",
+  "contractOpen": "Open contract",
+  "contractEventDirectAccepted": "Direct request accepted by the worker",
+  "contractDirectRequestTitle": "Request sent to you",
+  "contractDirectRequestBody": "Only you received this job. Accepting creates a contract at the client's budget; agree the final price in chat.",
+  "contractDirectAcceptTitle": "Accept this request?",
+  "contractDirectAcceptBody": "The job is assigned to you and a contract is created. Start the work when you begin.",
+  "chatsTitle": "Messages",
+  "chatsLoadError": "Couldn't load your conversations",
+  "chatsOffline": "You're offline. Showing conversations saved on this device.",
+  "chatsEmptyTitle": "No conversations yet",
+  "chatsEmptyClient": "Message a worker from their profile, a proposal or a contract. Your conversations appear here.",
+  "chatsEmptyWorker": "When you message a client about a job, or a client messages you, the conversation appears here.",
+  "chatNoMessagesYet": "No messages yet",
+  "chatYouPrefix": "You: {text}",
+  "@chatYouPrefix": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "chatYou": "You",
+  "chatPhoto": "Photo",
+  "chatUnreadCount": "{count} unread",
+  "@chatUnreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatToday": "Today",
+  "chatYesterday": "Yesterday",
+  "chatRoomLoadError": "Couldn't open this conversation",
+  "chatRoomUnavailableTitle": "This conversation isn't available",
+  "chatRoomUnavailableBody": "Only the two people in a conversation can open it. Check that you're signed in with the right account.",
+  "chatMessagesLoadError": "Couldn't load messages",
+  "chatEmptyTitle": "Start the conversation",
+  "chatEmptyBody": "Messages here are visible only to you and {name}.",
+  "@chatEmptyBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatEarlier": "Show earlier messages",
+  "chatInputHint": "Write a message",
+  "chatSend": "Send",
+  "chatAddPhoto": "Add photo",
+  "chatRemovePhoto": "Remove photo",
+  "chatSending": "Sending…",
+  "chatWaitingNetwork": "Waiting for connection",
+  "chatSent": "Sent",
+  "chatSeen": "Seen",
+  "chatNotSent": "Not sent",
+  "chatRetry": "Retry",
+  "chatDiscard": "Discard",
+  "chatNotAllowed": "This message can't be sent. The account may no longer be available.",
+  "chatOffline": "You're offline. Messages will send when you reconnect.",
+  "chatPeerSuspended": "This account is no longer active. You can read past messages but can't send new ones.",
+  "chatPhotoTooLarge": "Each photo must be under 5 MB.",
+  "chatPhotoType": "Use a JPEG, PNG or WebP photo.",
+  "chatPhotoLimit": "Up to 3 photos per message.",
+  "chatPhotoUnavailable": "Photo unavailable",
+  "chatTooLong": "Messages can be up to 2,000 characters.",
+  "chatViewContract": "View contract",
+  "contractWhereThingsStand": "Where things stand",
+  "contractStepHired": "Hired",
+  "contractStepStarted": "Started",
+  "contractStepSubmitted": "Submitted",
+  "contractStepConfirmed": "Confirmed",
+  "contractStepsLabel": "{done} of {total} steps done",
+  "@contractStepsLabel": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "contractEventResubmitted": "Work resubmitted (round {round})",
+  "@contractEventResubmitted": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "contractEventRevision": "Client asked for changes",
+  "contractEventUpdate": "Progress update",
+  "contractRequestChanges": "Ask for changes",
+  "contractRevisionTitle": "Ask for changes?",
+  "contractRevisionBody": "Tell {name} what needs to change. The work goes back to in progress and they can submit it again. Rounds left: {left}.",
+  "@contractRevisionBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "contractRevisionNoteLabel": "What needs to change",
+  "contractRevisionNoteHint": "e.g. The left socket cover is loose",
+  "contractRevisionNoteTooShort": "Describe the changes (at least 10 characters).",
+  "contractRevisionSend": "Send back for changes",
+  "contractRevisionSent": "Sent back for changes",
+  "contractRevisionsLeft": "Not quite right? You can ask for changes (rounds left: {count}).",
+  "@contractRevisionsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractNoRevisionsLeft": "No revision rounds left. Confirm the work, or talk to {name} in chat.",
+  "@contractNoRevisionsLeft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contractRevisionBannerWorker": "{name} asked for changes: {note}",
+  "@contractRevisionBannerWorker": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "contractRevisionBannerClient": "You asked for changes. Waiting for {name} to submit the work again.",
+  "@contractRevisionBannerClient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contractResubmit": "Submit changes",
+  "contractWorkerSubmittedNotice": "You submitted the work on {date}. {name} will review it and confirm, or ask for changes.",
+  "@contractWorkerSubmittedNotice": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contractClientConfirmedNotice": "{name} confirmed the work was completed on {date}.",
+  "@contractClientConfirmedNotice": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractClientCompletedNotice": "You confirmed this work as completed on {date}.",
+  "@contractClientCompletedNotice": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "contractUpdatesSection": "Progress updates",
+  "contractUpdatesEmptyWorker": "Keep the client informed: post a short update when something changes.",
+  "contractUpdatesEmptyClient": "No updates yet. {name}'s updates will appear here.",
+  "@contractUpdatesEmptyClient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contractPostUpdate": "Post an update",
+  "contractUpdateSheetTitle": "Post a progress update",
+  "contractUpdateSheetBody": "{name} is notified. Updates are kept with the contract and can't be edited.",
+  "@contractUpdateSheetBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contractUpdateLabel": "Update",
+  "contractUpdateHint": "e.g. Parts bought, I'll start tomorrow at 10am",
+  "contractUpdateTooShort": "Write a short update.",
+  "contractUpdatePost": "Post update",
+  "contractUpdatePosted": "Update posted",
+  "contractSubmissionHistory": "Earlier submissions",
+  "contractSubmissionN": "Submission {number}",
+  "@contractSubmissionN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "contractSubmissionChangesRequested": "Changes requested: {note}",
+  "@contractSubmissionChangesRequested": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "contractEvidenceUnavailable": "Photo unavailable",
+  "liveSectionTitle": "Live location",
+  "liveWorkerIntro": "Share your live location with {name} while you travel to the job. Only {name} can see it, and only for this contract.",
+  "@liveWorkerIntro": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveStartSharing": "Share my location",
+  "liveStopSharing": "Stop sharing",
+  "liveConsentTitle": "Share your live location?",
+  "liveConsentBody": "{name} will see where you are on a map while sharing is on. It stops when you tap Stop sharing, when you submit the work, or when the contract is completed or cancelled. Nobody else can see it.",
+  "@liveConsentBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveConsentAgree": "Start sharing",
+  "liveNotNow": "Not now",
+  "liveSharingWith": "Sharing your location with {name}. Last sent {time}.",
+  "@liveSharingWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "liveStarting": "Getting your location…",
+  "livePermissionDenied": "Location permission is off. Allow location to share it.",
+  "livePermissionBlocked": "Location is blocked for SkillBridge. Turn it on in Settings.",
+  "liveServiceOff": "Your device's location (GPS) is off. Turn it on to share.",
+  "liveUnavailable": "Location isn't available on this device.",
+  "liveEnded": "Sharing stopped because the work was submitted or the contract closed.",
+  "liveError": "Couldn't get your location. Try again.",
+  "liveOpenSettings": "Open settings",
+  "liveOfflineWorker": "You're offline. Your location will update when you reconnect.",
+  "liveStartedNotice": "Sharing your location with {name}",
+  "@liveStartedNotice": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveStoppedNotice": "Location sharing stopped",
+  "liveClientNotSharing": "{name} isn't sharing their location right now.",
+  "@liveClientNotSharing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveBadge": "Live",
+  "liveBadgeStale": "Not live",
+  "liveUpdated": "Updated {time}",
+  "@liveUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "liveClientStale": "{name}'s location hasn't updated recently and may be out of date.",
+  "@liveClientStale": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveClientOffline": "You're offline. This is the last location received and may be out of date.",
+  "liveClientExplainer": "Shown only while {name} chooses to share it, and only to you. It stops automatically when the work is submitted or the contract closes.",
+  "@liveClientExplainer": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveOpenInMaps": "Open in a maps app",
+  "liveAccuracy": "Accurate to about {meters} m",
+  "@liveAccuracy": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "liveJustNow": "just now",
+  "liveMinutesAgo": "{minutes} min ago",
+  "@liveMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "liveMapUnavailable": "The map can't be shown here. You can open the location in a maps app.",
+  "liveLoadError": "Couldn't load the location.",
+  "mapLabel": "Map",
+  "mapUnavailableTitle": "Map unavailable",
+  "mapUnavailableBody": "The map isn't set up correctly in this version of the app.",
+  "mapOffline": "You're offline. The map may be incomplete.",
+  "mapTilesFailed": "The map couldn't load. Check your connection.",
+  "mapRecenter": "Show my location",
+  "mapResetNorth": "Turn the map to face north",
+  "mapZoomIn": "Zoom in",
+  "mapZoomOut": "Zoom out",
+  "mapAttributionLabel": "Map data sources",
+  "mapYouAreHere": "You are here",
+  "mapSearchCentre": "Search centre",
+  "pickerTitle": "Choose a location",
+  "pickerSearchHint": "Search for an address or place",
+  "pickerSearchNoResults": "No places found. Try other words, or move the map to place the pin.",
+  "pickerSearchFailed": "Search isn't available right now. Move the map to place the pin.",
+  "pickerSearchTooShort": "Type at least 3 characters.",
+  "pickerSearchAttribution": "Search results © OpenStreetMap contributors",
+  "pickerMoveHint": "Move the map so the pin is on the exact place.",
+  "pickerZoomInHint": "Zoom in to place the pin precisely.",
+  "pickerFindingAddress": "Finding the address…",
+  "pickerPinnedLocation": "Pinned location",
+  "pickerConfirm": "Confirm location",
+  "pickerLocating": "Finding your location…",
+  "pickerLocationDenied": "Location permission is off. You can still choose a place on the map.",
+  "pickerLocationBlocked": "Location is blocked for SkillBridge. Turn it on in Settings, or choose a place on the map.",
+  "pickerLocationServiceOff": "Location (GPS) is off. Turn it on, or choose a place on the map.",
+  "pickerLocationFailed": "Couldn't get your location. Choose a place on the map.",
+  "navTitle": "Directions",
+  "navCalculating": "Finding the best road route…",
+  "navResuming": "Getting your location again…",
+  "navRouteTo": "Route to {place}",
+  "@navRouteTo": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "navYourDestination": "your destination",
+  "navFastest": "Fastest",
+  "navAlternative": "Alternative {number}",
+  "@navAlternative": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "navVia": "Via {roads}",
+  "@navVia": {
+    "placeholders": {
+      "roads": {
+        "type": "String"
+      }
+    }
+  },
+  "navStart": "Start",
+  "navEnd": "End",
+  "navEndTitle": "End directions?",
+  "navEndBody": "Turn-by-turn directions will stop.",
+  "navKeepGoing": "Keep going",
+  "navArriveAt": "Arrive {time}",
+  "@navArriveAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "navEstimateNote": "Times are estimates and don't include live traffic.",
+  "navThen": "Then {instruction}",
+  "@navThen": {
+    "placeholders": {
+      "instruction": {
+        "type": "String"
+      }
+    }
+  },
+  "navNow": "Now",
+  "navArrivedTitle": "You have arrived",
+  "navArrivedBody": "You're at {place}.",
+  "@navArrivedBody": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "navSignalLost": "GPS signal lost. The map shows your last known position.",
+  "navApproximate": "Only approximate location is allowed, so directions may be off. Allow precise location for SkillBridge.",
+  "navErrNoDestination": "This job has no map location yet, so directions can't start.",
+  "navErrPermission": "Directions need your location. Allow location to continue.",
+  "navErrBlocked": "Location is blocked for SkillBridge. Turn it on in Settings to get directions.",
+  "navErrServiceOff": "Location (GPS) is off. Turn it on to get directions.",
+  "navErrNoFix": "Couldn't get your location. Move to an open area and try again.",
+  "navErrNoRoute": "No road route was found to this place.",
+  "navErrFarFromRoad": "This place is too far from a road for directions.",
+  "navErrOffline": "You're offline. Connect to the internet to get a route.",
+  "navErrRouting": "Directions aren't available right now. Try again in a moment.",
+  "navMeters": "{meters} m",
+  "@navMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "navKilometres": "{km} km",
+  "@navKilometres": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "navMinutes": "{minutes} min",
+  "@navMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "navHoursMinutes": "{hours} h {minutes} min",
+  "@navHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "navUnderAMinute": "Under 1 min",
+  "navOnto": "{action} onto {road}",
+  "@navOnto": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "road": {
+        "type": "String"
+      }
+    }
+  },
+  "navTurnLeft": "Turn left",
+  "navTurnRight": "Turn right",
+  "navBearLeft": "Bear left",
+  "navBearRight": "Bear right",
+  "navSharpLeft": "Turn sharp left",
+  "navSharpRight": "Turn sharp right",
+  "navGoStraight": "Continue straight",
+  "navUTurn": "Make a U-turn",
+  "navContinue": "Continue",
+  "navMergeLeft": "Merge left",
+  "navMergeRight": "Merge right",
+  "navMerge": "Merge",
+  "navRampLeft": "Take the ramp on the left",
+  "navRampRight": "Take the ramp on the right",
+  "navRamp": "Take the ramp",
+  "navExitLeft": "Take the exit on the left",
+  "navExitRight": "Take the exit on the right",
+  "navExitNext": "Take the next exit",
+  "navKeepLeft": "Keep left",
+  "navKeepRight": "Keep right",
+  "navEndOfRoadLeft": "At the end of the road, turn left",
+  "navEndOfRoadRight": "At the end of the road, turn right",
+  "navRoundaboutExit": "At the roundabout, take exit {exit}",
+  "@navRoundaboutExit": {
+    "placeholders": {
+      "exit": {
+        "type": "int"
+      }
+    }
+  },
+  "navNamedRoundaboutExit": "At {name}, take exit {exit}",
+  "@navNamedRoundaboutExit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "exit": {
+        "type": "int"
+      }
+    }
+  },
+  "navEnterRoundabout": "Enter the roundabout",
+  "navEnterNamedRoundabout": "Enter {name}",
+  "@navEnterNamedRoundabout": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "navLeaveRoundabout": "Leave the roundabout",
+  "navHead": "Head {direction}",
+  "@navHead": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "navStartOff": "Start",
+  "navArrive": "Arrive at your destination",
+  "navArriveLeft": "Your destination is on the left",
+  "navArriveRight": "Your destination is on the right",
+  "navNorth": "north",
+  "navNorthEast": "northeast",
+  "navEast": "east",
+  "navSouthEast": "southeast",
+  "navSouth": "south",
+  "navSouthWest": "southwest",
+  "navWest": "west",
+  "navNorthWest": "northwest",
+  "navMute": "Mute voice",
+  "navUnmute": "Turn voice on",
+  "navRerouting": "Off route. Finding a new route…",
+  "navRerouted": "New route found.",
+  "navRerouteFailed": "Couldn’t get a new route. Keep going, or try again.",
+  "navRerouteOffline": "You’re offline, so the route can’t be updated.",
+  "navRerouteNoRoute": "No road route from here. Head back towards the route.",
+  "navSayIn": "In {distance}, {instruction}",
+  "@navSayIn": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "instruction": {
+        "type": "String"
+      }
+    }
+  },
+  "navSayThen": "{first}, then {next}",
+  "@navSayThen": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "next": {
+        "type": "String"
+      }
+    }
+  },
+  "navSayApproaching": "You are approaching your destination",
+  "navSpeakMeters": "{meters} metres",
+  "@navSpeakMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "navSpeakKilometres": "{km} kilometres",
+  "@navSpeakKilometres": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "navVoiceEnglishFallback": "There’s no Urdu voice on this phone, so directions are spoken in English.",
+  "navVoiceUnavailable": "Spoken directions aren’t available on this device. Follow the directions on screen.",
+  "contractPinTitle": "Place on the map",
+  "contractPinHelp": "Pin the exact door so the worker can get directions. Only the worker you hired sees it.",
+  "contractPinAdd": "Pin it on the map",
+  "contractPinChange": "Change pin",
+  "contractPinRemove": "Remove pin",
+  "contractPinSet": "Pinned on the map",
+  "contractPinMissing": "The client hasn't pinned the place on the map yet."
+}

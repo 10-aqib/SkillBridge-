@@ -32,12 +32,16 @@ class UserModel extends UserEntity {
     super.rating,
     super.totalReviews,
     super.workerProfile,
+    super.onboardingCompleted,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    return UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+  }
+
+  factory UserModel.fromMap(String documentId, Map<String, dynamic> data) {
     return UserModel(
-      uid: data['uid'] as String? ?? doc.id,
+      uid: data['uid'] as String? ?? documentId,
       email: data['email'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
       phoneNumber: data['phoneNumber'] as String? ?? '',
@@ -66,8 +70,10 @@ class UserModel extends UserEntity {
       totalReviews: data['totalReviews'] as int? ?? 0,
       workerProfile: data['workerProfile'] != null
           ? WorkerProfileModel.fromMap(
-              Map<String, dynamic>.from(data['workerProfile'] as Map))
+              Map<String, dynamic>.from(data['workerProfile'] as Map),
+            )
           : null,
+      onboardingCompleted: data['onboardingCompleted'] as bool?,
     );
   }
 
@@ -102,8 +108,8 @@ class UserModel extends UserEntity {
       'rating': rating,
       'totalReviews': totalReviews,
       if (workerProfile != null)
-        'workerProfile':
-            WorkerProfileModel.fromEntity(workerProfile!).toMap(),
+        'workerProfile': WorkerProfileModel.fromEntity(workerProfile!).toMap(),
+      if (onboardingCompleted != null) 'onboardingCompleted': onboardingCompleted,
     };
   }
 
@@ -115,6 +121,9 @@ class UserModel extends UserEntity {
     required String phoneNumber,
     required String role,
     String? city,
+    String? photoUrl,
+    bool isEmailVerified = false,
+    bool? onboardingCompleted,
   }) {
     final now = DateTime.now();
     return UserModel(
@@ -124,12 +133,17 @@ class UserModel extends UserEntity {
       phoneNumber: phoneNumber,
       role: role,
       city: city,
-      isEmailVerified: false,
+      photoUrl: photoUrl,
+      isEmailVerified: isEmailVerified,
       isPhoneVerified: false,
       isCnicVerified: false,
       isActive: true,
       createdAt: now,
       updatedAt: now,
+      // No rating until real reviews exist (the entity default is 5.0, which
+      // would show an invented rating on new profiles).
+      rating: 0,
+      onboardingCompleted: onboardingCompleted,
     );
   }
 }
@@ -164,6 +178,7 @@ class WorkerProfileModel extends WorkerProfileEntity {
     super.languages,
     super.responseTime,
     super.beforeAfterImages,
+    super.verificationStatus,
   });
 
   factory WorkerProfileModel.fromMap(Map<String, dynamic> map) {
@@ -177,8 +192,10 @@ class WorkerProfileModel extends WorkerProfileEntity {
       hourlyRate: (map['hourlyRate'] as num?)?.toDouble() ?? 0,
       dailyRate: (map['dailyRate'] as num?)?.toDouble() ?? 0,
       certifications: (map['certifications'] as List? ?? [])
-          .map((e) => CertificationModel.fromMap(
-              Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) =>
+                CertificationModel.fromMap(Map<String, dynamic>.from(e as Map)),
+          )
           .toList(),
       portfolioImages: List<String>.from(map['portfolioImages'] as List? ?? []),
       availability: map['availability'] as String? ?? 'available',
@@ -198,7 +215,10 @@ class WorkerProfileModel extends WorkerProfileEntity {
       coverImage: map['coverImage'] as String?,
       languages: List<String>.from(map['languages'] as List? ?? []),
       responseTime: map['responseTime'] as String?,
-      beforeAfterImages: List<String>.from(map['beforeAfterImages'] as List? ?? []),
+      beforeAfterImages: List<String>.from(
+        map['beforeAfterImages'] as List? ?? [],
+      ),
+      verificationStatus: map['verificationStatus'] as String?,
     );
   }
 
@@ -232,6 +252,7 @@ class WorkerProfileModel extends WorkerProfileEntity {
       languages: entity.languages,
       responseTime: entity.responseTime,
       beforeAfterImages: entity.beforeAfterImages,
+      verificationStatus: entity.verificationStatus,
     );
   }
 
@@ -267,6 +288,7 @@ class WorkerProfileModel extends WorkerProfileEntity {
       'languages': languages,
       if (responseTime != null) 'responseTime': responseTime,
       'beforeAfterImages': beforeAfterImages,
+      if (verificationStatus != null) 'verificationStatus': verificationStatus,
     };
   }
 }
@@ -298,9 +320,9 @@ class CertificationModel extends CertificationEntity {
   }
 
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'issuedBy': issuedBy,
-        'year': year,
-        if (imageUrl != null) 'imageUrl': imageUrl,
-      };
+    'name': name,
+    'issuedBy': issuedBy,
+    'year': year,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+  };
 }

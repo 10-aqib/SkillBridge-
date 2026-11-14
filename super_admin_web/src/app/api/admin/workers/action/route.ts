@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UsersService } from '@/lib/services/users.service';
-import { adminAuth } from '@/lib/firebase/admin';
+import { getAdminRequestIdentity, isSuperAdmin } from '@/lib/auth/admin-session';
 
 export async function POST(request: NextRequest) {
   try {
-    // Basic verification of the admin caller
-    const sessionCookie = request.cookies.get('__session')?.value;
-    if (!sessionCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-    if (decodedClaims.role !== 'SUPER_ADMIN') {
+    const admin = await getAdminRequestIdentity(request);
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!isSuperAdmin(admin)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -22,11 +17,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
-    await UsersService.updateWorkerVerification(workerId, isVerified, decodedClaims.uid);
+    await UsersService.updateWorkerVerification(workerId, isVerified, admin.uid);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Worker Action Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal Server Error' }, { status: 500 });
   }
 }

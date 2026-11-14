@@ -1,872 +1,371 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/enums/job_status.dart';
 import 'package:skill_bridge/core/enums/proposal_status.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/core/providers/firebase_providers.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
+import 'package:skill_bridge/features/chat/presentation/open_job_chat.dart';
+import 'package:skill_bridge/features/client/presentation/providers/worker_profile_provider.dart';
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
 import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
-import 'package:skill_bridge/features/proposals/data/models/proposal_model.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_actions.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_lifecycle_actions.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
+import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
 import 'package:skill_bridge/features/proposals/presentation/providers/proposal_providers.dart';
-import 'package:skill_bridge/shared/widgets/app_avatar.dart';
-import 'package:skill_bridge/shared/widgets/app_badge.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:skill_bridge/shared/widgets/app_chip.dart';
-import 'package:skill_bridge/core/services/location_tracking_service.dart';
-import 'package:skill_bridge/features/jobs/presentation/widgets/worker_live_tracking_map.dart';
+import 'package:skill_bridge/features/proposals/presentation/widgets/proposal_ui.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist Job Details Screen
+/// Job details for clients and workers, kept live from Firestore.
+///
+/// Workers see public client details, can send (or review) a proposal, message
+/// the client or report the job. Owners can edit, close or reopen, and review
+/// received proposals. Existing hiring and work actions are in
+/// [JobLifecycleActions].
 class JobDetailsScreen extends ConsumerWidget {
-  final JobEntity? job;
+  const JobDetailsScreen({super.key, required this.jobId, this.initial});
 
-  const JobDetailsScreen({
-    super.key,
-    this.job,
-  });
+  final String jobId;
+
+  /// Shown while the live copy loads (e.g. the card that was tapped).
+  final JobEntity? initial;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider);
-    final jobData = job;
+    final l = context.l10n;
+    final live = ref.watch(jobByIdProvider(jobId));
+    // Once the server refuses or fails, never keep showing an earlier copy
+    // (e.g. a job cached on this device that this account may not read).
+    final job = live.hasError ? null : (live.value ?? (live.isLoading ? initial : null));
 
-    final isOwner =
-        user != null && jobData != null && user.uid == jobData.clientId;
-    final isWorker = user != null && user.isWorker;
-    final isAssignedWorker = user != null &&
-        jobData != null &&
-        user.uid == jobData.selectedWorkerId;
-
-    return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: context.surfaceColor,
-        elevation: 0,
-        title: Text(
-          AppL10n.select(context, en: 'Job Details', ur: 'کام کی تفصیلات'),
-          style: AppTextStyles.heading3.copyWith(color: context.textColor),
-        ),
-      ),
-      body: jobData == null
-          ? Center(
-              child: Text(
-                'Job details not found.',
-                style: AppTextStyles.bodyStrong
-                    .copyWith(color: context.mutedColor),
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title & Badges
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          jobData.title,
-                          style: AppTextStyles.heading2.copyWith(
-                            color: context.textColor,
-                          ),
-                        ),
-                      ),
-                      if (jobData.urgency == 'urgent') ...[
-                        const SizedBox(width: 8),
-                        AppBadge.urgent(context),
-                      ],
-                    ],
-                  ).animate().fade(duration: 400.ms),
-                  const SizedBox(height: AppDimensions.md),
-
-                  // Category, City & Status Chips
-                  Wrap(
-                    spacing: AppDimensions.sm,
-                    runSpacing: AppDimensions.sm,
-                    children: [
-                      AppChip(label: jobData.categoryName),
-                      AppChip(label: jobData.city),
-                      _buildStatusBadge(context, jobData.status),
-                    ],
-                  ).animate().fade(delay: 80.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.xl),
-
-                  // Budget Card
-                  AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.lg),
-                    color: AppColors.blueTint,
-                    border: BorderSide(
-                        color: AppColors.primary.withValues(alpha: 0.2)),
-                    shadow: AppShadows.level1,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppL10n.select(context, en: 'Budget (PKR)', ur: 'بجٹ'),
-                              style: AppTextStyles.labelCaption.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Rs. ${jobData.budgetMin.toInt()} - ${jobData.budgetMax.toInt()}',
-                              style: AppTextStyles.dataNumeric.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: context.surfaceColor,
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusSm),
-                          ),
-                          child: Text(
-                            '${jobData.totalProposals} Proposals',
-                            style: AppTextStyles.bodyStrong.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 150.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.lg),
-
-                  // Client Information Card
-                  AppCard(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    shadow: AppShadows.level1,
-                    child: Row(
-                      children: [
-                        AppAvatar(
-                          name: jobData.clientName,
-                          imageUrl: jobData.clientPhotoUrl,
-                          size: 50,
-                        ),
-                        const SizedBox(width: AppDimensions.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                jobData.clientName,
-                                style: AppTextStyles.heading3.copyWith(
-                                  color: context.textColor,
-                                ),
-                              ),
-                              Text(
-                                'Posted in ${jobData.city}',
-                                style: AppTextStyles.labelCaption.copyWith(
-                                  color: context.mutedColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fade(delay: 200.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.xl),
-
-                  // Description
-                  Text(
-                    AppL10n.select(context, en: 'Description', ur: 'تفصیل'),
-                    style: AppTextStyles.heading3.copyWith(
-                      color: context.textColor,
-                    ),
-                  ).animate().fade(delay: 250.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.sm),
-                  Text(
-                    jobData.description,
-                    style: AppTextStyles.bodyPrimary.copyWith(
-                      height: 1.6,
-                      color: context.textColor,
-                    ),
-                  ).animate().fade(delay: 300.ms, duration: 400.ms),
-                  const SizedBox(height: AppDimensions.space32),
-
-                  // Action Buttons based on status
-                  if (jobData.status == JobStatus.open) ...[
-                    if (isWorker)
-                      AppButton(
-                        text: AppL10n.select(context, en: 'Apply / Submit Proposal', ur: 'تجویز ارسال کریں'),
-                        onPressed: () => _showSubmitProposalSheet(
-                            context, jobData, ref, user),
-                        width: double.infinity,
-                      ).animate().fade(delay: 350.ms, duration: 400.ms),
-                    if (isOwner)
-                      AppButton(
-                        text:
-                            context.l10n.viewReceivedProposals(jobData.totalProposals),
-                        onPressed: () =>
-                            _showReceivedProposalsSheet(context, jobData, ref),
-                        width: double.infinity,
-                      ).animate().fade(delay: 350.ms, duration: 400.ms),
-                  ] else if (jobData.status == JobStatus.assigned) ...[
-                    if (isOwner && jobData.selectedWorkerId != null) ...[
-                      WorkerLiveTrackingMap(
-                        workerId: jobData.selectedWorkerId!,
-                        workerName: jobData.selectedWorkerName ?? 'Assigned Worker',
-                        workerPhone: '',
-                        clientLat: jobData.location?.latitude ?? 33.6844,
-                        clientLon: jobData.location?.longitude ?? 73.0479,
-                      ).animate().fade(delay: 300.ms, duration: 400.ms),
-                      const SizedBox(height: AppDimensions.lg),
-                    ],
-                    if (isAssignedWorker) ...[
-                      _WorkerLocationSharingCard(
-                        jobId: jobData.id,
-                        workerUid: user.uid,
-                        jobAddress: jobData.address,
-                        jobLat: jobData.location?.latitude ?? 33.6844,
-                        jobLon: jobData.location?.longitude ?? 73.0479,
-                      ).animate().fade(delay: 300.ms, duration: 400.ms),
-                      const SizedBox(height: AppDimensions.lg),
-                    ],
-                    if (isOwner || isAssignedWorker)
-                      AppButton(
-                        text: AppL10n.select(context, en: 'Start Work', ur: 'کام شروع کریں'),
-                        onPressed: () async {
-                          try {
-                            await ref
-                                .read(jobRemoteDataSourceProvider)
-                                .startJob(jobData.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      AppL10n.select(context, en: 'Job started! Status is now IN PROGRESS', ur: 'کام شروع ہو گیا ہے')),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
-                              );
-                            }
-                          }
-                        },
-                        width: double.infinity,
-                      ).animate().fade(delay: 350.ms, duration: 400.ms),
-                  ] else if (jobData.status == JobStatus.inProgress) ...[
-                    if (isOwner && jobData.selectedWorkerId != null) ...[
-                      WorkerLiveTrackingMap(
-                        workerId: jobData.selectedWorkerId!,
-                        workerName: jobData.selectedWorkerName ?? 'Assigned Worker',
-                        workerPhone: '',
-                        clientLat: jobData.location?.latitude ?? 33.6844,
-                        clientLon: jobData.location?.longitude ?? 73.0479,
-                      ).animate().fade(delay: 300.ms, duration: 400.ms),
-                      const SizedBox(height: AppDimensions.lg),
-                    ],
-                    if (isAssignedWorker) ...[
-                      _WorkerLocationSharingCard(
-                        jobId: jobData.id,
-                        workerUid: user.uid,
-                        jobAddress: jobData.address,
-                        jobLat: jobData.location?.latitude ?? 33.6844,
-                        jobLon: jobData.location?.longitude ?? 73.0479,
-                      ).animate().fade(delay: 300.ms, duration: 400.ms),
-                      const SizedBox(height: AppDimensions.lg),
-                    ],
-                    if (isOwner || isAssignedWorker)
-                      AppButton(
-                        text: AppL10n.select(context, en: 'Mark as Complete', ur: 'کام مکمل کریں'),
-                        onPressed: () async {
-                          try {
-                            await ref
-                                .read(jobRemoteDataSourceProvider)
-                                .completeJob(jobData.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      AppL10n.select(context, en: 'Job marked as completed!', ur: 'کام مکمل ہو گیا ہے')),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
-                              );
-                            }
-                          }
-                        },
-                        width: double.infinity,
-                      ).animate().fade(delay: 350.ms, duration: 400.ms),
-                  ] else if (jobData.status == JobStatus.completed) ...[
-                    if (!jobData.isPaid && isOwner)
-                      AppButton(
-                        text: 'Pay with EasyPaisa (Rs. ${jobData.budgetMax.toInt()})',
-                        onPressed: () async {
-                          final success = await context.push<bool>(
-                            RouteNames.easyPaisaCheckoutPath,
-                            extra: {
-                              'jobId': jobData.id,
-                              'amount': jobData.budgetMax,
-                              'workerName': jobData.selectedWorkerName ?? 'Worker',
-                            },
-                          );
-                          if (success == true) {
-                            try {
-                              await ref
-                                  .read(jobRemoteDataSourceProvider)
-                                  .payJob(jobData.id);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Payment processed successfully!'),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error: $e')),
-                                );
-                              }
-                            }
-                          }
-                        },
-                        width: double.infinity,
-                      ).animate().fade(delay: 350.ms, duration: 400.ms),
-                    if (jobData.isPaid || !isOwner)
-                      AppCard(
-                        padding: const EdgeInsets.all(AppDimensions.md),
-                        color: AppColors.successGreen.withValues(alpha: 0.1),
-                        border: BorderSide(
-                            color: AppColors.successGreen.withValues(alpha: 0.3)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: AppColors.successGreen),
-                            const SizedBox(width: 8),
-                            Text(
-                              jobData.isPaid 
-                                  ? AppL10n.select(context, en: 'Job Completed & Paid', ur: 'کام مکمل اور ادا شدہ') 
-                                  : AppL10n.select(context, en: 'Job Completed', ur: 'کام مکمل ہو گیا ہے'),
-                              style: AppTextStyles.bodyStrong
-                                  .copyWith(color: AppColors.successGreen),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                  const SizedBox(height: AppDimensions.xl),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildStatusBadge(BuildContext context, JobStatus status) {
-    String text = AppL10n.select(context, en: 'OPEN', ur: 'کھلا');
-    Color bg = AppColors.successGreen.withValues(alpha: 0.12);
-    Color fg = AppColors.successGreen;
-    switch (status) {
-      case JobStatus.open:
-        text = AppL10n.select(context, en: 'OPEN', ur: 'کھلا');
-        bg = AppColors.successGreen.withValues(alpha: 0.12);
-        fg = AppColors.successGreen;
-        break;
-      case JobStatus.assigned:
-        text = AppL10n.select(context, en: 'ASSIGNED', ur: 'منتخب شدہ');
-        bg = AppColors.primary.withValues(alpha: 0.12);
-        fg = AppColors.primary;
-        break;
-      case JobStatus.inProgress:
-        text = AppL10n.select(context, en: 'IN PROGRESS', ur: 'کام جاری');
-        bg = AppColors.warningOrange.withValues(alpha: 0.15);
-        fg = AppColors.warningOrange;
-        break;
-      case JobStatus.completed:
-        text = AppL10n.select(context, en: 'COMPLETED', ur: 'مکمل');
-        bg = AppColors.successGreen.withValues(alpha: 0.12);
-        fg = AppColors.successGreen;
-        break;
-      case JobStatus.cancelled:
-        text = AppL10n.select(context, en: 'CANCELLED', ur: 'منسوخ');
-        bg = AppColors.errorRed.withValues(alpha: 0.12);
-        fg = AppColors.errorRed;
-        break;
+    if (job == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        // An error wins over loading: Riverpod may be retrying in the background.
+        body: live.isLoading && !live.hasError
+            ? const Center(child: CircularProgressIndicator())
+            : live.hasError
+                ? SbStateView(
+                    kind: SbStateKind.error,
+                    title: l.jobUnavailableTitle,
+                    message: l.jobUnavailableBody,
+                    actionLabel: l.tryAgain,
+                    onAction: () => ref.invalidate(jobByIdProvider(jobId)),
+                  )
+                : SbStateView(kind: SbStateKind.empty, title: l.jobUnavailableTitle, message: l.jobUnavailableBody),
+      );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        border: Border.all(color: fg.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        text,
-        style: AppTextStyles.labelCaption.copyWith(
-          color: fg,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  void _showSubmitProposalSheet(
-    BuildContext context,
-    JobEntity job,
-    WidgetRef ref,
-    dynamic user,
-  ) {
-    final rateController =
-        TextEditingController(text: job.budgetMax.toStringAsFixed(0));
-    final durationController = TextEditingController(text: '2-3 Days');
-    final coverController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.surfaceColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radiusLg)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: AppDimensions.lg,
-          right: AppDimensions.lg,
-          top: AppDimensions.lg,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + AppDimensions.lg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppL10n.select(context, en: 'Submit Proposal', ur: 'تجویز ارسال کریں'),
-              style: AppTextStyles.heading2.copyWith(color: context.textColor),
-            ),
-            const SizedBox(height: AppDimensions.md),
-            TextField(
-              controller: rateController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Proposed Hourly Rate (PKR)',
-                prefixText: 'Rs. ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.md),
-            TextField(
-              controller: durationController,
-              decoration: const InputDecoration(
-                labelText: 'Estimated Duration (e.g. 2-3 Days)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.md),
-            TextField(
-              controller: coverController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: AppL10n.select(context, en: 'Cover Note / Letter', ur: 'تعارفی پیغام'),
-                hintText: 'Explain why you are the best fit for this job...',
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: AppDimensions.lg),
-            AppButton(
-              text: AppL10n.select(context, en: 'Submit Proposal', ur: 'جمع کرائیں'),
-              width: double.infinity,
-              onPressed: () async {
-                final rate =
-                    double.tryParse(rateController.text.trim()) ?? job.budgetMax;
-                final duration = durationController.text.trim();
-                final cover = coverController.text.trim();
-
-                if (cover.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                        content: Text('Please enter a cover note / letter.')),
-                  );
-                  return;
-                }
-
-                final proposal = ProposalModel(
-                  id: '',
-                  jobId: job.id,
-                  jobTitle: job.title,
-                  workerId: user.uid,
-                  workerName: user.displayName ?? 'Skill Bridge Worker',
-                  workerRating: 4.8,
-                  coverLetter: cover,
-                  proposedRate: rate,
-                  rateType: 'hourly',
-                  estimatedDuration: duration,
-                  status: ProposalStatus.pending,
-                  clientId: job.clientId,
-                  createdAt: DateTime.now(),
-                  updatedAt: DateTime.now(),
-                );
-
-                try {
-                  await ref
-                      .read(proposalRemoteDataSourceProvider)
-                      .submitProposal(proposal);
-                  if (ctx.mounted) {
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            AppL10n.select(context, en: 'Proposal submitted successfully!', ur: 'تجویز ارسال کر دی گئی')),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showReceivedProposalsSheet(
-    BuildContext context,
-    JobEntity job,
-    WidgetRef ref,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.surfaceColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radiusLg)),
-      ),
-      builder: (ctx) => Consumer(
-        builder: (context, ref, child) {
-          final proposalsAsync =
-              ref.watch(jobProposalsStreamProvider(job.id));
-
-          return SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.75,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(AppDimensions.lg),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          context.l10n.receivedProposals,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.heading3
-                              .copyWith(color: context.textColor),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.of(ctx).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: proposalsAsync.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary),
-                    ),
-                    error: (err, stack) => Center(
-                      child: Text('Error loading proposals: $err',
-                          style: AppTextStyles.bodyPrimary),
-                    ),
-                    data: (proposals) {
-                      if (proposals.isEmpty) {
-                        return Center(
-                          child: Text(
-                            AppL10n.select(context, en: 'No proposals received yet', ur: 'ابھی کوئی تجویز موصول نہیں ہوئی'),
-                            style: AppTextStyles.bodyPrimary,
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(AppDimensions.lg),
-                        itemCount: proposals.length,
-                        itemBuilder: (context, index) {
-                          final p = proposals[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                                bottom: AppDimensions.md),
-                            child: AppCard(
-                              padding: const EdgeInsets.all(AppDimensions.md),
-                              shadow: AppShadows.level1,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        p.workerName,
-                                        style: AppTextStyles.heading3.copyWith(
-                                            color: context.textColor),
-                                      ),
-                                      Text(
-                                        'Rs. ${p.proposedRate.toInt()}/hr',
-                                        style: AppTextStyles.bodyStrong
-                                            .copyWith(color: AppColors.primary),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    AppL10n.select(context, en: 'Duration: ${p.estimatedDuration}', ur: 'Status: ${p.status.value.toUpperCase()}'),
-                                    style: AppTextStyles.labelCaption.copyWith(
-                                        color: context.mutedColor),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    p.coverLetter,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.bodyPrimary.copyWith(
-                                        color: context.textColor),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      OutlinedButton(
-                                        onPressed: () {
-                                          Navigator.of(ctx).pop();
-                                          context.push(
-                                            RouteNames.proposalDetailsPath
-                                                .replaceAll(
-                                                    ':proposalId', p.id),
-                                            extra: p,
-                                          );
-                                        },
-                                        child: const Text('View Details'),
-                                      ),
-                                      if (p.status ==
-                                          ProposalStatus.pending) ...[
-                                        const SizedBox(width: 8),
-                                        AppButton(
-                                          text: AppL10n.select(context, en: 'Accept', ur: 'منظور کریں'),
-                                          isSmall: true,
-                                          onPressed: () async {
-                                            try {
-                                              await ref
-                                                  .read(
-                                                      proposalRemoteDataSourceProvider)
-                                                  .acceptProposal(
-                                                    proposalId: p.id,
-                                                    jobId: p.jobId,
-                                                    workerId: p.workerId,
-                                                    workerName: p.workerName,
-                                                  );
-                                              if (ctx.mounted) {
-                                                Navigator.of(ctx).pop();
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                        'Proposal accepted & job assigned!'),
-                                                  ),
-                                                );
-                                              }
-                                            } catch (e) {
-                                              if (ctx.mounted) {
-                                                ScaffoldMessenger.of(ctx)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                      content:
-                                                          Text('Error: $e')),
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+    return _JobDetailsView(job: job);
   }
 }
 
-class _WorkerLocationSharingCard extends ConsumerWidget {
-  final String jobId;
-  final String workerUid;
-  final String jobAddress;
-  final double jobLat;
-  final double jobLon;
-
-  const _WorkerLocationSharingCard({
-    required this.jobId,
-    required this.workerUid,
-    required this.jobAddress,
-    required this.jobLat,
-    required this.jobLon,
-  });
+class _JobDetailsView extends ConsumerStatefulWidget {
+  const _JobDetailsView({required this.job});
+  final JobEntity job;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final locationAsync = ref.watch(userLiveLocationStreamProvider(workerUid));
-    final trackingService = ref.watch(locationTrackingServiceProvider);
+  ConsumerState<_JobDetailsView> createState() => _JobDetailsViewState();
+}
 
-    final isSharing = locationAsync.when(
-      data: (data) => data?['isLocationSharing'] as bool? ?? false,
-      loading: () => trackingService.isTracking,
-      error: (_, __) => false,
+class _JobDetailsViewState extends ConsumerState<_JobDetailsView> {
+  bool _openingChat = false;
+
+  JobEntity get job => widget.job;
+
+  Future<void> _messageClient(UserEntity me) async {
+    final l = context.l10n;
+    if (_openingChat) return;
+    setState(() => _openingChat = true);
+    final opened = await openJobChat(
+      context,
+      ref,
+      me: me,
+      otherUserId: job.clientId,
+      otherUserName: job.clientName,
+      otherUserPhoto: job.clientPhotoUrl,
+      jobId: job.id,
+      jobTitle: job.title,
+      workerId: me.uid,
     );
+    if (!mounted) return;
+    setState(() => _openingChat = false);
+    if (!opened) context.showSnackBar(l.jobMessageFailed, isError: true);
+  }
 
-    return AppCard(
-      padding: const EdgeInsets.all(AppDimensions.md),
-      shadow: AppShadows.level2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isSharing
-                      ? AppColors.successGreen.withValues(alpha: 0.12)
-                      : AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isSharing ? Icons.location_on : Icons.location_off_outlined,
-                  color: isSharing ? AppColors.successGreen : AppColors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Live GPS Location Sharing',
-                      style: AppTextStyles.bodyStrong.copyWith(
-                        color: context.textColor,
-                      ),
-                    ),
-                    Text(
-                      isSharing
-                          ? 'Client is receiving your live location'
-                          : 'Share location so client can track your arrival',
-                      style: AppTextStyles.labelCaption.copyWith(
-                        color: isSharing ? AppColors.successGreen : context.mutedColor,
-                        fontWeight: isSharing ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch.adaptive(
-                value: isSharing,
-                activeTrackColor: AppColors.primary,
-                onChanged: (val) async {
-                  if (val) {
-                    final status = await trackingService.startTracking(workerUid);
-                    if (!context.mounted) return;
-                    if (status == LocationTrackingStatus.serviceDisabled) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Please enable GPS/Location services.'),
-                          action: SnackBarAction(
-                            label: 'Settings',
-                            onPressed: () => trackingService.openLocationSettings(),
-                          ),
-                        ),
-                      );
-                    } else if (status == LocationTrackingStatus.permissionDenied ||
-                        status == LocationTrackingStatus.permissionPermanentlyDenied) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Location permission is required for live tracking.'),
-                          action: SnackBarAction(
-                            label: 'Settings',
-                            onPressed: () => trackingService.openAppSettings(),
-                          ),
-                        ),
-                      );
-                    }
-                  } else {
-                    await trackingService.stopTracking(workerUid);
-                  }
-                },
-              ),
-            ],
+  /// The worker's actions: send a proposal, see the one already sent, send it
+  /// again after withdrawing, and message the client.
+  Widget? _workerBar(UserEntity me, ProposalEntity? mine, bool loadingMine) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final edge = SbLayout.edge(context);
+    final open = job.isPublicOpen;
+    if (!open && mine == null) return null;
+
+    final Widget? main;
+    if (loadingMine) {
+      main = null;
+    } else if (mine == null) {
+      main = SbButton(
+        label: l.proposalSendCta,
+        icon: Icons.send_rounded,
+        expand: true,
+        onPressed: () => context.push(RouteNames.jobProposeLocation(job.id), extra: job),
+      );
+    } else if (mine.status == ProposalStatus.withdrawn && open) {
+      main = SbButton(
+        label: l.proposalSendAgain,
+        expand: true,
+        onPressed: () => context.push(RouteNames.jobProposeLocation(job.id), extra: job),
+      );
+    } else {
+      main = SbButton(
+        label: l.proposalViewMine,
+        variant: SbButtonVariant.secondary,
+        expand: true,
+        onPressed: () => context.push(RouteNames.proposalDetailsLocation(mine.id), extra: mine),
+      );
+    }
+    // The rules allow a job chat while the job is open or once a proposal exists.
+    // A worker who was not selected for a filled job is not offered a chat.
+    final canChat = open || mine?.status == ProposalStatus.pending || mine?.status == ProposalStatus.accepted;
+
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s3),
+        decoration: BoxDecoration(color: c.surface, border: Border(top: BorderSide(color: c.border))),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (mine != null) ...[
+            Row(children: [
+              Text(l.proposalYourStatus, style: t.bodySmall),
+              const SizedBox(width: SbSpace.s2),
+              ProposalStatusBadge(proposal: mine),
+            ]),
+            const SizedBox(height: SbSpace.s2),
+          ],
+          // Stacked: both labels stay readable on a narrow phone.
+          ?main,
+          if (main != null && canChat) const SizedBox(height: SbSpace.s2),
+          if (canChat)
+            SbButton(
+              label: l.jobMessageClient,
+              icon: Icons.chat_bubble_outline_rounded,
+              variant: main == null ? SbButtonVariant.secondary : SbButtonVariant.quiet,
+              expand: true,
+              isLoading: _openingChat,
+              onPressed: () => _messageClient(me),
+            ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _report(UserEntity me) async {
+    final l = context.l10n;
+    // Stored reason stays in English (admin review queue); labels localized.
+    final reasons = {
+      'Scam or fraud': l.jobReportScam,
+      'Misleading job': l.jobReportMisleading,
+      'Inappropriate content': l.jobReportInappropriate,
+      'Other': l.reportReasonOther,
+    };
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheet) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SbSpace.s5, SbSpace.s4, SbSpace.s5, SbSpace.s2),
+            child: Text(l.jobReportTitle, style: Theme.of(sheet).textTheme.titleLarge),
           ),
-          const SizedBox(height: AppDimensions.sm),
-          Divider(height: 1, color: context.borderColor),
-          const SizedBox(height: AppDimensions.sm),
-          Row(
-            children: [
-              const Icon(Icons.navigation_outlined, size: 14, color: AppColors.primary),
-              const SizedBox(width: 4),
+          for (final e in reasons.entries) ListTile(title: Text(e.value), onTap: () => Navigator.pop(sheet, e.key)),
+        ]),
+      ),
+    );
+    if (reason == null || !mounted) return;
+    try {
+      await ref.read(firestoreProvider).collection('reports').add({
+        'reporterId': me.uid,
+        'targetUserId': job.clientId,
+        'targetType': 'job',
+        'targetId': job.id,
+        'reason': reason,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (mounted) context.showSnackBar(l.reportSubmitted);
+    } catch (_) {
+      if (mounted) context.showSnackBar(l.reportFailed, isError: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final edge = SbLayout.edge(context);
+    final me = ref.watch(currentUserProvider);
+    final isOwner = me != null && me.uid == job.clientId;
+    final isWorker = me != null && me.isWorker;
+    final active = me?.isActive ?? false;
+    final direct = job.selectedWorkerId != null && job.selectedWorkerId!.isNotEmpty;
+    final mineAsync = isWorker && !isOwner ? ref.watch(myProposalForJobProvider(job.id)) : null;
+    final mine = mineAsync?.value;
+    final workerBar = isWorker && active && !isOwner ? _workerBar(me, mine, mineAsync?.isLoading ?? false) : null;
+    final showLifecycle = direct || job.status != JobStatus.open || isOwner;
+
+    Widget infoRow(IconData icon, String label, String value) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: SbSpace.s2),
+          child: MergeSemantics(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(icon, size: 20, color: c.textSecondary),
+              const SizedBox(width: SbSpace.s3),
               Expanded(
-                child: Text(
-                  'Job Destination: $jobAddress',
-                  style: AppTextStyles.labelCaption.copyWith(
-                    color: context.mutedColor,
-                    fontSize: 11,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(label, style: t.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(value, style: t.bodyLarge),
+                ]),
               ),
-            ],
+            ]),
+          ),
+        );
+
+    Widget card(List<Widget> children) => Container(
+          padding: const EdgeInsets.all(SbSpace.s4),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(SbRadius.card),
+            border: Border.all(color: c.border),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+        );
+
+    final when = [
+      urgencyLabel(l, job.urgency),
+      if (job.startDate != null)
+        l.jobPreferredOn(DateFormat.yMMMEd(Localizations.localeOf(context).toLanguageTag()).format(job.startDate!)),
+    ].join(' · ');
+    final area = jobAreaLabel(job);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l.jobDetailsTitle),
+        actions: [
+          if (isOwner && job.status == JobStatus.open)
+            IconButton(
+              tooltip: l.jobEdit,
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => context.push(RouteNames.jobEditLocation(job.id), extra: job),
+            ),
+          if (!isOwner && me != null && job.isPublicOpen)
+            IconButton(tooltip: l.jobReport, icon: const Icon(Icons.outlined_flag_rounded), onPressed: () => _report(me)),
+        ],
+      ),
+      bottomNavigationBar: workerBar,
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s8),
+        children: [
+          SbReadableWidth(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              if (me != null && !active) ...[
+                SbInlineBanner(message: l.jobSuspendedNotice, tone: SbTone.warning),
+                const SizedBox(height: SbSpace.s4),
+              ],
+              Wrap(spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+                JobStatusBadge(status: job.status, dense: false),
+                if (isUrgentJob(job)) SbStatusBadge.urgent(label: l.jobUrgencyImmediate),
+              ]),
+              const SizedBox(height: SbSpace.s3),
+              Text(job.title, style: t.headlineSmall),
+              const SizedBox(height: SbSpace.s2),
+              Row(children: [
+                Icon(jobCategoryIcon(job.categoryId), size: 18, color: c.textSecondary),
+                const SizedBox(width: SbSpace.s1),
+                Flexible(
+                  child: Text(
+                    '${jobCategoryLabel(context, job.categoryId, job.categoryName)} · ${jobPostedLabel(context, job.createdAt)}',
+                    style: t.bodyMedium!.copyWith(color: c.textSecondary),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: SbSpace.s4),
+              Container(
+                padding: const EdgeInsets.all(SbSpace.s4),
+                decoration: BoxDecoration(color: c.primarySubtle, borderRadius: BorderRadius.circular(SbRadius.card)),
+                child: Row(children: [
+                  Icon(Icons.payments_outlined, color: c.onPrimarySubtle),
+                  const SizedBox(width: SbSpace.s3),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(l.jobBudget, style: t.bodySmall!.copyWith(color: c.onPrimarySubtle)),
+                      Text(jobBudgetLabel(l, job), style: SbTypography.numeric(t.titleMedium!).copyWith(color: c.onPrimarySubtle)),
+                    ]),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: SbSpace.s4),
+              card([
+                if (area.isNotEmpty) infoRow(Icons.place_outlined, l.jobFormSectionWhere, area),
+                infoRow(Icons.schedule_rounded, l.jobFormSectionWhen, when),
+                // A direct request names the worker it was sent to. A job filled
+                // from proposals names the hired worker only to the two parties,
+                // never to other applicants. (Direct requests cannot receive
+                // proposals, so a proposal count means it was filled that way.)
+                if (direct && job.totalProposals == 0)
+                  infoRow(Icons.person_pin_outlined, l.jobDirectRequestLabel, job.selectedWorkerName ?? '')
+                else if (direct && (isOwner || me?.uid == job.selectedWorkerId))
+                  infoRow(Icons.how_to_reg_outlined, l.jobHiredLabel, job.selectedWorkerName ?? ''),
+              ]),
+              const SizedBox(height: SbSpace.s5),
+              Semantics(header: true, child: Text(l.jobDescription, style: t.titleMedium)),
+              const SizedBox(height: SbSpace.s2),
+              Text(job.description, style: t.bodyLarge),
+              if (job.requiredSkills.isNotEmpty) ...[
+                const SizedBox(height: SbSpace.s5),
+                Semantics(header: true, child: Text(l.jobFormSkillsLabel, style: t.titleMedium)),
+                const SizedBox(height: SbSpace.s2),
+                Wrap(spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
+                  for (final s in job.requiredSkills) Chip(label: Text(s)),
+                ]),
+              ],
+              if (job.images.isNotEmpty) ...[
+                const SizedBox(height: SbSpace.s5),
+                Semantics(header: true, child: Text(l.jobFormSectionPhotos, style: t.titleMedium)),
+                const SizedBox(height: SbSpace.s2),
+                SizedBox(
+                  height: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: job.images.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: SbSpace.s2),
+                    itemBuilder: (_, i) => ClipRRect(
+                      borderRadius: BorderRadius.circular(SbRadius.control),
+                      child: CachedNetworkImage(imageUrl: job.images[i], width: 140, height: 110, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+              ],
+              if (!isOwner) ...[
+                const SizedBox(height: SbSpace.s5),
+                _ClientCard(job: job),
+              ],
+              if (isOwner) ...[
+                const SizedBox(height: SbSpace.s5),
+                _OwnerPanel(job: job),
+              ],
+              if (showLifecycle && me != null) ...[
+                const SizedBox(height: SbSpace.s4),
+                JobLifecycleActions(job: job),
+              ],
+            ]),
           ),
         ],
       ),
@@ -874,3 +373,127 @@ class _WorkerLocationSharingCard extends ConsumerWidget {
   }
 }
 
+/// Public details of the client who posted the job.
+class _ClientCard extends ConsumerWidget {
+  const _ClientCard({required this.job});
+  final JobEntity job;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final client = ref.watch(workerProfileProvider(job.clientId)).value;
+    final name = (client?.formattedDisplayName ?? job.clientName).trim();
+    final photo = client?.photoUrl ?? job.clientPhotoUrl;
+    final since = client == null ? null : DateFormat.yMMM(Localizations.localeOf(context).toLanguageTag()).format(client.createdAt);
+    return Container(
+      padding: const EdgeInsets.all(SbSpace.s4),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(SbRadius.card),
+        border: Border.all(color: c.border),
+      ),
+      child: Row(children: [
+        SbAvatar(name: name.isEmpty ? '?' : name, imageUrl: photo, size: 48),
+        const SizedBox(width: SbSpace.s3),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l.jobPostedBy, style: t.bodySmall),
+            Text(name.isEmpty ? l.jobClientFallback : name, style: t.titleSmall),
+            if (since != null || (client?.city ?? '').isNotEmpty)
+              Text(
+                [if (since != null) l.jobMemberSince(since), if ((client?.city ?? '').isNotEmpty) client!.city!].join(' · '),
+                style: t.bodySmall,
+              ),
+          ]),
+        ),
+        if (client?.isEmailVerified == true) SbStatusBadge.verified(label: l.jobClientEmailVerified, dense: true),
+      ]),
+    );
+  }
+}
+
+/// Owner tools: proposals received, edit, close or reopen.
+class _OwnerPanel extends ConsumerWidget {
+  const _OwnerPanel({required this.job});
+  final JobEntity job;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final c = context.sb;
+    final direct = job.selectedWorkerId != null && job.selectedWorkerId!.isNotEmpty;
+    final manageable = job.status == JobStatus.open || (job.status == JobStatus.cancelled && !direct);
+    // Proposals stay reviewable after a hire (who was accepted, who was not).
+    final showProposals = job.isPublicOpen || job.totalProposals > 0;
+    if (!manageable && !showProposals) return const SizedBox.shrink();
+    final proposalsButton = SbButton(
+      label: l.proposalsViewReceived(job.totalProposals),
+      icon: Icons.inbox_outlined,
+      expand: true,
+      variant: job.isPublicOpen && job.totalProposals > 0 ? SbButtonVariant.primary : SbButtonVariant.secondary,
+      onPressed: () => context.push(RouteNames.jobProposalsLocation(job.id), extra: job),
+    );
+    if (!manageable) {
+      return Container(
+        padding: const EdgeInsets.all(SbSpace.s4),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(SbRadius.card),
+          border: Border.all(color: c.border),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(l.jobOwnerPanelTitle, style: t.titleSmall),
+          const SizedBox(height: SbSpace.s3),
+          proposalsButton,
+        ]),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(SbSpace.s4),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(SbRadius.card),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(l.jobOwnerPanelTitle, style: t.titleSmall),
+        const SizedBox(height: SbSpace.s1),
+        if (job.status == JobStatus.open && !direct) JobProposalCount(count: job.totalProposals, style: t.bodyMedium),
+        if (job.status == JobStatus.cancelled) Text(l.jobClosedNotice, style: t.bodyMedium),
+        const SizedBox(height: SbSpace.s3),
+        if (showProposals) ...[proposalsButton, const SizedBox(height: SbSpace.s3)],
+        Row(children: [
+          if (job.status == JobStatus.open) ...[
+            Expanded(
+              child: SbButton(
+                label: l.jobEdit,
+                icon: Icons.edit_outlined,
+                variant: SbButtonVariant.secondary,
+                onPressed: () => context.push(RouteNames.jobEditLocation(job.id), extra: job),
+              ),
+            ),
+            const SizedBox(width: SbSpace.s3),
+            Expanded(
+              child: SbButton(
+                label: l.jobClose,
+                variant: SbButtonVariant.quiet,
+                onPressed: () => closeJobWithConfirm(context, ref, job),
+              ),
+            ),
+          ] else
+            Expanded(
+              child: SbButton(
+                label: l.jobReopen,
+                icon: Icons.replay_rounded,
+                variant: SbButtonVariant.secondary,
+                onPressed: () => reopenJobWithConfirm(context, ref, job),
+              ),
+            ),
+        ]),
+      ]),
+    );
+  }
+}

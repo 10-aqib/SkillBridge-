@@ -1,259 +1,171 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
-import 'package:skill_bridge/core/providers/language_provider.dart';
+import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/chat/data/datasources/chat_remote_datasource.dart';
-import 'package:skill_bridge/shared/widgets/app_avatar.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/features/chat/data/models/chat_model.dart';
+import 'package:skill_bridge/features/chat/presentation/widgets/chat_ui.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist Chat List Screen — Premium Design
+/// The signed-in user's conversations, most recent first, from Firestore.
+/// Previews, times and unread counts are kept by the server.
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatsAsync = ref.watch(userChatsStreamProvider);
-    final currentUser = ref.watch(currentUserProvider);
-    final isUrdu = ref.watch(languageProvider).languageCode == 'ur';
+    final l = context.l10n;
+    final me = ref.watch(currentUserProvider);
+    final chats = ref.watch(userChatsStreamProvider);
+    final online = ref.watch(connectivityStatusProvider).value ?? true;
+    final edge = SbLayout.edge(context);
+    final list = chats.value;
+
+    Widget body;
+    if (list == null && chats.hasError) {
+      body = SbStateView(
+        kind: online ? SbStateKind.error : SbStateKind.offline,
+        title: l.chatsLoadError,
+        message: online ? l.errNetwork : l.chatsOffline,
+        actionLabel: l.tryAgain,
+        onAction: () => ref.invalidate(userChatsStreamProvider),
+      );
+    } else if (list == null) {
+      body = ListView(
+        padding: EdgeInsets.symmetric(vertical: SbSpace.s3, horizontal: edge),
+        children: const [SbListRowSkeleton(), SbListRowSkeleton(), SbListRowSkeleton(), SbListRowSkeleton()],
+      );
+    } else if (list.isEmpty) {
+      body = RefreshIndicator(
+        onRefresh: () async => ref.invalidate(userChatsStreamProvider),
+        child: ListView(children: [
+          if (!online) Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, 0), child: SbInlineBanner(message: l.chatsOffline, tone: SbTone.warning)),
+          SizedBox(
+            height: 420,
+            child: SbStateView(
+              kind: SbStateKind.empty,
+              icon: Icons.chat_bubble_outline_rounded,
+              title: l.chatsEmptyTitle,
+              message: (me?.isClient ?? false) ? l.chatsEmptyClient : l.chatsEmptyWorker,
+            ),
+          ),
+        ]),
+      );
+    } else {
+      body = RefreshIndicator(
+        onRefresh: () async => ref.invalidate(userChatsStreamProvider),
+        child: ListView.separated(
+          padding: const EdgeInsets.only(bottom: SbSpace.s8),
+          itemCount: list.length + 1,
+          separatorBuilder: (_, i) => i == 0 ? const SizedBox.shrink() : Divider(height: 1, indent: edge + 48 + SbSpace.s3, color: context.sb.border),
+          itemBuilder: (context, i) {
+            if (i == 0) {
+              return online
+                  ? const SizedBox.shrink()
+                  : Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s2), child: SbInlineBanner(message: l.chatsOffline, tone: SbTone.warning));
+            }
+            return ChatListTile(chat: list[i - 1], me: me?.uid ?? '');
+          },
+        ),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 140,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF001E60), Color(0xFF1A56DB)],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isUrdu ? 'پیغامات' : 'Messages',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          isUrdu
-                              ? 'اپنی گفتگو اور پیغامات یہاں دیکھیں'
-                              : 'Keep track of your conversations',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          chatsAsync.when(
-            loading: () => const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-            ),
-            error: (err, stack) => SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 64, color: context.borderColor),
-                    const SizedBox(height: 12),
-                    Text(
-                      isUrdu ? 'پیغامات لوڈ نہیں ہو سکے' : 'Could not load messages',
-                      style: AppTextStyles.heading3.copyWith(color: context.textColor),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            data: (chats) {
-              if (chats.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 88,
-                          height: 88,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.chat_bubble_outline_rounded,
-                              size: 44, color: AppColors.primary),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                            isUrdu ? 'کوئی پیغام نہیں' : 'No Conversations Yet',
-                            style: AppTextStyles.heading3
-                                .copyWith(color: context.textColor)),
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Text(
-                            isUrdu ? 'کسی ورکر یا کلائنٹ سے رابطہ شروع کریں' : 'Start a conversation by reaching out to someone.',
-                            style: AppTextStyles.bodyMedium
-                                .copyWith(color: context.mutedColor),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () => context.push(RouteNames.clientNearbyWorkersPath),
-                          icon: const Icon(Icons.explore_rounded),
-                          label: Text(isUrdu ? 'ورکرز تلاش کریں' : 'Browse Services'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.all(AppDimensions.md),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final chat = chats[index];
-                      final otherUserId = chat.participantIds.firstWhere(
-                          (id) => id != currentUser?.uid,
-                          orElse: () => '');
-                      final otherName = chat.participantNames[otherUserId] ?? 'Unknown';
-                      final otherPhoto = chat.participantPhotos[otherUserId];
-                      final unread = chat.unreadCount[currentUser?.uid ?? ''] ?? 0;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: GestureDetector(
-                          onTap: () => context.push(
-                            RouteNames.chatRoomPath.replaceFirst(':chatId', chat.id),
-                            extra: chat,
-                          ),
-                          child: AppCard(
-                            padding: const EdgeInsets.all(AppDimensions.md),
-                            shadow: AppShadows.level1,
-                            child: Row(
-                              children: [
-                                AppAvatar(
-                                  name: otherName,
-                                  imageUrl: otherPhoto,
-                                  size: 56,
-                                ),
-                                const SizedBox(width: AppDimensions.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        otherName,
-                                        style: AppTextStyles.heading3.copyWith(
-                                          color: context.textColor,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        chat.lastMessage.isEmpty
-                                            ? (isUrdu ? 'ابھی کوئی پیغام نہیں' : 'No messages yet')
-                                            : chat.lastMessage,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.bodyMedium.copyWith(
-                                          color: unread > 0 ? context.textColor : context.mutedColor,
-                                          fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      _formatTime(chat.lastMessageAt, isUrdu),
-                                      style: AppTextStyles.labelCaption.copyWith(
-                                        color: unread > 0 ? AppColors.primary : context.mutedColor,
-                                        fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    ),
-                                    if (unread > 0) ...[
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          '$unread',
-                                          style: AppTextStyles.labelCaption.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ).animate().fade(delay: (60 * index).ms, duration: 350.ms),
-                      );
-                    },
-                    childCount: chats.length,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l.chatsTitle)),
+      body: SbReadableWidth(maxWidth: 840, child: body),
     );
   }
+}
 
-  String _formatTime(DateTime dt, bool isUrdu) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return isUrdu ? 'ابھی' : 'Just now';
-    if (diff.inHours < 1) return isUrdu ? '${diff.inMinutes} منٹ قبل' : '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return isUrdu ? '${diff.inHours} گھنٹے قبل' : '${diff.inHours}h ago';
-    return isUrdu ? '${diff.inDays} دن قبل' : '${diff.inDays}d ago';
+/// One conversation: the other person, the job it is about, the last
+/// message (yours prefixed with "You:"), when, and how many are unread.
+class ChatListTile extends StatelessWidget {
+  const ChatListTile({super.key, required this.chat, required this.me});
+  final ChatEntity chat;
+  final String me;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final sb = context.sb;
+    final unread = chat.unreadFor(me);
+    final name = chat.otherName(me);
+    final raw = chat.lastMessageType == ChatLastMessageType.image && chat.lastMessage.isEmpty ? l.chatPhoto : chat.lastMessage;
+    final preview = chat.isEmpty
+        ? l.chatNoMessagesYet
+        : chat.lastMessageSenderId == me
+            ? l.chatYouPrefix(raw)
+            : raw;
+    final time = chatListTime(context, chat.lastMessageAt);
+    final strong = unread > 0;
+
+    return Semantics(
+      button: true,
+      label: [name, if (chat.relatedJobTitle?.isNotEmpty ?? false) chat.relatedJobTitle!, preview, time, if (strong) l.chatUnreadCount(unread)].join(', '),
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => context.push(RouteNames.chatRoomLocation(chat.id)),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: SbLayout.edge(context), vertical: SbSpace.s3),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SbAvatar(name: name, imageUrl: chat.otherPhoto(me), size: 48),
+            const SizedBox(width: SbSpace.s3),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(
+                    child: Text(name, style: t.titleSmall!.copyWith(fontWeight: strong ? FontWeight.w700 : FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                  const SizedBox(width: SbSpace.s2),
+                  Text(time, style: t.bodySmall!.copyWith(color: strong ? sb.primary : sb.textSecondary, fontWeight: strong ? FontWeight.w600 : null)),
+                ]),
+                if (chat.relatedJobTitle?.isNotEmpty ?? false)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(children: [
+                      Icon(Icons.work_outline_rounded, size: 14, color: sb.textSecondary),
+                      const SizedBox(width: SbSpace.s1),
+                      Expanded(child: Text(chat.relatedJobTitle!, style: t.labelSmall!.copyWith(color: sb.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ]),
+                  ),
+                const SizedBox(height: SbSpace.s1),
+                Row(children: [
+                  if (chat.lastMessageType == ChatLastMessageType.image) ...[
+                    Icon(Icons.photo_outlined, size: 16, color: sb.textSecondary),
+                    const SizedBox(width: SbSpace.s1),
+                  ],
+                  Expanded(
+                    child: Text(
+                      preview,
+                      style: t.bodyMedium!.copyWith(
+                        color: strong ? sb.text : sb.textSecondary,
+                        fontWeight: strong ? FontWeight.w600 : null,
+                        fontStyle: chat.isEmpty ? FontStyle.italic : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (strong) ...[
+                    const SizedBox(width: SbSpace.s2),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 22),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: sb.primary, borderRadius: BorderRadius.circular(SbRadius.full)),
+                      child: Text(unread > 99 ? '99+' : '$unread',
+                          textAlign: TextAlign.center, style: t.labelSmall!.copyWith(color: sb.onPrimary, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ]),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 }

@@ -1,328 +1,112 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
-import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
+import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
-/// Guild Modernist OTP Verification Screen (a4_otp_verification)
+/// Phone number verification (Firebase phone auth, linked to the signed-in
+/// account). Opened from the profile. One 6-digit field supports SMS autofill
+/// and paste, and is read as a single input by screen readers.
 class OtpVerificationScreen extends ConsumerStatefulWidget {
+  const OtpVerificationScreen({super.key, required this.phoneNumber});
+
+  /// +92… format.
   final String phoneNumber;
 
-  const OtpVerificationScreen({
-    super.key,
-    required this.phoneNumber,
-  });
-
   @override
-  ConsumerState<OtpVerificationScreen> createState() =>
-      _OtpVerificationScreenState();
+  ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState
-    extends ConsumerState<OtpVerificationScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-
-  int _resendSeconds = 60;
-  Timer? _timer;
+class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
+  final _code = TextEditingController();
+  late final ResendCooldown _cooldown = ResendCooldown(() {
+    if (mounted) setState(() {});
+  });
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sendOtp();
-    });
-    _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _send());
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
+    _cooldown.dispose();
+    _code.dispose();
     super.dispose();
   }
 
-  void _startTimer() {
-    _timer?.cancel();
-    setState(() => _resendSeconds = 60);
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_resendSeconds == 0) {
-        t.cancel();
-      } else {
-        if (mounted) {
-          setState(() => _resendSeconds--);
-        }
-      }
-    });
+  void _send() {
+    ref.read(otpViewModelProvider.notifier).sendOtp(phoneNumber: widget.phoneNumber);
+    _cooldown.start();
   }
 
-  void _sendOtp() {
-    ref
-        .read(otpViewModelProvider.notifier)
-        .sendOtp(phoneNumber: widget.phoneNumber);
-  }
-
-  void _resendOtp() {
-    if (_resendSeconds > 0) return;
-    _sendOtp();
-    _startTimer();
-  }
-
-  void _onDigitChanged(int index, String value) {
-    if (value.length == 1 && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-
-    final otp = _controllers.map((c) => c.text).join();
-    if (otp.length == 6) {
-      _verifyOtp(otp);
-    }
-  }
-
-  void _verifyOtp(String otp) {
-    ref.read(otpViewModelProvider.notifier).verifyOtp(
-          smsCode: otp,
-        );
+  void _verify() {
+    final code = _code.text.trim();
+    if (code.length != 6) return;
+    ref.read(otpViewModelProvider.notifier).verifyOtp(smsCode: code);
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<OtpState>(otpViewModelProvider, (prev, next) {
-      if (next.isVerified && !(prev?.isVerified ?? false)) {
-        // Router will redirect upon auth status update
-      }
-      if (next.errorMessage != null &&
-          next.errorMessage != prev?.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: AppColors.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        ref.read(otpViewModelProvider.notifier).clearError();
-      }
-    });
-
+    final l = context.l10n;
     final state = ref.watch(otpViewModelProvider);
 
-    return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.lg,
-            vertical: AppDimensions.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Back Button ─────────────────────────────────────────────
-              IconButton(
-                onPressed: () => context.pop(),
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: context.textColor,
-                  size: 20,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: context.surfaceColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                    side: BorderSide(
-                      color: context.borderColor.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimensions.xl),
+    ref.listen<OtpState>(otpViewModelProvider, (prev, next) {
+      if (next.isVerified && !(prev?.isVerified ?? false)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.otpVerified)));
+        if (context.canPop()) context.pop(true);
+      }
+    });
 
-              // ── Header (Sora + Inter) ─────────────────────────────────────
-              Text(
-                AppL10n.select(context, en: 'Verify Phone', ur: 'فون نمبر کی تصدیق'),
-                style: AppTextStyles.headlineLg.copyWith(
-                  color: context.textColor,
-                ),
-              ).animate().fade(duration: 500.ms).slideY(
-                    begin: 0.2,
-                    end: 0,
-                    curve: Curves.easeOutQuad,
-                  ),
-              const SizedBox(height: 4),
-              Text(
-                'We sent a 6-digit verification code to:\n${widget.phoneNumber}',
-                style: AppTextStyles.bodyPrimary.copyWith(
-                  color: context.mutedColor,
-                ),
-              ).animate().fade(delay: 100.ms, duration: 500.ms),
-              const SizedBox(height: AppDimensions.xl),
-
-              // ── 6-Digit OTP Inputs (JetBrains Mono) ────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
-                  return _OtpDigitField(
-                    controller: _controllers[index],
-                    focusNode: _focusNodes[index],
-                    onChanged: (value) => _onDigitChanged(index, value),
-                    isLoading: state.isVerifying || state.isSending,
-                  );
-                }),
-              ).animate().fade(delay: 200.ms, duration: 500.ms),
-              const SizedBox(height: AppDimensions.xl),
-
-              // ── Verify Button (52px Primary) ───────────────────────────────
-              AppButton(
-                text: AppL10n.select(context, en: 'Verify Account', ur: 'تصدیق کریں'),
-                onPressed: (state.isVerifying || state.isSending)
-                    ? null
-                    : () {
-                        final otp = _controllers.map((c) => c.text).join();
-                        if (otp.length == 6) {
-                          _verifyOtp(otp);
-                        }
-                      },
-                isLoading: state.isVerifying,
-                width: double.infinity,
-              ).animate().fade(delay: 300.ms, duration: 500.ms),
-              const SizedBox(height: AppDimensions.lg),
-
-              // ── Resend & Timer ─────────────────────────────────────────────
-              if (state.isSending)
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: AppDimensions.sm),
-                      Text(
-                        'Sending OTP code...',
-                        style: AppTextStyles.bodyPrimary.copyWith(
-                          color: context.mutedColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Didn't receive the code? ",
-                        style: AppTextStyles.bodyPrimary.copyWith(
-                          color: context.mutedColor,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _resendSeconds == 0 ? _resendOtp : null,
-                        child: Text(
-                          _resendSeconds > 0
-                              ? 'Resend in ${_resendSeconds}s'
-                              : 'Resend Now',
-                          style: AppTextStyles.bodyStrong.copyWith(
-                            color: _resendSeconds > 0
-                                ? context.mutedColor
-                                : AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+    final waiting = _cooldown.remaining > 0;
+    return AuthScaffold(
+      onBack: context.canPop() ? () => context.pop(false) : null,
+      title: l.otpTitle,
+      subtitle: l.otpSubtitle(PakPhone.toLocalDisplay(widget.phoneNumber)),
+      footer: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SbButton(
+          label: l.otpVerify,
+          expand: true,
+          isLoading: state.isVerifying,
+          onPressed: state.isSending ? null : _verify,
         ),
-      ),
-    );
-  }
-}
-
-class _OtpDigitField extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
-  final bool isLoading;
-
-  const _OtpDigitField({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-    required this.isLoading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = controller.text.isNotEmpty;
-
-    return SizedBox(
-      width: 48,
-      height: 56,
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        enabled: !isLoading,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: AppTextStyles.dataNumericLg.copyWith(
-          color: AppColors.primary,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
+        SbButton(
+          label: waiting ? l.forgotResendIn(_cooldown.remaining) : l.otpResend,
+          variant: SbButtonVariant.quiet,
+          expand: true,
+          isLoading: state.isSending,
+          onPressed: waiting || state.isVerifying ? null : _send,
         ),
-        decoration: InputDecoration(
-          counterText: '',
-          filled: true,
-          fillColor: hasValue ? AppColors.blueTint : context.surfaceColor,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            borderSide: BorderSide(
-              color: hasValue ? AppColors.primary : context.borderColor.withValues(alpha: 0.5),
-            ),
+      ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (state.errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: SbSpace.s4),
+            child: SbInlineBanner(message: l.otpError, tone: SbTone.error),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            borderSide: BorderSide(
-              color: hasValue ? AppColors.primary : context.borderColor.withValues(alpha: 0.5),
-            ),
+        if (state.otpSent && state.errorMessage == null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: SbSpace.s4),
+            child: SbInlineBanner(message: l.otpSent, tone: SbTone.info),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            borderSide: const BorderSide(
-              color: AppColors.primary,
-              width: 2,
-            ),
-          ),
+        SbTextField(
+          label: l.otpCodeLabel,
+          hint: '••••••',
+          controller: _code,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.oneTimeCode],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+          onChanged: (v) {
+            if (v.length == 6) _verify();
+          },
+          onSubmitted: (_) => _verify(),
         ),
-        onChanged: onChanged,
-      ),
+      ]),
     );
   }
 }

@@ -1,6 +1,3 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -10,13 +7,6 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
-
-val envFile = rootProject.file("../.env")
-val envProperties = Properties()
-if (envFile.exists()) {
-    FileInputStream(envFile).use { stream -> envProperties.load(stream) }
-}
-val mapsApiKey = envProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.skillbridge.skill_bridge"
@@ -38,7 +28,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {

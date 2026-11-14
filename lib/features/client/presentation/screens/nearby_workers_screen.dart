@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_shadows.dart';
@@ -14,17 +15,25 @@ import 'package:skill_bridge/core/utils/geo_location_util.dart';
 import 'package:skill_bridge/features/client/domain/entities/nearby_worker_entity.dart';
 import 'package:skill_bridge/features/client/domain/services/worker_match_service.dart';
 import 'package:skill_bridge/core/providers/location_provider.dart';
+import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/features/client/presentation/providers/nearby_workers_provider.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
+import 'package:skill_bridge/shared/widgets/app_shimmer_card.dart';
 import 'package:skill_bridge/shared/widgets/booking_payment_sheet.dart';
 import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
-import 'package:skill_bridge/core/services/routes_service.dart';
+import 'package:skill_bridge/core/map/map_markers.dart';
+import 'package:skill_bridge/core/map/sb_map.dart';
+import 'package:skill_bridge/core/utils/logger.dart';
+import 'package:skill_bridge/features/navigation/data/routing_service.dart';
+import 'package:skill_bridge/features/navigation/domain/entities/nav_route.dart';
+import 'package:skill_bridge/features/navigation/presentation/providers/routing_providers.dart';
+import 'package:skill_bridge/features/navigation/presentation/widgets/route_layer.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:go_router/go_router.dart';
 
-/// Skill Bridge Nearby Workers — Real Google Maps with worker pins
+/// Skill Bridge Nearby Workers — OpenStreetMap map with worker pins
 class NearbyWorkersScreen extends ConsumerStatefulWidget {
   const NearbyWorkersScreen({super.key});
 
@@ -42,17 +51,15 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   bool _availableOnly = false;
   bool _isMapView = false;
   String? _selectedWorkerId;
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   late AnimationController _filterAnim;
   bool _showFilters = true;
   LocationResult? _customLocation;
-  Set<Polyline> _polylines = {};
 
-  static const _mapStyle = '''[
-    {"featureType":"poi","stylers":[{"visibility":"off"}]},
-    {"featureType":"transit","stylers":[{"visibility":"simplified"}]},
-    {"featureType":"road","elementType":"labels.icon","stylers":[{"visibility":"off"}]}
-  ]''';
+  /// Road route to the selected worker (OSRM), and who it is for.
+  NavRoute? _route;
+  String? _routeWorkerId;
+  int _routeRequest = 0;
 
   @override
   void initState() {
@@ -61,17 +68,56 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
     _filterAnim.forward();
   }
 
+  /// Selects [w], frames both points and asks for the road route. A route
+  /// that fails is simply not drawn; straight-line distance stays labelled
+  /// as such.
+  Future<void> _selectWorker(NearbyWorkerEntity w, LatLng centre) async {
+    final target = LatLng(w.location.latitude, w.location.longitude);
+    setState(() {
+      _selectedWorkerId = w.workerId;
+      if (_routeWorkerId != w.workerId) {
+        _route = null;
+        _routeWorkerId = null;
+      }
+    });
+    _mapController.frame([centre, target], padding: const EdgeInsets.all(60));
+    final id = ++_routeRequest;
+    try {
+      final result = await ref.read(routingServiceProvider).getRoute(centre, target, alternatives: false);
+      if (!mounted || id != _routeRequest) return;
+      setState(() {
+        _route = result.primary;
+        _routeWorkerId = w.workerId;
+      });
+      _mapController.frame([centre, target, ...result.primary.points], padding: const EdgeInsets.all(60));
+    } on RoutingException catch (e) {
+      Logger.w('[NearbyWorkers] no road route: $e');
+    }
+  }
+
+  void _clearRoute() {
+    _routeRequest++;
+    _route = null;
+    _routeWorkerId = null;
+  }
+
   @override
   void dispose() {
-    _mapController?.dispose();
+    _mapController.dispose();
     _filterAnim.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final isOffline = connectivityStatus.when(
+      data: (isConnected) => !isConnected,
+      loading: () => false,
+      error: (_, __) => true,
+    );
     final locAsync = ref.watch(locationProvider);
-    
+
     return locAsync.when(
       loading: () => Scaffold(
         backgroundColor: context.scaffoldBg,
@@ -79,7 +125,11 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           backgroundColor: AppColors.primary,
           elevation: 0,
           title: Text(
-            AppL10n.select(context, en: 'Find Workers Nearby', ur: 'قریبی کاریگر'),
+            AppL10n.select(
+              context,
+              en: 'Find Workers Nearby',
+              ur: 'قریبی کاریگر',
+            ),
             style: AppTextStyles.heading3.copyWith(color: Colors.white),
           ),
         ),
@@ -94,30 +144,49 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           ),
         ),
       ),
-      error: (err, _) => _buildMainScaffold(context, true), // Fallback
+      error: (err, _) => _buildMainScaffold(
+        context,
+        true,
+        isOffline: isOffline,
+        locationError: err.toString(),
+      ),
       data: (pos) => _buildMainScaffold(
-        context, 
-        false, 
-        userLat: pos.latitude, 
+        context,
+        false,
+        isOffline: isOffline,
+        userLat: pos.latitude,
         userLng: pos.longitude,
       ),
     );
   }
 
-  Widget _buildMainScaffold(BuildContext context, bool isFallback, {double? userLat, double? userLng}) {
+  Widget _buildMainScaffold(
+    BuildContext context,
+    bool isFallback, {
+    required bool isOffline,
+    double? userLat,
+    double? userLng,
+    String? locationError,
+  }) {
     // Determine the center based on custom location or GPS or fallback
-    final centerLat = _customLocation?.latitude ?? (isFallback ? 33.6844 : userLat!);
-    final centerLng = _customLocation?.longitude ?? (isFallback ? 73.0479 : userLng!);
-    
+    final centerLat =
+        _customLocation?.latitude ?? (isFallback ? 33.6844 : userLat!);
+    final centerLng =
+        _customLocation?.longitude ?? (isFallback ? 73.0479 : userLng!);
+
     final currentUserLocation = GeoPointLocation(
       latitude: centerLat,
       longitude: centerLng,
     );
 
-    final nearbyWorkersAsync = ref.watch(nearbyWorkersProvider(currentUserLocation));
+    final nearbyWorkersAsync = ref.watch(
+      nearbyWorkersProvider(
+        NearbyWorkerParams(currentUserLocation, _maxDistanceRadiusKm),
+      ),
+    );
     final categories = [
       'All',
-      ...PakistanConstants.categories.map((c) => c['name'] as String)
+      ...PakistanConstants.categories.map((c) => c['name'] as String),
     ];
 
     return Scaffold(
@@ -127,7 +196,11 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
         elevation: 0,
         foregroundColor: Colors.white,
         title: Text(
-          AppL10n.select(context, en: 'Find Workers Nearby', ur: 'قریبی کاریگر'),
+          AppL10n.select(
+            context,
+            en: 'Find Workers Nearby',
+            ur: 'قریبی کاریگر',
+          ),
           style: AppTextStyles.heading3.copyWith(color: Colors.white),
         ),
         actions: [
@@ -159,35 +232,139 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 : const SizedBox.shrink(),
           ),
 
+          if (locationError != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.md,
+                AppDimensions.sm,
+                AppDimensions.md,
+                0,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.md,
+                  vertical: AppDimensions.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.blueTint,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.location_off_outlined,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: AppDimensions.sm),
+                    const Expanded(
+                      child: Text(
+                        'Location unavailable. Showing workers near Islamabad.',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.invalidate(locationProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // ── Content ────────────────────────────────────────────────────────
           Expanded(
             child: nearbyWorkersAsync.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
+              loading: () => isOffline
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.wifi_off_rounded,
+                            size: 48,
+                            color: context.mutedColor,
+                          ),
+                          const SizedBox(height: AppDimensions.md),
+                          Text(
+                            'No internet connection',
+                            style: AppTextStyles.bodyStrong.copyWith(
+                              color: context.textColor,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.xs),
+                          Text(
+                            'Reconnect to load nearby workers',
+                            style: AppTextStyles.labelCaption.copyWith(
+                              color: context.mutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _isMapView
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(AppDimensions.md),
+                      itemCount: 4,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppDimensions.md),
+                      itemBuilder: (_, __) => const WorkerShimmerCard(),
+                    ),
               error: (err, _) => Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.wifi_off_rounded,
-                        size: 64, color: context.borderColor),
-                    SizedBox(height: 12),
-                    Text('Could not load workers',
-                        style: AppTextStyles.bodyStrong.copyWith(
-                            color: context.mutedColor)),
-                    SizedBox(height: 4),
-                    Text('Check your internet connection',
-                        style: AppTextStyles.labelCaption.copyWith(
-                            color: context.mutedColor)),
+                    Icon(
+                      isOffline
+                          ? Icons.wifi_off_rounded
+                          : Icons.cloud_off_outlined,
+                      size: 64,
+                      color: context.borderColor,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Could not load workers',
+                      style: AppTextStyles.bodyStrong.copyWith(
+                        color: context.mutedColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isOffline
+                          ? 'Reconnect to the internet and retry.'
+                          : 'The worker request timed out. Please retry.',
+                      style: AppTextStyles.labelCaption.copyWith(
+                        color: context.mutedColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppDimensions.sm),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(
+                        nearbyWorkersProvider(
+                          NearbyWorkerParams(
+                            currentUserLocation,
+                            _maxDistanceRadiusKm,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                    ),
                   ],
                 ),
               ),
               data: (allWorkers) {
                 final filtered = allWorkers
                     .where((w) => w.distanceKm <= _maxDistanceRadiusKm)
-                    .where((w) =>
-                        _selectedCategory == 'All' ||
-                        w.category == _selectedCategory)
+                    .where(
+                      (w) =>
+                          _selectedCategory == 'All' ||
+                          w.category == _selectedCategory,
+                    )
                     .where((w) => w.hourlyRate <= _maxHourlyRate)
                     .where((w) => w.rating >= _minRating)
                     .where((w) => !_availableOnly || w.isAvailable)
@@ -204,7 +381,15 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 }
 
                 return _isMapView
-                    ? _buildMapView(context, sorted, centerLat, centerLng)
+                    ? _buildMapView(
+                        context,
+                        sorted,
+                        centerLat,
+                        centerLng,
+                        // The fallback centre is not the person's position.
+                        centreIsDevice: !isFallback && _customLocation == null,
+                        centreIsChosen: _customLocation != null,
+                      )
                     : _buildListView(context, sorted);
               },
             ),
@@ -228,17 +413,22 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                   onTap: () async {
                     final result = await Navigator.push<LocationResult>(
                       context,
-                      MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const LocationPickerScreen(),
+                      ),
                     );
                     if (result != null) {
                       setState(() {
                         _customLocation = result;
-                        _polylines.clear(); // clear any routes
+                        _clearRoute();
                       });
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: context.borderColor),
                       borderRadius: BorderRadius.circular(8),
@@ -246,12 +436,19 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.location_on, size: 16, color: AppColors.primary),
+                        const Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _customLocation?.formattedAddress ?? 'Current Location',
-                            style: AppTextStyles.bodyMedium.copyWith(color: context.textColor),
+                            _customLocation?.formattedAddress ??
+                                'Current Location',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: context.textColor,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -281,11 +478,15 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
               Text(
                 'Within',
                 style: AppTextStyles.labelCaption.copyWith(
-                    color: context.textColor),
+                  color: context.textColor,
+                ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -323,7 +524,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                   spacing: 6,
                   children: [0.0, 4.0, 4.5].map((r) {
                     return ChoiceChip(
-                      label: Text(r == 0.0 ? 'All ★' : '★ ${r.toStringAsFixed(1)}+'),
+                      label: Text(
+                        r == 0.0 ? 'All ★' : '★ ${r.toStringAsFixed(1)}+',
+                      ),
                       selected: _minRating == r,
                       selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
@@ -375,58 +578,33 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           isDense: true,
           style: AppTextStyles.bodyMedium.copyWith(color: context.textColor),
           dropdownColor: context.surfaceColor,
-          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, overflow: TextOverflow.ellipsis))).toList(),
+          items: items
+              .map(
+                (i) => DropdownMenuItem(
+                  value: i,
+                  child: Text(i, overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
         ),
       ),
     );
   }
 
-  Widget _buildMapView(BuildContext context, List<NearbyWorkerEntity> workers,
-      double centerLat, double centerLng) {
+  Widget _buildMapView(
+    BuildContext context,
+    List<NearbyWorkerEntity> workers,
+    double centerLat,
+    double centerLng, {
+    required bool centreIsDevice,
+    required bool centreIsChosen,
+  }) {
     final selectedWorker = workers.firstWhere(
       (w) => w.workerId == _selectedWorkerId,
       orElse: () => workers.first,
     );
-
-    // Build markers
-    final Set<Marker> markers = {
-      // My location marker
-      Marker(
-        markerId: const MarkerId('my_location'),
-        position: LatLng(centerLat, centerLng),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: '📍 Your Location'),
-      ),
-      // Worker markers
-      ...workers.map((w) => Marker(
-            markerId: MarkerId(w.workerId),
-            position: LatLng(w.location.latitude, w.location.longitude),
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              w.workerId == _selectedWorkerId
-                  ? BitmapDescriptor.hueRed
-                  : BitmapDescriptor.hueOrange,
-            ),
-            infoWindow: InfoWindow(
-              title: w.name,
-              snippet:
-                  AppL10n.select(context, en: '${w.category}', ur: '${GeoLocationUtil.formatInDriveDistance(w.distanceKm)} away'),
-            ),
-            onTap: () => setState(() => _selectedWorkerId = w.workerId),
-          )),
-    };
-
-    // 5km radius circle
-    final Set<Circle> circles = {
-      Circle(
-        circleId: const CircleId('search_radius'),
-        center: LatLng(centerLat, centerLng),
-        radius: _maxDistanceRadiusKm * 1000,
-        fillColor: AppColors.primary.withValues(alpha: 0.06),
-        strokeColor: AppColors.primary.withValues(alpha: 0.4),
-        strokeWidth: 2,
-      ),
-    };
+    final centre = LatLng(centerLat, centerLng);
 
     return Stack(
       children: [
@@ -434,23 +612,38 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           children: [
             Expanded(
               flex: 3,
-              child: GoogleMap(
-                onMapCreated: (ctrl) {
-                  _mapController = ctrl;
-                },
-                style: _mapStyle,
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(centerLat, centerLng),
-                  zoom: 13.5,
-                ),
-                markers: markers,
-                circles: circles,
-                polylines: _polylines,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                mapToolbarEnabled: false,
-                compassEnabled: true,
+              child: SbMap(
+                controller: _mapController,
+                initialCenter: centre,
+                initialZoom: 13.5,
+                onRecenter: () => _mapController.move(centre, 13.5),
+                layers: [
+                  // Search radius
+                  CircleLayer(circles: [
+                    CircleMarker(
+                      point: centre,
+                      radius: _maxDistanceRadiusKm * 1000,
+                      useRadiusInMeter: true,
+                      color: AppColors.primary.withValues(alpha: 0.06),
+                      borderColor: AppColors.primary.withValues(alpha: 0.4),
+                      borderStrokeWidth: 2,
+                    ),
+                  ]),
+                  if (_route != null && _routeWorkerId == selectedWorker.workerId) SbRouteLayer(route: _route!),
+                  MarkerLayer(markers: [
+                    if (centreIsDevice)
+                      sbCurrentLocationMarker(centre, semanticLabel: context.l10n.mapYouAreHere)
+                    else if (centreIsChosen)
+                      sbDestinationMarker(centre, semanticLabel: context.l10n.mapSearchCentre),
+                    for (final w in workers)
+                      sbPersonMarker(
+                        LatLng(w.location.latitude, w.location.longitude),
+                        name: w.name,
+                        selected: w.workerId == selectedWorker.workerId,
+                        onTap: () => _selectWorker(w, centre),
+                      ),
+                  ]),
+                ],
               ),
             ),
             // Bottom worker detail card
@@ -467,60 +660,41 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.md, vertical: 8),
+                        horizontal: AppDimensions.md,
+                        vertical: 8,
+                      ),
                       itemCount: workers.length,
                       itemBuilder: (ctx, i) {
                         final w = workers[i];
-                        final isSelected = w.workerId == (
-                          _selectedWorkerId ?? workers.first.workerId
-                        );
+                        final isSelected =
+                            w.workerId ==
+                            (_selectedWorkerId ?? workers.first.workerId);
                         return GestureDetector(
-                          onTap: () async {
-                            setState(() => _selectedWorkerId = w.workerId);
-                            _mapController?.animateCamera(
-                              CameraUpdate.newLatLngBounds(
-                                _boundsFromLatLngList([
-                                  LatLng(centerLat, centerLng),
-                                  LatLng(w.location.latitude, w.location.longitude)
-                                ]),
-                                60.0, // padding
-                              ),
-                            );
-                            
-                            // Fetch route
-                            final route = await RoutesService.getDrivingRoute(
-                              LatLng(centerLat, centerLng),
-                              LatLng(w.location!.latitude, w.location!.longitude),
-                            );
-                            if (route != null) {
-                              setState(() {
-                                _polylines = {
-                                  Polyline(
-                                    polylineId: const PolylineId('route'),
-                                    points: route.polylinePoints,
-                                    color: AppColors.primary,
-                                    width: 4,
-                                  )
-                                };
-                              });
-                            }
-                          },
+                          onTap: () => _selectWorker(w, centre),
                           child: AnimatedContainer(
                             duration: 200.ms,
                             margin: EdgeInsets.only(right: 8),
                             padding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary : context.scaffoldBg,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : context.scaffoldBg,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isSelected ? AppColors.primary : context.borderColor,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : context.borderColor,
                               ),
                             ),
                             child: Text(
                               w.name.split(' ').first,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : context.textColor,
+                                color: isSelected
+                                    ? Colors.white
+                                    : context.textColor,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -546,23 +720,36 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                             onTap: () {
                               context.pushNamed(
                                 RouteNames.publicWorkerProfileName,
-                                pathParameters: {'workerId': selectedWorker.workerId},
+                                pathParameters: {
+                                  'workerId': selectedWorker.workerId,
+                                },
                               );
                             },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(selectedWorker.name,
-                                    style: AppTextStyles.heading3.copyWith(
-                                        color: context.textColor)),
                                 Text(
-                                  AppL10n.select(context, en: '${selectedWorker.category}', ur: '★ ${selectedWorker.rating}'),
+                                  selectedWorker.name,
+                                  style: AppTextStyles.heading3.copyWith(
+                                    color: context.textColor,
+                                  ),
+                                ),
+                                Text(
+                                  AppL10n.select(
+                                    context,
+                                    en: '${selectedWorker.category}',
+                                    ur: '★ ${selectedWorker.rating}',
+                                  ),
                                   style: AppTextStyles.labelCaption.copyWith(
-                                      color: context.mutedColor),
+                                    color: context.mutedColor,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 _buildDistanceChip(
-                                    selectedWorker.distanceKm, context),
+                                  selectedWorker.distanceKm,
+                                  context,
+                                  road: _routeWorkerId == selectedWorker.workerId ? _route : null,
+                                ),
                               ],
                             ),
                           ),
@@ -597,27 +784,14 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
             ),
           ],
         ),
-        // My Location FAB
-        Positioned(
-          right: 16,
-          bottom: 220,
-          child: FloatingActionButton(
-            mini: true,
-            backgroundColor: context.surfaceColor,
-            foregroundColor: AppColors.primary,
-            child: const Icon(Icons.my_location_rounded),
-            onPressed: () {
-              _mapController?.animateCamera(
-                CameraUpdate.newLatLng(LatLng(centerLat, centerLng)),
-              );
-            },
-          ),
-        ),
       ],
     );
   }
 
-  Widget _buildListView(BuildContext context, List<NearbyWorkerEntity> workers) {
+  Widget _buildListView(
+    BuildContext context,
+    List<NearbyWorkerEntity> workers,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.all(AppDimensions.md),
       itemCount: workers.length,
@@ -629,7 +803,10 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   }
 
   Widget _buildWorkerCard(
-      BuildContext context, NearbyWorkerEntity worker, int index) {
+    BuildContext context,
+    NearbyWorkerEntity worker,
+    int index,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
@@ -642,8 +819,10 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
             if (worker.matchScore > 80)
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF003FB1), Color(0xFF1A56DB)],
@@ -653,8 +832,11 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.bolt_rounded,
-                        size: 13, color: Colors.white),
+                    const Icon(
+                      Icons.bolt_rounded,
+                      size: 13,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Top Match — ${worker.matchScore.toInt()}%',
@@ -695,7 +877,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                               color: AppColors.successGreen,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                  color: context.surfaceColor, width: 2),
+                                color: context.surfaceColor,
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
@@ -712,17 +896,22 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                               child: Text(
                                 worker.name,
                                 style: AppTextStyles.heading3.copyWith(
-                                    color: context.textColor),
+                                  color: context.textColor,
+                                ),
                               ),
                             ),
-                            Icon(Icons.verified_rounded,
-                                size: 16, color: AppColors.primary),
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                           ],
                         ),
                         Text(
                           worker.category,
                           style: AppTextStyles.labelCaption.copyWith(
-                              color: context.mutedColor),
+                            color: context.mutedColor,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -747,9 +936,12 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Rate',
-                        style: AppTextStyles.labelCaption.copyWith(
-                            color: context.mutedColor)),
+                    Text(
+                      'Rate',
+                      style: AppTextStyles.labelCaption.copyWith(
+                        color: context.mutedColor,
+                      ),
+                    ),
                     Text(
                       '${Formatters.formatPkr(worker.hourlyRate)} / hr',
                       style: AppTextStyles.bodyStrong.copyWith(
@@ -774,7 +966,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.primary),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         textStyle: const TextStyle(fontSize: 13),
                       ),
                     ),
@@ -800,7 +994,21 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
     );
   }
 
-  Widget _buildDistanceChip(double distanceKm, BuildContext context) {
+  /// Road distance and time when a road route is known; otherwise only the
+  /// straight-line distance (no made-up travel time).
+  Widget _buildDistanceChip(double distanceKm, BuildContext context, {NavRoute? road}) {
+    final minutes = road == null ? 0 : (road.duration / 60).ceil().clamp(1, 9999);
+    final label = road != null
+        ? AppL10n.select(
+            context,
+            en: '${GeoLocationUtil.formatDistance(road.distance / 1000)} by road · ~$minutes min',
+            ur: 'سڑک سے ${GeoLocationUtil.formatDistance(road.distance / 1000)} · ~$minutes منٹ',
+          )
+        : AppL10n.select(
+            context,
+            en: '${GeoLocationUtil.formatDistance(distanceKm)} away',
+            ur: '${GeoLocationUtil.formatDistance(distanceKm)} دور',
+          );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -813,11 +1021,14 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
         children: [
           const Icon(Icons.near_me_rounded, size: 12, color: AppColors.primary),
           const SizedBox(width: 4),
-          Text(
-            GeoLocationUtil.formatInDriveDistanceEta(distanceKm),
-            style: AppTextStyles.labelCaption.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
+          // Wraps in narrow cards instead of overflowing.
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.labelCaption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -861,26 +1072,28 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
               color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.person_search_rounded,
-                size: 50, color: AppColors.primary),
+            child: Icon(
+              Icons.person_search_rounded,
+              size: 50,
+              color: AppColors.primary,
+            ),
           ),
           SizedBox(height: 16),
           Text(
             'No workers found',
-            style: AppTextStyles.heading3.copyWith(
-                color: context.textColor),
+            style: AppTextStyles.heading3.copyWith(color: context.textColor),
           ),
           SizedBox(height: 8),
           Text(
             'Try increasing the distance or\nchanging the category',
-            style: AppTextStyles.bodyMedium.copyWith(
-                color: context.mutedColor),
+            style: AppTextStyles.bodyMedium.copyWith(color: context.mutedColor),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           OutlinedButton(
             onPressed: () => setState(() {
               _customLocation = null;
+              _clearRoute();
               _maxDistanceRadiusKm = 5.0;
               _selectedCategory = 'All';
               _minRating = 0.0;
@@ -890,26 +1103,6 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           ),
         ],
       ),
-    );
-  }
-  
-  LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
-    assert(list.isNotEmpty);
-    double? x0, x1, y0, y1;
-    for (LatLng latLng in list) {
-      if (x0 == null) {
-        x0 = x1 = latLng.latitude;
-        y0 = y1 = latLng.longitude;
-      } else {
-        if (latLng.latitude > x1!) x1 = latLng.latitude;
-        if (latLng.latitude < x0) x0 = latLng.latitude;
-        if (latLng.longitude > y1!) y1 = latLng.longitude;
-        if (latLng.longitude < y0!) y0 = latLng.longitude;
-      }
-    }
-    return LatLngBounds(
-      northeast: LatLng(x1!, y1!),
-      southwest: LatLng(x0!, y0!),
     );
   }
 }

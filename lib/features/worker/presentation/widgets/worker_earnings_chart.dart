@@ -1,242 +1,463 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:skill_bridge/config/theme/app_dimensions.dart';
-import 'package:skill_bridge/config/theme/app_shadows.dart';
-import 'package:skill_bridge/config/theme/app_text_styles.dart';
-import 'package:skill_bridge/shared/widgets/app_card.dart';
-import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:skill_bridge/config/theme/app_text_styles.dart';
+import 'package:skill_bridge/core/enums/contract_status.dart';
 import 'package:skill_bridge/features/contracts/presentation/providers/contract_providers.dart';
 import 'package:skill_bridge/core/utils/formatters.dart';
-import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
+import 'package:skill_bridge/features/worker/presentation/screens/worker_home_screen.dart';
 
-/// Guild Modernist Worker 7-Day Earnings & Escrow Performance Chart
-class WorkerEarningsChart extends ConsumerWidget {
+// ── Dark Design Tokens ────────────────────────────────────────────────────────
+const _card = Color(0xFF131A27);
+const _surface2 = Color(0xFF192233);
+const _textPrimary = Color(0xFFF5F6FA);
+const _textSecondary = Color(0xFF929BAA);
+const _border = Color(0xFF252F40);
+const _accent = Color(0xFF4778E8);
+const _success = Color(0xFF22C58B);
+
+/// Minimal Premium Earnings Widget — 4-week line chart.
+class WorkerEarningsChart extends ConsumerStatefulWidget {
   final int totalCompleted;
 
-  const WorkerEarningsChart({
-    super.key,
-    required this.totalCompleted,
-  });
+  const WorkerEarningsChart({super.key, required this.totalCompleted});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (totalCompleted == 0) {
-      return const AppEmptyState(
-        title: 'No Earnings Yet',
-        description: 'Complete your first job to see earnings and performance stats here.',
-        icon: Icons.bar_chart_rounded,
-      );
-    }
+  ConsumerState<WorkerEarningsChart> createState() =>
+      _WorkerEarningsChartState();
+}
 
+class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
+  String _period = 'This Month';
+  final _periods = ['This Month', 'Last Month', 'All Time'];
+
+  @override
+  Widget build(BuildContext context) {
     final contractsAsync = ref.watch(userContractsStreamProvider);
 
     return contractsAsync.when(
-      data: (contracts) {
-        // Here we could calculate real stats, but for now we'll just show the baseline.
-        // As per the prompt, if there is no real aggregation provider, we should show an honest empty state or real data.
-        if (contracts.isEmpty) {
-          return const AppEmptyState(
-            title: 'No Earnings Yet',
-            description: 'Complete your first job to see earnings and performance stats here.',
-            icon: Icons.bar_chart_rounded,
-          );
-        }
-
-        // Calculate real stats from contracts
-        double totalEarnings = 0;
-        int onTimeCount = 0;
-        for (var contract in contracts) {
-           totalEarnings += contract.totalAmount;
-           // naive on time check
-           onTimeCount++;
-        }
-        
-        final avgTicket = contracts.isEmpty ? 0 : totalEarnings / contracts.length;
-        final onTimePercent = contracts.isEmpty ? 100.0 : (onTimeCount / contracts.length) * 100;
-
-        // Dummy baseline chart for real data since we don't have historical daily breakdowns in ContractEntity yet.
-        final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        final earnings = [0, 0, 0, 0, 0, 0, totalEarnings.toInt()];
-        final maxEarning = totalEarnings == 0 ? 1 : totalEarnings;
-
-        return AppCard(
-          padding: const EdgeInsets.all(AppDimensions.lg),
-          shadow: AppShadows.level1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppL10n.select(context, en: '7-Day Earnings', ur: 'ہفتہ وار آمدنی'),
-                        style: AppTextStyles.bodyStrong.copyWith(
-                          color: context.mutedColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        Formatters.formatPkr(totalEarnings),
-                        style: AppTextStyles.heading2.copyWith(
-                          color: const Color(0xFF005438),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF005438).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.verified_user_rounded,
-                          size: 14,
-                          color: Color(0xFF005438),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Escrow Protected',
-                          style: AppTextStyles.labelCaption.copyWith(
-                            color: const Color(0xFF005438),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.lg),
-
-              // Bar Chart Visualizer
-              SizedBox(
-                height: 140,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(7, (index) {
-                    final amount = earnings[index];
-                    final heightFactor = amount / maxEarning;
-
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          amount == 0 ? '0' : '${(amount / 1000).toStringAsFixed(1)}k',
-                          style: AppTextStyles.labelCaption.copyWith(
-                            fontSize: 10,
-                            color: context.mutedColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          width: 26,
-                          height: 80 * heightFactor,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                const Color(0xFF005438),
-                                const Color(0xFF005438).withValues(alpha: 0.75),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          days[index],
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: index == 6
-                                ? Color(0xFF005438)
-                                : context.mutedColor,
-                            fontWeight:
-                                index == 6 ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
-              ).animate().fade(duration: 500.ms).slideY(begin: 0.1, end: 0),
-              SizedBox(height: AppDimensions.lg),
-              Divider(height: 1, color: context.borderColor),
-              const SizedBox(height: AppDimensions.md),
-
-              // Stats summary row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatItem(
-                    context,
-                    label: 'Avg Job Ticket',
-                    value: Formatters.formatPkrCompact(avgTicket),
-                    icon: Icons.receipt_long_rounded,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 32,
-                    color: context.borderColor,
-                  ),
-                  _buildStatItem(
-                    context,
-                    label: 'On-Time Signoff',
-                    value: '${onTimePercent.toStringAsFixed(1)}%',
-                    icon: Icons.timer_rounded,
-                  ),
-                ],
-              ),
-            ],
+      loading: () => _buildShell(
+        child: const SizedBox(
+          height: 140,
+          child: Center(
+            child: CircularProgressIndicator(color: _accent, strokeWidth: 2),
           ),
-        );
+        ),
+        totalEarnings: null,
+        weeklyValues: null,
+      ),
+      error: (_, __) => _buildShell(
+        child: const SizedBox(
+          height: 100,
+          child: Center(
+            child: Text(
+              'Could not load earnings',
+              style: TextStyle(color: _textSecondary, fontSize: 13),
+            ),
+          ),
+        ),
+        totalEarnings: null,
+        weeklyValues: null,
+      ),
+      data: (contracts) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+
+        // Determine period date range
+        DateTime periodStart;
+        DateTime periodEnd;
+        if (_period == 'Last Month') {
+          final firstOfThisMonth = DateTime(now.year, now.month, 1);
+          periodStart = DateTime(now.year, now.month - 1, 1);
+          periodEnd = firstOfThisMonth.subtract(const Duration(days: 1));
+        } else if (_period == 'All Time') {
+          periodStart = DateTime(2020);
+          periodEnd = today.add(const Duration(days: 1));
+        } else {
+          // This Month
+          periodStart = DateTime(now.year, now.month, 1);
+          periodEnd = today.add(const Duration(days: 1));
+        }
+
+        return _buildForRange(contracts, periodStart, periodEnd);
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => const Center(child: Text('Could not load earnings')),
     );
   }
 
-  Widget _buildStatItem(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required IconData icon,
+  Widget _buildForRange(
+    List<dynamic> contracts,
+    DateTime start,
+    DateTime end,
+  ) {
+    final completed = contracts.where((c) {
+      final at = c.completedAt;
+      return c.status == ContractStatus.completed &&
+          at != null &&
+          !at.isBefore(start) &&
+          at.isBefore(end);
+    }).toList();
+
+    final totalEarnings = completed.fold<double>(
+      0,
+      (sum, c) => sum + (c.workerEarnings as double),
+    );
+
+    // Build 4-week buckets
+    final weeklyValues = List.generate(4, (week) {
+      final weekStart = start.add(Duration(days: week * 7));
+      final weekEnd = weekStart.add(const Duration(days: 7));
+      return completed
+          .where((c) {
+            final at = c.completedAt as DateTime;
+            return !at.isBefore(weekStart) && at.isBefore(weekEnd);
+          })
+          .fold<double>(0, (sum, c) => sum + (c.workerEarnings as double));
+    });
+
+    // Previous period comparison
+    final periodDuration = end.difference(start);
+    final prevStart = start.subtract(periodDuration);
+    final prevEarnings = contracts
+        .where((c) {
+          final at = c.completedAt;
+          return c.status == ContractStatus.completed &&
+              at != null &&
+              !at.isBefore(prevStart) &&
+              at.isBefore(start);
+        })
+        .fold<double>(0, (sum, c) => sum + (c.workerEarnings as double));
+
+    double? growthPct;
+    if (prevEarnings > 0) {
+      growthPct = ((totalEarnings - prevEarnings) / prevEarnings) * 100;
+    }
+
+    return _buildShell(
+      totalEarnings: totalEarnings,
+      growthPct: growthPct,
+      weeklyValues: weeklyValues,
+      child: const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildShell({
+    required Widget child,
+    double? totalEarnings,
+    double? growthPct,
+    List<double>? weeklyValues,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Color(0xFF005438)),
-        SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: AppTextStyles.bodyStrong.copyWith(
-                color: context.textColor,
+    final hasData =
+        totalEarnings != null && weeklyValues != null && totalEarnings > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row with flexible layout
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.bar_chart_rounded,
+                      color: _accent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Your Earnings',
+                        style: AppTextStyles.bodyStrong.copyWith(
+                          color: _textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
+              // Period selector dropdown
+              _PeriodDropdown(
+                value: _period,
+                options: _periods,
+                onChanged: (val) => setState(() => _period = val),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Total earnings + growth badge
+          if (totalEarnings != null) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Text(
+                    Formatters.formatPkr(totalEarnings),
+                    style: const TextStyle(
+                      color: _textPrimary,
+                      fontFamily: 'JetBrainsMono',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (growthPct != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: (growthPct >= 0
+                              ? _success
+                              : const Color(0xFFEF5350))
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          growthPct >= 0
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
+                          color: growthPct >= 0
+                              ? _success
+                              : const Color(0xFFEF5350),
+                          size: 11,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${growthPct.abs().toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            color: growthPct >= 0
+                                ? _success
+                                : const Color(0xFFEF5350),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'JetBrainsMono',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
+            const SizedBox(height: 14),
+          ],
+
+          // Chart area or loading/empty
+          if (hasData) ...[
+            _LineChartWidget(values: weeklyValues!),
+          ] else if (weeklyValues != null && totalEarnings == 0) ...[
+            _buildEmptyChartPlaceholder(),
+          ] else ...[
+            child,
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyChartPlaceholder() {
+    return SizedBox(
+      height: 110,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.show_chart_rounded,
+                color: _textSecondary, size: 28),
+            const SizedBox(height: 6),
             Text(
-              label,
+              'No earnings recorded yet',
               style: AppTextStyles.labelCaption.copyWith(
-                color: context.mutedColor,
+                color: _textSecondary,
+                fontSize: 12,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Period Dropdown ───────────────────────────────────────────────────────────
+class _PeriodDropdown extends StatelessWidget {
+  final String value;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+
+  const _PeriodDropdown({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      initialValue: value,
+      onSelected: onChanged,
+      color: const Color(0xFF131A27),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
+      itemBuilder: (context) => options
+          .map((opt) => PopupMenuItem(
+                value: opt,
+                child: Text(
+                  opt,
+                  style: AppTextStyles.bodyPrimary.copyWith(
+                    color: _textPrimary,
+                    fontSize: 13,
+                  ),
+                ),
+              ))
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: _surface2,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: AppTextStyles.labelCaption.copyWith(
+                color: _textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 3),
+            const Icon(Icons.keyboard_arrow_down_rounded,
+                color: _textSecondary, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Line Chart Widget ─────────────────────────────────────────────────────────
+class _LineChartWidget extends StatelessWidget {
+  final List<double> values;
+
+  const _LineChartWidget({required this.values});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxVal = values.isEmpty ? 1.0 : values.reduce(math.max);
+    final effectiveMax = maxVal == 0 ? 1.0 : maxVal;
+
+    return Column(
+      children: [
+        // Chart + Y-axis labels
+        SizedBox(
+          height: 125,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Y-axis labels
+              SizedBox(
+                width: 32,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _yLabel(effectiveMax),
+                      style: const TextStyle(
+                          color: _textSecondary,
+                          fontSize: 9,
+                          fontFamily: 'JetBrainsMono'),
+                    ),
+                    Text(
+                      _yLabel(effectiveMax * 0.67),
+                      style: const TextStyle(
+                          color: _textSecondary,
+                          fontSize: 9,
+                          fontFamily: 'JetBrainsMono'),
+                    ),
+                    Text(
+                      _yLabel(effectiveMax * 0.33),
+                      style: const TextStyle(
+                          color: _textSecondary,
+                          fontSize: 9,
+                          fontFamily: 'JetBrainsMono'),
+                    ),
+                    const Text(
+                      '0',
+                      style: TextStyle(
+                          color: _textSecondary,
+                          fontSize: 9,
+                          fontFamily: 'JetBrainsMono'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Canvas chart
+              Expanded(
+                child: CustomPaint(
+                  painter: PremiumLineChartPainter(values: values),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // X-axis labels
+        Padding(
+          padding: const EdgeInsets.only(left: 40),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(
+              values.length,
+              (i) => Expanded(
+                child: Center(
+                  child: Text(
+                    'Week ${i + 1}',
+                    style: const TextStyle(
+                      color: _textSecondary,
+                      fontSize: 9,
+                      fontFamily: 'JetBrainsMono',
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  String _yLabel(double val) {
+    if (val >= 1000) {
+      return '${(val / 1000).toStringAsFixed(0)}k';
+    }
+    return val.toStringAsFixed(0);
   }
 }

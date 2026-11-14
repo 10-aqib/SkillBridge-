@@ -22,7 +22,7 @@ export class JobsService {
         budgetMax: data.budgetMax || 0,
         status: data.status || 'open',
         totalProposals: data.totalProposals || 0,
-        createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString()) : new Date().toISOString(),
+        createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString()) : '',
       };
     });
   }

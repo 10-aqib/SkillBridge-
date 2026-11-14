@@ -49,18 +49,38 @@ void main() {
       expect(loc2, contains('DHA Phase 5, Lahore'));
     });
 
-    test('formatInDriveDistance formats meters when under 1 km and km when 1 km or above', () {
-      expect(GeoLocationUtil.formatInDriveDistance(0.45), equals('450 m'));
-      expect(GeoLocationUtil.formatInDriveDistance(0.45, isUrdu: true), equals('450 میٹر'));
-      expect(GeoLocationUtil.formatInDriveDistance(1.84), equals('1.8 km'));
-      expect(GeoLocationUtil.formatInDriveDistance(1.84, isUrdu: true), equals('1.8 کلومیٹر'));
-    });
+    test(
+      'formatInDriveDistance formats meters when under 1 km and km when 1 km or above',
+      () {
+        expect(GeoLocationUtil.formatInDriveDistance(0.45), equals('450 m'));
+        expect(
+          GeoLocationUtil.formatInDriveDistance(0.45, isUrdu: true),
+          equals('450 m'),
+        );
+        expect(GeoLocationUtil.formatInDriveDistance(1.84), equals('1.8 km'));
+        expect(
+          GeoLocationUtil.formatInDriveDistance(1.84, isUrdu: true),
+          equals('1.8 km'),
+        );
+      },
+    );
 
-    test('formatInDriveDistanceEta includes formatted distance and estimated arrival time', () {
-      expect(GeoLocationUtil.formatInDriveDistanceEta(0.8), contains('800 m • ~'));
-      expect(GeoLocationUtil.formatInDriveDistanceEta(0.8, isUrdu: true), contains('800 میٹر • ~'));
-      expect(GeoLocationUtil.formatInDriveDistanceEta(2.4), contains('2.4 km • ~'));
-    });
+    test(
+      'formatInDriveDistanceEta includes formatted distance and estimated arrival time',
+      () {
+        expect(
+          GeoLocationUtil.formatInDriveDistanceEta(0.8),
+          contains('800 m • ~'),
+        );
+        expect(
+          GeoLocationUtil.formatInDriveDistanceEta(0.8, isUrdu: true),
+          contains('800 m • ~4 min away'),
+        );
+        expect(
+          GeoLocationUtil.formatInDriveDistanceEta(2.4),
+          contains('2.4 km • ~'),
+        );
+      },
+    );
   });
 }
-

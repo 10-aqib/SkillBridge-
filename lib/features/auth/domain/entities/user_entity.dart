@@ -40,6 +40,10 @@ class UserEntity {
   // Worker-specific
   final WorkerProfileEntity? workerProfile;
 
+  /// Client onboarding state. Only profiles created by the redesigned sign-up
+  /// carry `false`; missing (legacy profiles) counts as completed.
+  final bool? onboardingCompleted;
+
   const UserEntity({
     required this.uid,
     required this.email,
@@ -69,6 +73,7 @@ class UserEntity {
     this.rating = 5.0,
     this.totalReviews = 0,
     this.workerProfile,
+    this.onboardingCompleted,
   });
 
   String? get profilePictureUrl => photoUrl;
@@ -76,6 +81,9 @@ class UserEntity {
   bool get isClient => role == 'client';
   bool get isWorker => role == 'worker';
   bool get isAdmin => role == 'admin';
+
+  /// True only for new clients who haven't finished or skipped onboarding.
+  bool get needsClientOnboarding => isClient && onboardingCompleted == false;
   bool get isWorkerProfileComplete =>
       workerProfile != null &&
       workerProfile!.headline.isNotEmpty &&
@@ -173,6 +181,10 @@ class WorkerProfileEntity {
   final String? responseTime;
   final List<String> beforeAfterImages;
 
+  /// 'pending' | 'verified' | 'rejected' (set by staff), or null if never
+  /// submitted. Public; the submission itself lives in users/{uid}/private.
+  final String? verificationStatus;
+
   const WorkerProfileEntity({
     required this.headline,
     required this.bio,
@@ -202,6 +214,7 @@ class WorkerProfileEntity {
     this.languages = const [],
     this.responseTime,
     this.beforeAfterImages = const [],
+    this.verificationStatus,
   });
 }
 

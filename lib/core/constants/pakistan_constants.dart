@@ -1,7 +1,6 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
 
-/// Defines Pakistani worker categories, cities, payment methods, and seed profiles.
+/// Defines Pakistani worker categories, cities, and payment methods.
 class PakistanConstants {
   // ── Worker Categories ──────────────────────────────────────────────────
   static const List<Map<String, dynamic>> categories = [
@@ -10,86 +9,98 @@ class PakistanConstants {
       'name': 'Electrician',
       'urdu': 'بجلی والا',
       'icon': Icons.electrical_services,
-      'avgRatePkr': 800,
     },
     {
       'id': 'plumber',
       'name': 'Plumber',
       'urdu': 'نلکے والا',
       'icon': Icons.plumbing,
-      'avgRatePkr': 700,
     },
     {
       'id': 'ac_technician',
       'name': 'AC Technician',
       'urdu': 'اے سی ٹیکنیشن',
       'icon': Icons.ac_unit,
-      'avgRatePkr': 1500,
     },
     {
       'id': 'solar_installer',
       'name': 'Solar Installer',
       'urdu': 'سولر انسٹالر',
       'icon': Icons.solar_power,
-      'avgRatePkr': 2500,
     },
     {
       'id': 'generator_ups',
       'name': 'UPS & Generator',
       'urdu': 'یو پی ایس اور جنریٹر',
       'icon': Icons.power,
-      'avgRatePkr': 1200,
     },
     {
       'id': 'mechanic',
       'name': 'Mechanic',
       'urdu': 'مستری',
       'icon': Icons.car_repair,
-      'avgRatePkr': 1000,
     },
     {
       'id': 'painter',
       'name': 'Painter',
       'urdu': 'پینٹر',
       'icon': Icons.format_paint,
-      'avgRatePkr': 900,
     },
     {
       'id': 'carpenter',
       'name': 'Carpenter',
       'urdu': 'بڑھئی',
       'icon': Icons.handyman,
-      'avgRatePkr': 1100,
     },
     {
       'id': 'tutor',
       'name': 'Home Tutor',
       'urdu': 'ٹیوٹر',
       'icon': Icons.menu_book,
-      'avgRatePkr': 1500,
     },
     {
       'id': 'driver',
       'name': 'Driver',
       'urdu': 'ڈرائیور',
       'icon': Icons.directions_car,
-      'avgRatePkr': 800,
     },
     {
       'id': 'cleaner',
       'name': 'House Cleaner',
       'urdu': 'صفائی والا',
       'icon': Icons.cleaning_services,
-      'avgRatePkr': 600,
     },
     {
       'id': 'mason',
       'name': 'Mason / Builder',
       'urdu': 'راج مستری',
       'icon': Icons.construction,
-      'avgRatePkr': 1300,
     },
   ];
+
+  // ── Common skills per category (worker setup, job posting, job filters) ─
+  static const Map<String, List<String>> skillSuggestions = {
+    'electrician': ['House wiring', 'DB / breaker boards', 'Fans & lights', 'UPS installation', 'Fault finding'],
+    'plumber': ['Leak repair', 'Pipe fitting', 'Water tank', 'Geyser installation', 'Bathroom fittings'],
+    'ac_technician': ['AC installation', 'AC service', 'Gas refill', 'Inverter AC repair'],
+    'solar_installer': ['Solar panels', 'Inverter setup', 'Net metering', 'Battery banks'],
+    'generator_ups': ['Generator repair', 'UPS repair', 'Battery replacement'],
+    'mechanic': ['Car repair', 'Motorbike repair', 'Engine tuning'],
+    'painter': ['Wall paint', 'Distemper', 'Wood polish', 'Waterproofing'],
+    'carpenter': ['Furniture repair', 'Doors & windows', 'Kitchen cabinets', 'Wood polish'],
+    'tutor': ['Mathematics', 'Science', 'English', 'Quran'],
+    'driver': ['City driving', 'Long route', 'Pick & drop'],
+    'cleaner': ['Deep cleaning', 'Sofa cleaning', 'Water tank cleaning'],
+    'mason': ['Brick work', 'Plaster', 'Tile fixing', 'Renovation'],
+  };
+
+  /// Category map by id (null for unknown/legacy ids).
+  static Map<String, dynamic>? categoryById(String id) {
+    for (final c in categories) {
+      if (c['id'] == id) return c;
+    }
+    return null;
+  }
 
   // ── Pakistani Cities & Coordinates ─────────────────────────────────────
   static const List<Map<String, dynamic>> cities = [
@@ -138,7 +149,8 @@ class PakistanConstants {
       'icon': Icons.qr_code_scanner_rounded,
       'color': 0xFF006622,
       'requiresPhone': false,
-      'details': 'Raast ID: 0300-1234567\nBank: Meezan Bank Ltd\nTitle: Skill Bridge Escrow PK\nIBAN: PK29MEZN00012345678901',
+      'details':
+          'Raast ID: 0300-1234567\nBank: Meezan Bank Ltd\nTitle: Skill Bridge Escrow PK\nIBAN: PK29MEZN00012345678901',
     },
     {
       'id': 'card',
@@ -155,90 +167,6 @@ class PakistanConstants {
       'icon': Icons.payments_outlined,
       'color': 0xFF333333,
       'requiresPhone': false,
-    },
-  ];
-
-  // ── Seed Workers for Mock/Testing ───────────────────────────────────────
-  static const List<Map<String, dynamic>> seedWorkers = [
-    {
-      'id': 'worker_pk_1',
-      'name': 'Muhammad Usman',
-      'category': 'Solar Installer',
-      'urdu': 'سولر انسٹالر',
-      'rating': 4.9,
-      'reviewsCount': 124,
-      'hourlyRate': 2500,
-      'city': 'Islamabad',
-      'address': 'Blue Area, Islamabad',
-      'phone': '+92 300 4567891',
-      'isVerified': true,
-      'experienceYears': 7,
-      'bio': 'Certified Solar & Inverter installation expert. Specializing in Nitrox, Growatt, and Huawei hybrid solar systems across Islamabad.',
-      'imageUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-    },
-    {
-      'id': 'worker_pk_2',
-      'name': 'Tariq Mehmood',
-      'category': 'AC Technician',
-      'urdu': 'اے سی ٹیکنیشن',
-      'rating': 4.8,
-      'reviewsCount': 98,
-      'hourlyRate': 1500,
-      'city': 'Islamabad',
-      'address': 'F-10 Markaz, Islamabad',
-      'phone': '+92 333 5678901',
-      'isVerified': true,
-      'experienceYears': 9,
-      'bio': 'Inverter AC repair, gas charging, and installation expert. Serving Islamabad and Rawalpindi with 100% satisfaction guarantee.',
-      'imageUrl': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-    },
-    {
-      'id': 'worker_pk_3',
-      'name': 'Bilal Ahmed',
-      'category': 'Electrician',
-      'urdu': 'بجلی والا',
-      'rating': 5.0,
-      'reviewsCount': 156,
-      'hourlyRate': 800,
-      'city': 'Rawalpindi',
-      'address': 'Saddar, Rawalpindi',
-      'phone': '+92 321 2345678',
-      'isVerified': true,
-      'experienceYears': 11,
-      'bio': 'Licensed electrician for residential and commercial wiring, UPS installation, and fault debugging. Quick response across Rawalpindi.',
-      'imageUrl': 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400',
-    },
-    {
-      'id': 'worker_pk_4',
-      'name': 'Hamza Shah',
-      'category': 'UPS & Generator',
-      'urdu': 'یو پی ایس اور جنریٹر',
-      'rating': 4.9,
-      'reviewsCount': 110,
-      'hourlyRate': 1200,
-      'city': 'Islamabad',
-      'address': 'G-11 Markaz, Islamabad',
-      'phone': '+92 301 8765432',
-      'isVerified': true,
-      'experienceYears': 8,
-      'bio': 'Specialist in Homage, Inverex, and Honda silent generator tuning, battery maintenance, and automatic changeover wiring in Islamabad.',
-      'imageUrl': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400',
-    },
-    {
-      'id': 'worker_pk_5',
-      'name': 'Ayesha Noor',
-      'category': 'Home Tutor',
-      'urdu': 'ٹیوٹر',
-      'rating': 5.0,
-      'reviewsCount': 64,
-      'hourlyRate': 1500,
-      'city': 'Islamabad',
-      'address': 'G-11/3, Islamabad',
-      'phone': '+92 336 1122334',
-      'isVerified': true,
-      'experienceYears': 5,
-      'bio': 'M.Phil Mathematics & Physics tutor for O-Level, A-Level, and FSc students. Interactive teaching method with proven exam results.',
-      'imageUrl': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
     },
   ];
 }

@@ -1,11 +1,18 @@
-import 'package:skill_bridge/core/utils/app_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skill_bridge/config/theme/app_colors.dart';
-import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/features/chat/data/datasources/chat_remote_datasource.dart';
+import 'package:skill_bridge/core/utils/app_l10n.dart';
 
-/// Guild Modernist Worker Bottom Navigation (5 Tabs)
-class WorkerMainScreen extends StatelessWidget {
+// ── Dark Design Tokens ────────────────────────────────────────────────────────
+const _navBg = Color(0xFF131A27);
+const _navBorder = Color(0xFF252F40);
+const _accent = Color(0xFF4778E8);
+const _inactive = Color(0xFF929BAA);
+const _textActive = Color(0xFFF5F6FA);
+
+/// Minimal Premium Worker Bottom Navigation — dark forced.
+class WorkerMainScreen extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const WorkerMainScreen({
@@ -21,67 +28,146 @@ class WorkerMainScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = navigationShell.currentIndex;
+    // Conversations with unread messages (kept by the server).
+    final unreadChats = ref.watch(unreadChatsCountProvider);
+
+    final items = [
+      _NavItem(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
+        label: AppL10n.select(context, en: 'Home', ur: 'ہوم'),
+      ),
+      _NavItem(
+        icon: Icons.description_outlined,
+        activeIcon: Icons.description_rounded,
+        label: 'Proposals',
+      ),
+      _NavItem(
+        icon: Icons.assignment_outlined,
+        activeIcon: Icons.assignment_rounded,
+        label: 'Contracts',
+      ),
+      _NavItem(
+        icon: Icons.chat_bubble_outline_rounded,
+        activeIcon: Icons.chat_bubble_rounded,
+        label: 'Chats',
+        badge: unreadChats,
+      ),
+      _NavItem(
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
+        label: 'Profile',
+      ),
+    ];
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: context.surfaceColor,
+          color: _navBg,
+          border: const Border(
+            top: BorderSide(color: _navBorder, width: 1),
+          ),
         ),
-        child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: _onTap,
-          backgroundColor: context.surfaceColor,
-          indicatorColor: AppColors.primaryContainer,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          elevation: 0,
-          destinations: [
-            _buildNavDestination(
-              context,
-              icon: Icons.home_outlined,
-              selectedIcon: Icons.home_rounded,
-              label: AppL10n.select(context, en: 'Home', ur: 'ہوم'),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: List.generate(items.length, (i) {
+                final item = items[i];
+                final isActive = i == currentIndex;
+                return Expanded(
+                  child: _NavButton(
+                    item: item,
+                    isActive: isActive,
+                    onTap: () => _onTap(i),
+                  ),
+                );
+              }),
             ),
-            _buildNavDestination(
-              context,
-              icon: Icons.description_outlined,
-              selectedIcon: Icons.description_rounded,
-              label: 'Proposals',
-            ),
-            _buildNavDestination(
-              context,
-              icon: Icons.assignment_outlined,
-              selectedIcon: Icons.assignment_rounded,
-              label: 'Contracts',
-            ),
-            _buildNavDestination(
-              context,
-              icon: Icons.chat_bubble_outline_rounded,
-              selectedIcon: Icons.chat_bubble_rounded,
-              label: 'Chats',
-            ),
-            _buildNavDestination(
-              context,
-              icon: Icons.person_outline_rounded,
-              selectedIcon: Icons.person_rounded,
-              label: 'Profile',
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  NavigationDestination _buildNavDestination(
-    BuildContext context, {
-    required IconData icon,
-    required IconData selectedIcon,
-    required String label,
-  }) {
-    return NavigationDestination(
-      icon: Icon(icon, color: context.mutedColor, size: 22),
-      selectedIcon: Icon(selectedIcon, color: AppColors.primary, size: 24),
-      label: label,
+// ── Nav Item Data ─────────────────────────────────────────────────────────────
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final int badge;
+
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    this.badge = 0,
+  });
+}
+
+// ── Nav Button ────────────────────────────────────────────────────────────────
+class _NavButton extends StatelessWidget {
+  final _NavItem item;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavButton({
+    required this.item,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: _accent.withValues(alpha: 0.08),
+      highlightColor: Colors.transparent,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Active indicator dot above icon
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isActive ? 20 : 0,
+            height: isActive ? 3 : 0,
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: _accent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          if (!isActive) const SizedBox(height: 7),
+          // Icon
+          Badge(
+            isLabelVisible: item.badge > 0,
+            label: Text('${item.badge}'),
+            child: Icon(
+              isActive ? item.activeIcon : item.icon,
+              color: isActive ? _accent : _inactive,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 3),
+          // Label
+          Text(
+            item.label,
+            style: TextStyle(
+              color: isActive ? _textActive : _inactive,
+              fontSize: 10,
+              fontWeight:
+                  isActive ? FontWeight.w700 : FontWeight.w400,
+              fontFamily: 'Inter',
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

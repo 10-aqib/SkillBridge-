@@ -1,12 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/app.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
+import 'package:skill_bridge/core/services/app_check_setup.dart';
 import 'package:skill_bridge/core/services/crashlytics_service.dart';
 import 'package:skill_bridge/core/services/offline_cache_service.dart';
+import 'package:skill_bridge/core/services/offline_outbox_service.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 import 'package:skill_bridge/firebase_options.dart';
 import 'package:skill_bridge/features/notifications/data/services/push_notification_service.dart';
@@ -15,24 +17,36 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
+    // Bundled Noto fonts (assets/fonts) are SIL OFL 1.1; show the licence in
+    // the app's licence page.
+    LicenseRegistry.addLicense(() async* {
+      final license = await rootBundle.loadString('assets/fonts/OFL.txt');
+      yield LicenseEntryWithLineBreaks(['Noto Sans', 'Noto Nastaliq Urdu'], license);
+    });
+
+    // Maps, routing and address search are OpenStreetMap services configured
+    // at build time (lib/core/map/map_config.dart); none needs an API key.
+
     // ── Setup Firebase ──
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     Logger.i('Firebase initialized successfully');
 
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.deviceCheck,
-      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-    );
-    Logger.i('Firebase App Check initialized');
+    // Debug providers in debug builds; Play Integrity / DeviceCheck / reCAPTCHA v3
+    // in release. Web release without a site key skips App Check (see AppCheckSetup).
+    await AppCheckSetup.activate();
 
     // ── Setup non-critical services asynchronously ──
+    // Failures here must never surface as uncaught startup errors.
     Future.microtask(() async {
-      await CrashlyticsService().init();
-      await PushNotificationService().init();
-      Logger.i('Crashlytics and Push Notifications initialized');
+      try {
+        await CrashlyticsService().init();
+        await PushNotificationService().init();
+        Logger.i('Crashlytics and Push Notifications initialized');
+      } catch (e, st) {
+        Logger.e('Non-critical service start-up failed', e, st);
+      }
     });
 
 
@@ -49,6 +63,7 @@ void main() async {
     final container = ProviderContainer();
     final hiveService = container.read(hiveServiceProvider);
     await hiveService.init();
+    await OfflineOutboxService.init();
     await OfflineCacheService.init();
     Logger.i('Local cache database initialized successfully');
 

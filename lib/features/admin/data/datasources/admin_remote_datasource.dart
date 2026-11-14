@@ -26,10 +26,12 @@ class AdminRemoteDataSource {
   final FirebaseFirestore _firestore;
 
   AdminRemoteDataSource({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<AdminStatsModel> getStatsStream() {
-    return _firestore.collection('users').snapshots().asyncMap((usersSnap) async {
+    return _firestore.collection('users').snapshots().asyncMap((
+      usersSnap,
+    ) async {
       final totalUsers = usersSnap.docs.length;
       final activeWorkers = usersSnap.docs.where((doc) {
         final data = doc.data();
@@ -44,14 +46,22 @@ class AdminRemoteDataSource {
       final totalJobs = jobsCountQuery.count ?? 0;
 
       final contractsRef = _firestore.collection('contracts');
-      final activeContractsQuery = await contractsRef.where('status', whereIn: ['active', 'in_progress']).count().get();
+      final activeContractsQuery = await contractsRef
+          .where('status', whereIn: ['active', 'in_progress'])
+          .count()
+          .get();
       final activeContracts = activeContractsQuery.count ?? 0;
 
-      final revenueAggregate = await contractsRef.aggregate(sum('totalAmount')).get();
-      final commissionAggregate = await contractsRef.aggregate(sum('commissionAmount')).get();
-      
+      final revenueAggregate = await contractsRef
+          .aggregate(sum('totalAmount'))
+          .get();
+      final commissionAggregate = await contractsRef
+          .aggregate(sum('commissionAmount'))
+          .get();
+
       final totalRevenue = revenueAggregate.getSum('totalAmount') ?? 0.0;
-      final totalCommission = commissionAggregate.getSum('commissionAmount') ?? 0.0;
+      final totalCommission =
+          commissionAggregate.getSum('commissionAmount') ?? 0.0;
 
       return AdminStatsModel(
         totalUsers: totalUsers,
@@ -81,7 +91,11 @@ class AdminRemoteDataSource {
 
   Future<void> toggleWorkerVerification(String userId, bool isVerified) async {
     await _firestore.collection('users').doc(userId).update({
-      'isVerified': isVerified,
+      'workerProfile.isVerified': isVerified,
+      'workerProfile.verificationStatus': isVerified ? 'verified' : 'pending',
+      'workerProfile.verifiedAt': isVerified
+          ? FieldValue.serverTimestamp()
+          : null,
     });
   }
 
@@ -102,4 +116,3 @@ class AdminRemoteDataSource {
     await _firestore.collection('jobs').doc(jobId).delete();
   }
 }
-

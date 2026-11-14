@@ -2,9 +2,11 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:skill_bridge/core/errors/app_exception.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_roles.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// Remote data source that communicates with Firebase Auth and Firestore.
@@ -23,7 +25,7 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
   });
-  Future<UserModel> loginWithGoogle({required String role});
+  Future<UserModel> loginWithGoogle({String? role});
   Future<void> signOut();
   Future<void> sendPasswordResetEmail({required String email});
   Future<String> sendPhoneOtp({required String phoneNumber});
@@ -37,17 +39,36 @@ abstract class AuthRemoteDataSource {
     required String uid,
     required Map<String, dynamic> data,
   });
+
+  /// Creates (or finishes) the SkillBridge profile for the signed-in Firebase
+  /// user with a client/worker role. Used after Google sign-up and to recover
+  /// an interrupted registration.
+  Future<UserModel> completeProfile({
+    required String role,
+    String? displayName,
+    String? phoneNumber,
+  });
+
+  /// Sends Firebase's verification email to the signed-in user.
+  Future<void> sendEmailVerification();
+
+  /// Reloads the Firebase user; if the email is now verified, records it on
+  /// the profile. Returns the current verification state.
+  Future<bool> refreshEmailVerification();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  static Future<void>? _googleSignInInitialization;
+
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   AuthRemoteDataSourceImpl({
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
-  })  : _auth = auth,
-        _firestore = firestore;
+  }) : _auth = auth,
+       _firestore = firestore;
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
@@ -60,34 +81,40 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     controller = StreamController<UserModel?>.broadcast(
       onListen: () {
-        authSub = _auth.authStateChanges().listen((firebaseUser) {
-          docSub?.cancel();
-          if (firebaseUser == null) {
-            controller.add(null);
-          } else {
-            docSub = _usersCollection
-                .doc(firebaseUser.uid)
-                .snapshots()
-                .listen((doc) {
-              if (!doc.exists) {
-                controller.add(null);
-              } else {
-                try {
-                  controller.add(UserModel.fromFirestore(doc));
-                } catch (e) {
-                  Logger.e('authStateChanges error', e);
-                  controller.add(null);
-                }
-              }
-            }, onError: (e) {
-              Logger.e('authStateChanges snapshot error', e);
+        authSub = _auth.authStateChanges().listen(
+          (firebaseUser) {
+            docSub?.cancel();
+            if (firebaseUser == null) {
               controller.add(null);
-            });
-          }
-        }, onError: (e) {
-          Logger.e('authStateChanges auth error', e);
-          controller.add(null);
-        });
+            } else {
+              docSub = _usersCollection
+                  .doc(firebaseUser.uid)
+                  .snapshots()
+                  .listen(
+                    (doc) {
+                      if (!doc.exists) {
+                        controller.add(null);
+                      } else {
+                        try {
+                          controller.add(UserModel.fromFirestore(doc));
+                        } catch (e) {
+                          Logger.e('authStateChanges error', e);
+                          controller.add(null);
+                        }
+                      }
+                    },
+                    onError: (e) {
+                      Logger.e('authStateChanges snapshot error', e);
+                      controller.add(null);
+                    },
+                  );
+            }
+          },
+          onError: (e) {
+            Logger.e('authStateChanges auth error', e);
+            controller.add(null);
+          },
+        );
       },
       onCancel: () {
         authSub?.cancel();
@@ -120,6 +147,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String role,
     String? city,
   }) async {
+    if (!UserRoles.isSelfService(role)) {
+      throw const AuthException('Choose client or worker.', 'invalid-role');
+    }
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -138,11 +168,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         phoneNumber: phoneNumber,
         role: role,
         city: city,
+        // New clients get a short onboarding; workers use the profile setup.
+        onboardingCompleted: role == UserRoles.client ? false : null,
       );
 
-      await _usersCollection
-          .doc(firebaseUser.uid)
-          .set(userModel.toFirestore());
+      await _usersCollection.doc(firebaseUser.uid).set({
+        ...userModel.toFirestore(),
+        'authProvider': 'password',
+      });
+
+      // Best effort: the account works without it; the profile offers resend.
+      try {
+        await firebaseUser.sendEmailVerification();
+      } catch (e) {
+        Logger.w('Verification email not sent: $e');
+      }
 
       Logger.i('User registered: ${firebaseUser.uid}');
       return userModel;
@@ -167,8 +207,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final doc = await _usersCollection.doc(firebaseUser.uid).get();
       if (!doc.exists) {
-        throw const ServerException(
-            'User profile not found. Please contact support.');
+        // Account exists but registration was interrupted before the profile
+        // was saved. Keep the session and let the person finish (choose role)
+        // instead of creating a second account.
+        throw const AuthException('Finish setting up your account.', AuthFlowCodes.needsRole);
       }
 
       final userModel = UserModel.fromFirestore(doc);
@@ -177,7 +219,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (!userModel.isActive) {
         await _auth.signOut();
         throw const AuthException(
-            'Your account has been suspended. Contact support.');
+          'Your account has been suspended. Contact support.',
+        );
       }
 
       Logger.i('User logged in: ${firebaseUser.uid}');
@@ -192,44 +235,92 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw ServerException(e.message ?? 'Login failed', e.code);
     }
   }
+
+  static const String _serverClientId =
+      '140302201182-bioc9sfe6kjc3iq68896g588reu0eip2.apps.googleusercontent.com';
+
   @override
-  Future<UserModel> loginWithGoogle({required String role}) async {
+  Future<UserModel> loginWithGoogle({String? role}) async {
     try {
-      final googleSignIn = GoogleSignIn();
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        throw const AuthException('Google sign in was cancelled', 'cancelled');
+      UserCredential userCredential;
+      if (kIsWeb) {
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        _googleSignInInitialization ??= _googleSignIn.initialize(
+          serverClientId: _serverClientId,
+        );
+        await _googleSignInInitialization;
+        final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+        );
+        userCredential = await _auth.signInWithCredential(credential);
       }
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await _auth.signInWithCredential(credential);
-      final firebaseUser = userCredential.user!;
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        throw const AuthException('Could not retrieve Google user profile.');
+      }
 
       final doc = await _usersCollection.doc(firebaseUser.uid).get();
       if (!doc.exists) {
-        final userModel = UserModel.newUser(
-          uid: firebaseUser.uid,
-          email: firebaseUser.email ?? '',
-          displayName: firebaseUser.displayName ?? 'Google User',
-          phoneNumber: firebaseUser.phoneNumber ?? '',
-          role: role,
-        );
-        await _usersCollection.doc(firebaseUser.uid).set(userModel.toFirestore());
+        // New Google account. Without a chosen client/worker role, don't
+        // create a profile yet (the old code stored role '' which the rules
+        // then refused to change). The UI asks for the role and calls
+        // completeProfile().
+        if (!UserRoles.isSelfService(role)) {
+          throw const AuthException('Choose how you will use SkillBridge.', AuthFlowCodes.needsRole);
+        }
+        final userModel = await completeProfile(role: role!);
+        Logger.i('New user created via Google Sign-In: ${firebaseUser.uid}');
         return userModel;
       } else {
         final userModel = UserModel.fromFirestore(doc);
         if (!userModel.isActive) {
           await _auth.signOut();
-          await googleSignIn.signOut();
-          throw const AuthException('Your account has been suspended. Contact support.', 'suspended');
+          if (!kIsWeb) {
+            await _googleSignIn.signOut();
+          }
+          throw const AuthException(
+            'Your account has been suspended. Contact support.',
+            'suspended',
+          );
         }
+
+        final updateData = <String, dynamic>{
+          'updatedAt': FieldValue.serverTimestamp(),
+          'lastLoginAt': FieldValue.serverTimestamp(),
+          'authProvider': 'google',
+        };
+
+        if ((userModel.photoUrl == null || userModel.photoUrl!.isEmpty) &&
+            firebaseUser.photoURL != null &&
+            firebaseUser.photoURL!.isNotEmpty) {
+          updateData['photoUrl'] = firebaseUser.photoURL;
+        }
+
+        if (userModel.displayName.trim().isEmpty &&
+            firebaseUser.displayName != null &&
+            firebaseUser.displayName!.trim().isNotEmpty) {
+          updateData['displayName'] = firebaseUser.displayName!.trim();
+        }
+
+        await _usersCollection.doc(firebaseUser.uid).update(updateData);
+        Logger.i('Existing user logged in via Google: ${firebaseUser.uid}');
         return userModel;
       }
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const AuthException('Google sign in was cancelled', 'cancelled');
+      }
+      throw AuthException(
+        e.description ?? 'Google sign in failed',
+        e.code.name,
+      );
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseAuthError(e.code), e.code);
     } catch (e) {
@@ -241,6 +332,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> signOut() async {
     try {
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
       await _auth.signOut();
       Logger.i('User signed out');
     } on FirebaseAuthException catch (e) {
@@ -273,7 +367,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       verificationFailed: (FirebaseAuthException e) {
         if (!completer.isCompleted) {
           completer.completeError(
-              AuthException(_mapFirebaseAuthError(e.code), e.code));
+            AuthException(_mapFirebaseAuthError(e.code), e.code),
+          );
         }
       },
       codeSent: (String verificationId, int? resendToken) {
@@ -325,8 +420,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> updateUserRole(
-      {required String uid, required String role}) async {
+  Future<void> updateUserRole({
+    required String uid,
+    required String role,
+  }) async {
+    if (!UserRoles.isSelfService(role)) {
+      throw const ServerException('Choose client or worker.', 'invalid-role');
+    }
     try {
       await _usersCollection.doc(uid).update({
         'role': role,
@@ -338,8 +438,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> updateFcmToken(
-      {required String uid, required String token}) async {
+  Future<void> updateFcmToken({
+    required String uid,
+    required String token,
+  }) async {
     try {
       await _usersCollection.doc(uid).update({
         'fcmToken': token,
@@ -356,10 +458,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required Map<String, dynamic> data,
   }) async {
     try {
-      await _usersCollection.doc(uid).update({
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      try {
+        await _usersCollection.doc(uid).update({
+          ...data,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } on FirebaseException catch (e) {
+        if (e.code == 'not-found') {
+          await _usersCollection.doc(uid).set({
+            ...data,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } else {
+          rethrow;
+        }
+      }
       final doc = await _usersCollection.doc(uid).get();
       return UserModel.fromFirestore(doc);
     } on FirebaseException catch (e) {
@@ -367,8 +480,109 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  @override
+  Future<UserModel> completeProfile({
+    required String role,
+    String? displayName,
+    String? phoneNumber,
+  }) async {
+    if (!UserRoles.isSelfService(role)) {
+      throw const AuthException('Choose client or worker.', 'invalid-role');
+    }
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) {
+      throw const AuthException('Please sign in again.', 'no-current-user');
+    }
+    try {
+      final ref = _usersCollection.doc(firebaseUser.uid);
+      final doc = await ref.get();
+      if (doc.exists) {
+        final existing = UserModel.fromFirestore(doc);
+        final storedRole = (doc.data()?['role'] as String?) ?? '';
+        if (storedRole == role) return existing;
+        if (storedRole.isNotEmpty) {
+          // Roles can't be switched once chosen (also enforced by the rules).
+          throw const AuthException('This account already has a role.', 'role-locked');
+        }
+        await ref.update({
+          'role': role,
+          if (role == UserRoles.client) 'onboardingCompleted': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        return UserModel.fromFirestore(await ref.get());
+      }
+
+      final name = (displayName ?? firebaseUser.displayName ?? '').trim();
+      final isGoogle = firebaseUser.providerData.any((p) => p.providerId == 'google.com');
+      final userModel = UserModel.newUser(
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        displayName: name,
+        phoneNumber: phoneNumber ?? firebaseUser.phoneNumber ?? '',
+        role: role,
+        photoUrl: firebaseUser.photoURL,
+        isEmailVerified: firebaseUser.emailVerified,
+        onboardingCompleted: role == UserRoles.client ? false : null,
+      );
+      await ref.set({
+        ...userModel.toFirestore(),
+        'authProvider': isGoogle ? 'google' : 'password',
+        'lastLoginAt': FieldValue.serverTimestamp(),
+      });
+      return userModel;
+    } on FirebaseException catch (e) {
+      throw ServerException(e.message ?? 'Could not save your profile', e.code);
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthException('Please sign in again.', 'no-current-user');
+    }
+    try {
+      await user.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseAuthError(e.code), e.code);
+    }
+  }
+
+  @override
+  Future<bool> refreshEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    try {
+      await user.reload();
+      final verified = _auth.currentUser?.emailVerified ?? false;
+      if (verified) {
+        await _usersCollection.doc(user.uid).update({
+          'isEmailVerified': true,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return verified;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseAuthError(e.code), e.code);
+    } on FirebaseException catch (e) {
+      throw ServerException(e.message ?? 'Could not refresh verification', e.code);
+    }
+  }
+
   String _mapFirebaseAuthError(String code) {
     switch (code) {
+      case 'invalid-credential':
+      case 'INVALID_LOGIN_CREDENTIALS':
+        return 'Email or password is incorrect.';
+      case 'account-exists-with-different-credential':
+        return 'This email is already registered with a different sign-in method.';
+      case 'popup-closed-by-user':
+      case 'cancelled-popup-request':
+        return 'Google sign in was cancelled';
+      case 'operation-not-allowed':
+        return 'This sign-in method is not enabled.';
+      case 'requires-recent-login':
+        return 'Please sign in again to continue.';
       case 'user-not-found':
         return 'No account found with this email address.';
       case 'wrong-password':
