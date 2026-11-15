@@ -361,7 +361,7 @@ void main() {
       expect(ProfileMediaService.contentTypeFor('doc.pdf', allowPdf: true), 'application/pdf');
       expect(ProfileMediaService.contentTypeFor('evil.exe'), isNull);
       expect(ProfileMediaService.contentTypeFor('x.svg', mimeType: 'text/html'), isNull);
-      expect(ProfileMediaService.maxBytes, 5 * 1024 * 1024, reason: 'matches storage.rules');
+      expect(ProfileMediaService.maxBytes, 2 * 1024 * 1024, reason: 'matches the image host upload preset (free plan, Phase S6)');
     });
   });
 }

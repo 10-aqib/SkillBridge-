@@ -21,7 +21,7 @@ typedef ChatPhoto = ({Uint8List bytes, String contentType});
 typedef ChatPhotoPicker = Future<ChatPhoto?> Function();
 
 Future<ChatPhoto?> _pickWithImagePicker() async {
-  final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, maxHeight: 1600, imageQuality: 80);
+  final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1280, maxHeight: 1280, imageQuality: 70);
   if (file == null) return null;
   final bytes = await file.readAsBytes();
   final name = file.name.toLowerCase();
@@ -614,7 +614,7 @@ void _openPhoto(BuildContext context, Widget image) {
   );
 }
 
-/// A photo from Storage, read with getData() — members only, no link.
+/// A photo kept privately in Firestore, read with the member's access — no link.
 class _StoredPhoto extends ConsumerWidget {
   const _StoredPhoto({required this.path});
   final String path;

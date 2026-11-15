@@ -6,7 +6,7 @@ import 'package:skill_bridge/features/proposals/data/datasources/proposal_remote
 import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
 
 final proposalRemoteDataSourceProvider = Provider<ProposalRemoteDataSource>((ref) {
-  return ProposalRemoteDataSourceImpl(ref.watch(firestoreProvider), ref.watch(firebaseFunctionsProvider));
+  return ProposalRemoteDataSourceImpl(ref.watch(firestoreProvider), ref.watch(firebaseAuthProvider));
 });
 
 /// A refused read is final; other failures retry a few times.

@@ -79,7 +79,7 @@ service cloud.firestore {
     // Verification document entries must be files in the owner's private folder.
     function isOwnVerificationPath(userId, path) {
       return path is string
-        && path.matches('^users/' + userId + '/verificationDocuments/[^/]+$');
+        && path.matches('^users/' + userId + '/(verificationDocuments|verificationDocs)/[^/]+$');
     }
 
     function isProtectedProfileDataUnchanged() {
@@ -97,21 +97,69 @@ service cloud.firestore {
             && request.resource.data.isCnicVerified == resource.data.isCnicVerified)
           || (('isCnicVerified' in request.resource.data) && !('isCnicVerified' in resource.data)
             && request.resource.data.isCnicVerified == false))
-        && ((!('rating' in request.resource.data) && !('rating' in resource.data))
-          || (('rating' in request.resource.data) && ('rating' in resource.data)
-            && request.resource.data.rating == resource.data.rating)
-          || (!('rating' in resource.data)))
-        && ((!('totalReviews' in request.resource.data) && !('totalReviews' in resource.data))
-          || (('totalReviews' in request.resource.data) && ('totalReviews' in resource.data)
-            && request.resource.data.totalReviews == resource.data.totalReviews)
-          || (!('totalReviews' in resource.data)))
-        && (!('workerProfile' in request.resource.data)
+        // Reputation numbers are shown publicly (publicProfiles), so owners can
+        // never set them: kept as stored, or (field not stored yet) only the
+        // starting values (Phase S2; previously any value could be added).
+        && (statKept(request.resource.data, resource.data, 'rating', 5)
+            || request.resource.data.rating == myRatings().average)
+        && (statKept(request.resource.data, resource.data, 'totalReviews', 0)
+            || request.resource.data.totalReviews == myRatings().count)
+        // A worker profile, once stored, can't be removed (that would reset
+        // its stats on re-creation).
+        && ((!('workerProfile' in request.resource.data) && !('workerProfile' in resource.data))
           || ((!('workerProfile' in resource.data)
-              && (!('isVerified' in request.resource.data.workerProfile) || request.resource.data.workerProfile.isVerified == false))
+              && (!('isVerified' in request.resource.data.workerProfile) || request.resource.data.workerProfile.isVerified == false)
+              && startingWorkerStats(request.resource.data.workerProfile))
             || (('workerProfile' in resource.data)
               && (!('isVerified' in request.resource.data.workerProfile) || !('isVerified' in resource.data.workerProfile) || request.resource.data.workerProfile.isVerified == resource.data.workerProfile.isVerified)
-              && (!('averageRating' in request.resource.data.workerProfile) || !('averageRating' in resource.data.workerProfile) || request.resource.data.workerProfile.averageRating == resource.data.workerProfile.averageRating)
-              && (!('totalReviews' in request.resource.data.workerProfile) || !('totalReviews' in resource.data.workerProfile) || request.resource.data.workerProfile.totalReviews == resource.data.workerProfile.totalReviews))));
+              && (statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'averageRating', 0)
+                  || request.resource.data.workerProfile.averageRating == myRatings().average)
+              && (statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'totalReviews', 0)
+                  || request.resource.data.workerProfile.totalReviews == myRatings().count)
+              && statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'totalJobsCompleted', 0))));
+    }
+
+    // The signed-in person's rating ledger (free plan, Phase S5): reviews
+    // update it in checked transactions; owners copy it onto their account.
+    function myRatings() {
+      return get(/databases/$(database)/documents/ratings/$(request.auth.uid)).data;
+    }
+
+    // A reputation number is unchanged (and can't be removed, which would
+    // let a bad rating be reset), or (not stored before) absent or its
+    // starting value. A rating starts at 5 (the app's default) or 0.
+    function statKept(after, before, field, start) {
+      return (field in before && field in after && after[field] == before[field])
+        || (!(field in before) && (!(field in after) || after[field] == start
+            || (field == 'rating' && after[field] == 0)));
+    }
+    function startingWorkerStats(wp) {
+      return wp.get('averageRating', 0) == 0
+        && wp.get('totalReviews', 0) == 0
+        && wp.get('totalJobsCompleted', 0) == 0;
+    }
+    // New accounts start with no reputation.
+    function startingStats(d) {
+      return (d.get('rating', 5) == 5 || d.get('rating', 5) == 0)
+        && d.get('totalReviews', 0) == 0
+        && startingWorkerStats(d.get('workerProfile', {}));
+    }
+
+    // Free plan (Phase S4): when the client confirms a contract, the worker's
+    // completed-jobs count goes up by exactly one, in the same write, naming
+    // that contract. A contract completes once, so it is credited once.
+    function jobCompletionCreditAllowed(userId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let cid = after.get('lastCompletedContractId', '');
+      let c = get(contractPath(cid)).data;
+      return isAuthenticated() && userId != request.auth.uid
+        && after.diff(before).affectedKeys().hasOnly(['workerProfile', 'lastCompletedContractId'])
+        && after.workerProfile.diff(before.get('workerProfile', {})).affectedKeys().hasOnly(['totalJobsCompleted'])
+        && after.workerProfile.totalJobsCompleted == before.get('workerProfile', {}).get('totalJobsCompleted', 0) + 1
+        && c.workerId == userId && c.clientId == request.auth.uid
+        && stageSubmitted(c)
+        && contractAfterOf(cid).status == 'completed';
     }
 
     // ── Users ─────────────────────────────────────────────────────────────
@@ -129,12 +177,27 @@ service cloud.firestore {
                     && !('cnicNumber' in request.resource.data)
                     && request.resource.data.get('workerProfile', {}).get('isVerified', false) == false
                     && request.resource.data.get('workerProfile', {}).get('verificationStatus', '') in ['', 'pending']
+                    && startingStats(request.resource.data)
                     && isValidLocationUpdate(request.resource.data);
       allow update: if (isOwner(userId) && isValidLocationUpdate(request.resource.data)
-                        && isProtectedProfileDataUnchanged()) || isAdmin();
+                        && isProtectedProfileDataUnchanged()) || isAdmin()
+                    || jobCompletionCreditAllowed(userId);
       allow delete: if isAdmin();
 
-      // Private verification submission (CNIC + document storage paths).
+      // Private verification documents (free plan, Phase S6): the owner
+      // adds them; only the owner and staff read them. Kept once added
+      // except by the owner (replacing one before submitting) or staff.
+      match /verificationDocs/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isActiveUser()
+          && docId.matches('^[A-Za-z0-9_-]{1,100}$')
+          && request.resource.data.keys().hasOnly(['data', 'contentType', 'createdAt'])
+          && privateFileValid(request.resource.data, true);
+        allow update: if false;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      // Private verification submission (CNIC + document paths).
       // Readable only by the owner and staff; never part of public profiles.
       match /private/{docId} {
         allow read: if isOwner(userId) || isAdmin();
@@ -158,16 +221,83 @@ service cloud.firestore {
       }
     }
 
-    // ── Public profiles and live location (written only by Cloud Functions) ─
+    // ── Public profiles ───────────────────────────────────────────────────
     // Allowlisted public view of users/{uid}: no phone, email, CNIC, push
     // token, addresses, earnings or verification data; worker areas ~1 km.
+    //
+    // Free plan (no Cloud Functions, Phase S2): the owner's app writes its
+    // own public profile. The rules decide what it may contain:
+    // - only allowlisted fields (nothing private can be published);
+    // - everything other people rely on (role, active, rating, reviews,
+    //   verified badges, jobs completed) must equal the private account,
+    //   which the owner cannot change (see isProtectedProfileDataUnchanged);
+    // - "email/phone verified" only when the sign-in token says so;
+    // - locations only at ~1 km precision (2 decimal places).
+    // Self-description (name, bio, skills, rates…) is the owner's own text.
+    function publicUserKeys() {
+      return ['uid', 'displayName', 'photoUrl', 'role', 'isActive', 'city',
+        'isEmailVerified', 'isPhoneVerified', 'isCnicVerified', 'createdAt',
+        'rating', 'totalReviews', 'location', 'geohash', 'locationAccuracy',
+        'workerProfile', 'updatedAt'];
+    }
+    function publicWorkerKeys() {
+      return ['headline', 'bio', 'categoryId', 'categoryName', 'skills', 'experience',
+        'hourlyRate', 'dailyRate', 'availability', 'isVerified', 'city',
+        'serviceRadius', 'totalJobsCompleted', 'averageRating', 'totalReviews',
+        'coverImage', 'languages', 'responseTime', 'portfolioImages', 'beforeAfterImages',
+        'certifications', 'location', 'geohash', 'locationAccuracy'];
+    }
+    // ~1.1 km: the point has at most 2 decimal places.
+    function isCoarse(p) {
+      return isValidGeoPoint(p)
+        && math.abs(p.latitude() * 100 - math.round(p.latitude() * 100)) < 0.0001
+        && math.abs(p.longitude() * 100 - math.round(p.longitude() * 100)) < 0.0001;
+    }
+    function sameAs(pub, priv, field) {
+      return pub.get(field, null) == priv.get(field, null);
+    }
+    function publicWorkerValid(pub, priv) {
+      let wp = pub.get('workerProfile', null);
+      let src = priv.get('workerProfile', {});
+      return wp == null || (
+        wp is map
+        && priv.get('role', '') == 'worker'
+        && wp.keys().hasOnly(publicWorkerKeys())
+        && sameAs(wp, src, 'isVerified')
+        && sameAs(wp, src, 'averageRating')
+        && sameAs(wp, src, 'totalReviews')
+        && sameAs(wp, src, 'totalJobsCompleted')
+        && (!('location' in wp) || isCoarse(wp.location))
+        && (!('certifications' in wp) || (wp.certifications is list && wp.certifications.size() <= 20)));
+    }
+    function publicProfileValid(userId) {
+      let pub = request.resource.data;
+      let priv = get(/databases/$(database)/documents/users/$(userId)).data;
+      return pub.keys().hasOnly(publicUserKeys())
+        && pub.get('uid', '') == userId
+        && sameAs(pub, priv, 'role')
+        && sameAs(pub, priv, 'isActive')
+        && sameAs(pub, priv, 'isCnicVerified')
+        && sameAs(pub, priv, 'rating')
+        && sameAs(pub, priv, 'totalReviews')
+        && sameAs(pub, priv, 'createdAt')
+        && (pub.get('isEmailVerified', false) != true || request.auth.token.email_verified == true)
+        && (pub.get('isPhoneVerified', false) != true || request.auth.token.get('phone_number', null) != null)
+        && (!('location' in pub) || pub.location == null || isCoarse(pub.location))
+        && publicWorkerValid(pub, priv);
+    }
     match /publicProfiles/{userId} {
       allow read: if isAuthenticated();
-      allow write: if false;
+      allow create, update: if isOwner(userId)
+        && exists(/databases/$(database)/documents/users/$(userId))
+        && publicProfileValid(userId);
+      allow delete: if isOwner(userId) || isAdmin();
     }
 
     // A worker's live position: the worker, staff, and the clients of jobs
     // currently assigned to that worker (viewerIds, set by the function).
+    // Unused by the app (live tracking uses contracts/{id}/live/location),
+    // and with no Cloud Functions nothing writes it: kept closed.
     match /liveLocations/{workerId} {
       allow read: if isOwner(workerId) || isAdmin()
         || (isAuthenticated() && request.auth.uid in resource.data.viewerIds);
@@ -250,9 +380,70 @@ service cloud.firestore {
             && before.get('selectedWorkerId', null) == null
             && changed.hasOnly(['status', 'updatedAt']))
           // Hiring (open → assigned) and every later step (start, complete,
-          // cancel) are made by the trusted contract functions, which keep the
-          // job, proposals and contract consistent. Owners cannot do them here.
+          // cancel) go with the contract: see jobHireAllowed and
+          // jobContractStepAllowed (free plan, Phase S4).
         );
+    }
+
+    // The owner hires on their public open job: in the same write the
+    // contract `{jobId}_{worker}` is created, active, for this client.
+    function jobHireAllowed(jobId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let cid = jobId + '_' + after.get('selectedWorkerId', '');
+      return before.clientId == request.auth.uid && isActiveUser()
+        && isPublicOpenJob(before) && after.status == 'assigned'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'selectedWorkerId', 'selectedWorkerName', 'updatedAt'])
+        && after.selectedWorkerId is string
+        && !exists(contractPath(cid))
+        && contractAfterOf(cid).status == 'active'
+        && contractAfterOf(cid).clientId == request.auth.uid;
+    }
+
+    // The job follows its contract `{jobId}_{selectedWorker}` (changed in the
+    // same write): start → in progress (worker), confirm → completed
+    // (client), cancel/decline → cancelled (either), a direct request
+    // accepted → assigned (worker).
+    function jobContractStepAllowed(jobId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let w = before.get('selectedWorkerId', null);
+      let c = contractAfterOf(jobId + '_' + w);
+      let me = request.auth.uid;
+      return w is string && isActiveUser() && (before.clientId == me || w == me)
+        && after.diff(before).affectedKeys().hasOnly(['status', 'selectedWorkerName', 'updatedAt'])
+        && (
+          (w == me && before.status == 'assigned' && after.status == 'in_progress'
+            && c.get('workStartedAt', null) != null)
+          || (before.clientId == me && before.status in ['assigned', 'in_progress'] && after.status == 'completed'
+            && c.status == 'completed')
+          || (before.status in ['open', 'assigned', 'in_progress'] && after.status == 'cancelled'
+            && c.status in ['cancelled', 'rejected'])
+          || (w == me && before.status == 'open' && after.status == 'assigned' && c.status == 'active'));
+    }
+
+    // Free plan (no Cloud Functions, Phase S3): the proposal count moves by
+    // exactly one, in the same write as the worker's own proposal changing
+    // the same way: sent or re-sent (+1), withdrawn (-1). Nothing else on the
+    // job changes, and it never goes below 0.
+    function proposalPath(pid) {
+      return /databases/$(database)/documents/proposals/$(pid);
+    }
+    function proposalCounterUpdateAllowed(jobId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let pid = jobId + '_' + request.auth.uid;
+      let delta = after.get('totalProposals', 0) - before.get('totalProposals', 0);
+      return after.diff(before).affectedKeys().hasOnly(['totalProposals'])
+        && after.get('totalProposals', 0) >= 0
+        && existsAfter(proposalPath(pid))
+        && ((delta == 1
+              && getAfter(proposalPath(pid)).data.status == 'pending'
+              && (!exists(proposalPath(pid)) || get(proposalPath(pid)).data.status == 'withdrawn'))
+          || (delta == -1
+              && exists(proposalPath(pid))
+              && get(proposalPath(pid)).data.status == 'pending'
+              && getAfter(proposalPath(pid)).data.status == 'withdrawn'));
     }
 
     // The worker a job is assigned or directly requested from: status only.
@@ -281,7 +472,8 @@ service cloud.firestore {
         || (isPublicOpenJob(resource.data) && isActiveUser()));
       allow create: if isAuthenticated() && (isAdmin() || jobCreateAllowed());
       allow update: if isAuthenticated() && (
-        isAdmin() || ownerJobUpdateAllowed(jobId) || assignedWorkerJobUpdateAllowed());
+        isAdmin() || ownerJobUpdateAllowed(jobId) || assignedWorkerJobUpdateAllowed()
+        || proposalCounterUpdateAllowed(jobId) || jobHireAllowed(jobId) || jobContractStepAllowed(jobId));
       // Published jobs are kept for history; clients close them instead.
       allow delete: if isAdmin();
     }
@@ -290,7 +482,8 @@ service cloud.firestore {
     // One proposal per worker per job: the document id is
     // `{jobId}_{workerId}`, so a second create is refused and a withdrawn
     // proposal is re-sent by updating the same document. `totalProposals`
-    // on the job is kept by a Cloud Function (syncJobProposalCount).
+    // on the job moves by one in the same write (free plan, Phase S3; see
+    // proposalCounterUpdateAllowed).
     function jobDoc(jobId) {
       return get(/databases/$(database)/documents/jobs/$(jobId)).data;
     }
@@ -313,6 +506,18 @@ service cloud.firestore {
         && d.estimatedDuration is string && d.estimatedDuration.size() >= 2 && d.estimatedDuration.size() <= 60;
     }
 
+    // The job's count, before and after this write.
+    function countedOnce(jobId) {
+      return jobAfter(jobId).get('totalProposals', 0) == jobDoc(jobId).get('totalProposals', 0) + 1;
+    }
+    // Withdrawing takes one off. Jobs from before the count was kept may
+    // read 0 with proposals still pending: then the count stays at 0.
+    function uncountedOnce(jobId) {
+      let was = jobDoc(jobId).get('totalProposals', 0);
+      let now = jobAfter(jobId).get('totalProposals', 0);
+      return (was > 0 && now == was - 1) || (was <= 0 && now == was);
+    }
+
     function proposalCreateAllowed(proposalId) {
       let d = request.resource.data;
       let job = jobDoc(d.jobId);
@@ -327,7 +532,20 @@ service cloud.firestore {
         && isPublicOpenJob(job)
         && job.clientId != request.auth.uid
         && d.clientId == job.clientId
-        && d.jobTitle == job.title;
+        && d.jobTitle == job.title
+        && countedOnce(d.jobId);
+    }
+
+    // The client copies the job's real status onto its proposals, so
+    // applicants can follow a job they can no longer read (free plan, Phase
+    // S3; was the syncJobRelations function). Only that field, only the
+    // job's actual status (after this write).
+    function proposalJobStatusSyncAllowed() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return before.clientId == request.auth.uid
+        && after.diff(before).affectedKeys().hasOnly(['jobStatus'])
+        && after.jobStatus == jobAfter(before.jobId).status;
     }
 
     function proposalUpdateAllowed(proposalId) {
@@ -335,28 +553,39 @@ service cloud.firestore {
       let after = request.resource.data;
       let changed = after.diff(before).affectedKeys();
       return isActiveUser()
-        // jobStatus is copied from the job by a trusted function only.
-        && !changed.hasAny(['jobId', 'jobTitle', 'workerId', 'clientId', 'createdAt', 'workerRating', 'jobStatus'])
+        // jobStatus only as the job's real status (see the "filled" branch
+        // and proposalJobStatusSyncAllowed).
+        && !changed.hasAny(['jobId', 'jobTitle', 'workerId', 'clientId', 'createdAt', 'workerRating'])
+        && (!changed.hasAny(['jobStatus']) || (before.status == 'pending' && after.status == 'rejected'))
         && proposalKeysAllowed(after)
         && (
-          // Worker withdraws a pending proposal.
+          // Worker withdraws a pending proposal (the job's count goes down).
           (before.workerId == request.auth.uid && before.status == 'pending' && after.status == 'withdrawn'
-            && changed.hasOnly(['status', 'updatedAt', 'withdrawnAt']))
+            && changed.hasOnly(['status', 'updatedAt', 'withdrawnAt'])
+            && uncountedOnce(before.jobId))
           // Worker re-sends a withdrawn proposal while the job is still open.
           || (before.workerId == request.auth.uid && before.status == 'withdrawn' && after.status == 'pending'
             && changed.hasOnly(['status', 'updatedAt', 'resubmittedAt', 'withdrawnAt', 'viewedAt',
                                 'coverLetter', 'proposedRate', 'rateType', 'estimatedDuration',
                                 'workerName', 'workerPhotoUrl'])
-            && proposalContentValid(after) && isPublicOpenJob(jobDoc(before.jobId)))
+            && proposalContentValid(after) && isPublicOpenJob(jobDoc(before.jobId))
+            && countedOnce(before.jobId))
           // Client opens a pending proposal (shown to the worker as "Viewed").
           || (before.clientId == request.auth.uid && before.status == 'pending' && after.status == 'pending'
             && changed.hasOnly(['viewedAt']) && !('viewedAt' in before) && after.viewedAt == request.time)
-          // Client declines (or it closes because someone else was hired).
+          // Client declines (or it closes because someone else was hired;
+          // then the job's new status may be copied in the same write).
           || (before.clientId == request.auth.uid && before.status == 'pending' && after.status == 'rejected'
-            && changed.hasOnly(['status', 'updatedAt', 'decidedAt', 'closedReason'])
-            && after.closedReason in ['client', 'filled'])
-          // Accepting is done only by the acceptProposalCall function, which
-          // creates the contract in the same transaction.
+            && changed.hasOnly(['status', 'updatedAt', 'decidedAt', 'closedReason', 'jobStatus'])
+            && after.closedReason in ['client', 'filled']
+            && (!changed.hasAny(['jobStatus']) || after.jobStatus == jobAfter(before.jobId).status))
+          // Client accepts: the contract `{proposalId}` is created in the same
+          // write (proposalContractCreateAllowed checks its terms).
+          || (before.clientId == request.auth.uid && before.status == 'pending' && after.status == 'accepted'
+            && changed.hasOnly(['status', 'updatedAt', 'decidedAt'])
+            && after.decidedAt == request.time
+            && !exists(contractPath(proposalId))
+            && contractAfterOf(proposalId).status == 'active')
         );
     }
 
@@ -367,26 +596,168 @@ service cloud.firestore {
         || resource.data.workerId == request.auth.uid
         || resource.data.clientId == request.auth.uid);
       allow create: if isAuthenticated() && proposalCreateAllowed(proposalId);
-      allow update: if isAuthenticated() && (isAdmin() || proposalUpdateAllowed(proposalId));
+      allow update: if isAuthenticated() && (isAdmin() || proposalUpdateAllowed(proposalId)
+        || (isActiveUser() && proposalJobStatusSyncAllowed()));
       // Kept for history; workers withdraw instead.
       allow delete: if isAdmin();
     }
 
     // ── Contracts ─────────────────────────────────────────────────────────
-    // Proposal contracts are created only by acceptProposalCall, and every
-    // status change (accept/decline a booking, start, submit, confirm,
-    // cancel, share address) goes through contractActionCall. Clients may
-    // still send a booking request: a pending contract for a direct hire of
-    // their own job, created with no lifecycle data. Payment fields stay with
-    // staff and the payment provider.
-    function contractCreateAllowed() {
+    // Free plan (no Cloud Functions, Phase S4). Hiring and every lifecycle
+    // step are written by the parties' apps in one transaction, and these
+    // rules are the state machine the contract functions used to be: who may
+    // act, at which stage, exactly which fields change and to what (prices,
+    // commission, counts, server times). Every contract id is
+    // `{jobId}_{workerId}`, so the job, its proposal and its contract can find
+    // each other. Payment fields stay with staff and the payment provider.
+    //
+    // Stage, from stored fields (as stageOf in functions/src/contracts.ts):
+    // pending = booking request; active = not started → in progress
+    // (workStartedAt) → submitted (more submissions than revision requests).
+
+    function contractPath(cid) {
+      return /databases/$(database)/documents/contracts/$(cid);
+    }
+    function contractAfterOf(cid) {
+      return getAfter(contractPath(cid)).data;
+    }
+    function submissionsOf(c) {
+      return c.get('submissionCount', null) is int ? c.submissionCount
+        : (c.get('submittedAt', null) != null ? 1 : 0);
+    }
+    function revisionsOf(c) {
+      return c.get('revisionCount', null) is int ? c.revisionCount : 0;
+    }
+    // Submitted work waiting for the client.
+    function awaitingReviewOf(c) {
+      return submissionsOf(c) > revisionsOf(c);
+    }
+    function stageNotStarted(c) {
+      return c.status == 'active' && c.get('workStartedAt', null) == null && !awaitingReviewOf(c);
+    }
+    function stageInProgress(c) {
+      return c.status == 'active' && c.get('workStartedAt', null) != null && !awaitingReviewOf(c);
+    }
+    function stageSubmitted(c) {
+      return c.status == 'active' && awaitingReviewOf(c);
+    }
+    // Requested, not started or in progress: may still be cancelled, and the
+    // client may still share or change the address.
+    function stageOpen(c) {
+      return c.status == 'pending' || stageNotStarted(c) || stageInProgress(c);
+    }
+    // A private file kept in Firestore (free plan, Phase S6; Firebase
+    // Storage needs the paid plan): bytes under 700 KB, a known type, server
+    // time. A document holds at most 1 MiB.
+    function privateFileValid(d, allowPdf) {
+      return d.data is bytes && d.data.size() > 0 && d.data.size() <= 716800
+        && (d.contentType in ['image/jpeg', 'image/png', 'image/webp']
+            || (allowPdf && d.contentType == 'application/pdf'))
+        && d.createdAt == request.time;
+    }
+
+    function textBetween(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function contractKeysAllowed(d) {
+      return d.keys().hasOnly([
+        'jobId', 'jobTitle', 'jobDescription', 'proposalId',
+        'clientId', 'clientName', 'clientPhotoUrl', 'clientPhone',
+        'workerId', 'workerName', 'workerPhotoUrl',
+        'agreedRate', 'priceMin', 'rateType', 'estimatedDuration', 'totalAmount',
+        'commissionRate', 'commissionAmount', 'workerEarnings',
+        'paymentStatus', 'paymentProviderState', 'paymentMethod', 'paymentTransactionId',
+        'serviceAddress', 'serviceCity', 'serviceArea', 'serviceDate', 'serviceTimeSlot',
+        'status', 'acceptedAt', 'startDate', 'endDate', 'workStartedAt', 'submittedAt',
+        'completedAt', 'cancelledAt', 'clientReviewed', 'workerReviewed',
+        'createdAt', 'updatedAt']);
+    }
+    // A contract made by hiring starts active and empty: no work, no
+    // payment, no address yet, at server time.
+    function freshActiveContract(d) {
+      return d.status == 'active'
+        && d.paymentStatus == 'unpaid'
+        && d.get('paymentProviderState', 'not_configured') == 'not_configured'
+        && d.acceptedAt == request.time && d.startDate == request.time
+        && d.createdAt == request.time && d.updatedAt == request.time
+        && d.get('workStartedAt', null) == null && d.get('submittedAt', null) == null
+        && d.get('completedAt', null) == null && d.get('cancelledAt', null) == null
+        && d.get('endDate', null) == null
+        && d.get('clientReviewed', false) == false && d.get('workerReviewed', false) == false
+        && !d.keys().hasAny(['serviceAddress', 'paymentMethod', 'paymentTransactionId', 'clientPhone',
+                             'serviceDate', 'serviceTimeSlot']);
+    }
+    // 10% commission, rounded to whole rupees (COMMISSION_RATE).
+    function pricedAt(d, amount) {
+      return d.agreedRate == amount && d.totalAmount == amount
+        && d.commissionRate == 0.1
+        && d.commissionAmount == math.round(amount * 0.1)
+        && d.workerEarnings == amount - math.round(amount * 0.1);
+    }
+
+    // The job owner accepts a pending proposal on their public open job. In
+    // the same write: the proposal accepted, the job assigned to that worker.
+    // Every term comes from the proposal and the job.
+    function proposalContractCreateAllowed(contractId) {
+      let d = request.resource.data;
+      let p = get(proposalPath(contractId)).data;
+      let job = jobDoc(p.jobId);
+      return isClient() && isActiveUser()
+        && p.clientId == request.auth.uid && p.status == 'pending'
+        && contractId == p.jobId + '_' + p.workerId
+        && job.clientId == request.auth.uid && isPublicOpenJob(job)
+        && getAfter(proposalPath(contractId)).data.status == 'accepted'
+        && jobAfter(p.jobId).status == 'assigned'
+        && jobAfter(p.jobId).selectedWorkerId == p.workerId
+        && contractKeysAllowed(d) && freshActiveContract(d)
+        && d.jobId == p.jobId && d.proposalId == contractId
+        && d.clientId == request.auth.uid && d.workerId == p.workerId
+        && d.workerName == p.get('workerName', '')
+        && d.get('workerPhotoUrl', null) == p.get('workerPhotoUrl', null)
+        && d.jobTitle == job.title && d.get('jobDescription', '') == job.get('description', '')
+        && d.get('serviceCity', null) == job.get('city', null)
+        && d.get('serviceArea', null) == job.get('address', null)
+        && d.rateType == p.get('rateType', 'fixed')
+        && d.get('estimatedDuration', '') == p.get('estimatedDuration', '')
+        && !('priceMin' in d)
+        && pricedAt(d, p.proposedRate);
+    }
+
+    // The requested worker accepts a direct request (an open job sent only to
+    // them). Price = the client's budget; a range stays a range (priceMin).
+    function directRequestContractCreateAllowed(contractId) {
+      let d = request.resource.data;
+      let job = jobDoc(d.jobId);
+      return isWorker() && isActiveUser()
+        && contractId == d.jobId + '_' + request.auth.uid
+        && job.get('selectedWorkerId', null) == request.auth.uid && job.status == 'open'
+        && jobAfter(d.jobId).status == 'assigned'
+        && contractKeysAllowed(d) && freshActiveContract(d)
+        && d.proposalId == 'direct_request'
+        && d.workerId == request.auth.uid && d.clientId == job.clientId
+        && d.get('clientName', '') == job.get('clientName', '')
+        && d.get('clientPhotoUrl', null) == job.get('clientPhotoUrl', null)
+        && d.jobTitle == job.title && d.get('jobDescription', '') == job.get('description', '')
+        && d.get('serviceCity', null) == job.get('city', null)
+        && d.get('serviceArea', null) == job.get('address', null)
+        && d.rateType == job.budgetType
+        && d.get('priceMin', null) == (job.budgetMin < job.budgetMax ? job.budgetMin : null)
+        && pricedAt(d, job.budgetMax);
+    }
+
+    // A client's booking request to one worker: a pending contract for a
+    // direct hire of their own job, created with no lifecycle data.
+    function contractCreateAllowed(contractId) {
       let d = request.resource.data;
       return isClient() && isActiveUser()
+        && contractId == d.jobId + '_' + d.workerId
         && d.clientId == request.auth.uid
         && d.workerId is string && d.workerId != request.auth.uid
         && d.paymentStatus == 'unpaid'
         && d.status == 'pending'
         && d.proposalId == 'direct_hire'
+        && contractKeysAllowed(d)
         && !d.keys().hasAny(['acceptedAt', 'respondedAt', 'workStartedAt', 'submittedAt', 'submission',
                              'completedAt', 'cancelledAt', 'cancelledBy', 'cancelledByRole', 'cancelReason'])
         && jobAfter(d.jobId).clientId == request.auth.uid
@@ -394,7 +765,7 @@ service cloud.firestore {
     }
 
     // After completion each party may record that they reviewed (set when
-    // writing their review). Nothing else on a contract is user-writable.
+    // writing their review).
     function contractReviewFlagAllowed() {
       let before = resource.data;
       let changed = request.resource.data.diff(before).affectedKeys();
@@ -405,13 +776,116 @@ service cloud.firestore {
               && before.get('workerReviewed', false) == false && request.resource.data.workerReviewed == true));
     }
 
+    // Evidence must be this contract's own photos (free plan, Phase S6).
+    function evidenceOk(contractId, path) {
+      return path is string
+        && path.matches('^contracts/' + contractId + '/evidence/[A-Za-z0-9_-]{1,80}$')
+        && exists(/databases/$(database)/documents/contracts/$(contractId)/evidence/$(path.split('/')[3]));
+    }
+    function evidenceListValid(contractId, list) {
+      return list.size() == 0
+        || (evidenceOk(contractId, list[0])
+          && (list.size() < 2 || evidenceOk(contractId, list[1]))
+          && (list.size() < 3 || evidenceOk(contractId, list[2])));
+    }
+
+    // The contract's job moves with it in the same write (if the job exists).
+    function jobFollows(jobId, status) {
+      return !exists(/databases/$(database)/documents/jobs/$(jobId)) || jobAfter(jobId).status == status;
+    }
+
+    // Every lifecycle step (was contractActionCall). Exactly one branch per
+    // step; each lists the only fields it may change.
+    function contractStepAllowed(contractId) {
+      let c = resource.data;
+      let n = request.resource.data;
+      let ch = n.diff(c).affectedKeys();
+      let me = request.auth.uid;
+      let asWorker = c.workerId == me;
+      let asClient = c.clientId == me;
+      return isActiveUser() && (asWorker || asClient)
+        && n.get('updatedAt', null) == request.time
+        && (
+          // respond: the worker accepts a booking request…
+          (asWorker && c.status == 'pending' && n.status == 'active'
+            && ch.hasOnly(['status', 'respondedAt', 'acceptedAt', 'workStartedAt', 'submittedAt', 'updatedAt'])
+            && n.respondedAt == request.time && n.acceptedAt == request.time
+            && n.get('workStartedAt', null) == null && n.get('submittedAt', null) == null)
+          // …or declines it.
+          || (asWorker && c.status == 'pending' && n.status == 'rejected'
+            && ch.hasOnly(['status', 'respondedAt', 'updatedAt']) && n.respondedAt == request.time
+            && jobFollows(c.jobId, 'cancelled'))
+          // start: the hired worker, once, on the job assigned to them.
+          || (asWorker && stageNotStarted(c)
+            && ch.hasOnly(['workStartedAt', 'updatedAt']) && n.workStartedAt == request.time
+            && jobDoc(c.jobId).get('selectedWorkerId', null) == me
+            && jobDoc(c.jobId).status == 'assigned'
+            && jobAfter(c.jobId).status == 'in_progress')
+          // submit: the hired worker, after starting; the submission is
+          // also kept in submissions/{number}.
+          || (asWorker && stageInProgress(c)
+            && ch.hasOnly(['submittedAt', 'submission', 'submissionCount', 'updatedAt'])
+            && n.submittedAt == request.time
+            && n.submissionCount == submissionsOf(c) + 1
+            && n.submission.keys().hasOnly(['note', 'attachments', 'submittedAt'])
+            && textBetween(n.submission.note, 10, 1000)
+            && n.submission.attachments is list && n.submission.attachments.size() <= 3
+            && n.submission.submittedAt == request.time
+            && existsAfter(/databases/$(database)/documents/contracts/$(contractId)/submissions/$(string(n.submissionCount))))
+          // confirm: the client, only after the work was submitted. The
+          // worker's completed-jobs count goes up in the same write.
+          || (asClient && stageSubmitted(c) && n.status == 'completed'
+            && ch.hasOnly(['status', 'completedAt', 'endDate', 'updatedAt'])
+            && n.completedAt == request.time && n.endDate == request.time
+            && jobFollows(c.jobId, 'completed')
+            && getAfter(/databases/$(database)/documents/users/$(c.workerId)).data.get('lastCompletedContractId', '') == contractId)
+          // cancel: either party, before the work is submitted.
+          || (stageOpen(c) && n.status == 'cancelled'
+            && ch.hasOnly(['status', 'cancelledAt', 'cancelledBy', 'cancelledByRole', 'cancelReason', 'cancelNote', 'updatedAt'])
+            && n.cancelledAt == request.time && n.cancelledBy == me
+            && jobFollows(c.jobId, 'cancelled')
+            && n.cancelledByRole == (asClient ? 'client' : 'worker')
+            && n.cancelReason in ['schedule_conflict', 'no_longer_needed', 'agreed_with_other_party', 'safety_concern', 'other']
+            && n.get('cancelNote', '') is string && n.get('cancelNote', '').size() <= 300)
+          // shareAddress: the client, while open; the map pin is optional
+          // (kept, set, or removed together with its time).
+          || (asClient && stageOpen(c)
+            && ch.hasOnly(['serviceAddress', 'addressSharedAt', 'serviceLocation', 'serviceLocationSetAt', 'updatedAt'])
+            && textBetween(n.serviceAddress, 5, 200) && n.addressSharedAt == request.time
+            && (!ch.hasAny(['serviceLocation', 'serviceLocationSetAt'])
+              || (isValidGeoPoint(n.get('serviceLocation', null))
+                  && !(n.serviceLocation.latitude() == 0 && n.serviceLocation.longitude() == 0)
+                  && n.serviceLocationSetAt == request.time)
+              || (!('serviceLocation' in n) && !('serviceLocationSetAt' in n))))
+          // requestRevision: the client sends submitted work back, at most
+          // three times; recorded on that submission.
+          || (asClient && stageSubmitted(c) && revisionsOf(c) < 3
+            && ch.hasOnly(['revisionCount', 'revisionRequestedAt', 'revisionNote', 'submissionCount', 'updatedAt'])
+            && n.revisionCount == revisionsOf(c) + 1
+            && n.revisionRequestedAt == request.time
+            && textBetween(n.revisionNote, 10, 1000)
+            && n.submissionCount == submissionsOf(c))
+          // progressUpdate: the hired worker, before submitting; the update
+          // itself is updates/{lastUpdateId}, written in the same transaction.
+          || (asWorker && (stageNotStarted(c) || stageInProgress(c))
+            && ch.hasOnly(['lastUpdateAt', 'updateCount', 'lastUpdateId', 'updatedAt'])
+            && n.lastUpdateAt == request.time
+            && n.updateCount == c.get('updateCount', 0) + 1
+            && n.lastUpdateId is string && n.lastUpdateId != c.get('lastUpdateId', '')
+            && !exists(/databases/$(database)/documents/contracts/$(contractId)/updates/$(n.lastUpdateId))
+            && existsAfter(/databases/$(database)/documents/contracts/$(contractId)/updates/$(n.lastUpdateId)))
+        );
+    }
+
     match /contracts/{contractId} {
       allow read: if isAuthenticated() &&
                      (resource.data.clientId == request.auth.uid ||
                       resource.data.workerId == request.auth.uid ||
                       isAdmin());
-      allow create: if isAuthenticated() && (isAdmin() || contractCreateAllowed());
-      allow update: if isAuthenticated() && (isAdmin() || contractReviewFlagAllowed());
+      allow create: if isAuthenticated() && (isAdmin() || contractCreateAllowed(contractId)
+        || proposalContractCreateAllowed(contractId) || directRequestContractCreateAllowed(contractId));
+      allow update: if isAuthenticated() && (isAdmin() || contractReviewFlagAllowed()
+        || contractStepAllowed(contractId));
       allow delete: if isAdmin();
 
       function contractData() {
@@ -423,13 +897,13 @@ service cloud.firestore {
       }
       // Submitted work waiting for the client (see stageOf in contracts.ts).
       function awaitingReview(c) {
-        return (c.get('submissionCount', null) is int && c.submissionCount > c.get('revisionCount', 0))
-          || (!(c.get('submissionCount', null) is int) && c.get('submittedAt', null) != null);
+        return awaitingReviewOf(c);
       }
       // Live location for this contract only: the hired worker, while the
       // contract is active and the work is not waiting for review, at server
-      // time. The function deletes it when work is submitted, completed or
-      // cancelled; the worker deletes it to stop sharing.
+      // time. It is deleted when work is submitted, completed or cancelled
+      // (in the same write as that step); the worker deletes it to stop
+      // sharing.
       function liveLocationValid(d) {
         let c = contractData();
         return c.workerId == request.auth.uid && c.status == 'active' && !awaitingReview(c) && isActiveUser()
@@ -453,18 +927,88 @@ service cloud.firestore {
         allow update: if isAuthenticated() && docId == 'location'
           && liveLocationValid(request.resource.data)
           && (request.resource.data.startedAt == resource.data.startedAt || request.resource.data.startedAt == request.time);
-        allow delete: if isAuthenticated() && (isAdmin() || contractData().workerId == request.auth.uid);
+        // The worker, staff, or the client in the step that ends sharing
+        // (cancel or confirm: the contract is no longer open for work after
+        // this write).
+        allow delete: if isAuthenticated() && (isAdmin() || contractData().workerId == request.auth.uid
+          || (contractData().clientId == request.auth.uid
+              && (contractAfterOf(contractId).status != 'active' || awaitingReviewOf(contractAfterOf(contractId)))));
       }
 
-      // Progress updates and submission history: written only by
-      // contractActionCall; readable by the two parties and staff.
+      // Work evidence photos (free plan, Phase S6; were in Storage): only the
+      // hired worker adds them, while the work is in progress; the two
+      // parties and staff read them; kept as part of the record.
+      match /evidence/{photoId} {
+        allow read: if isAuthenticated() && (isAdmin() || isContractParty());
+        allow create: if isAuthenticated() && isActiveUser()
+          && contractData().workerId == request.auth.uid
+          && stageInProgress(contractData())
+          && photoId.matches('^[A-Za-z0-9_-]{1,80}$')
+          && request.resource.data.keys().hasOnly(['data', 'contentType', 'uploadedBy', 'createdAt'])
+          && request.resource.data.uploadedBy == request.auth.uid
+          && privateFileValid(request.resource.data, false);
+        allow update, delete: if isAdmin();
+      }
+
+      // Progress updates: written by the hired worker together with the
+      // contract step (lastUpdateId); readable by the two parties and staff.
       match /updates/{updateId} {
         allow read: if isAuthenticated() && (isAdmin() || isContractParty());
-        allow write: if false;
+        allow create: if isAuthenticated()
+          && contractData().workerId == request.auth.uid
+          && updateId.matches('^[A-Za-z0-9_-]{8,64}$')
+          && contractAfterOf(contractId).get('lastUpdateId', '') == updateId
+          && request.resource.data.keys().hasOnly(['note', 'authorId', 'authorRole', 'createdAt'])
+          && textBetween(request.resource.data.note, 2, 1000)
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorRole == 'worker'
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+
+      // Submission history. The worker adds each submission with the submit
+      // step; the client records a revision request on it with that step.
+      // Contracts from before the counter existed get their first record
+      // created by the client's revision request.
+      function submissionNumberOk(submissionId, c) {
+        return submissionId == string(c.submissionCount);
       }
       match /submissions/{submissionId} {
         allow read: if isAuthenticated() && (isAdmin() || isContractParty());
-        allow write: if false;
+        allow create: if isAuthenticated() && (
+          // Worker: this submission, same note and photos as the contract's.
+          (contractData().workerId == request.auth.uid
+            && stageInProgress(contractData())
+            && submissionNumberOk(submissionId, contractAfterOf(contractId))
+            && request.resource.data.keys().hasOnly(['number', 'note', 'attachments', 'submittedAt', 'submittedBy'])
+            && request.resource.data.number == contractAfterOf(contractId).submissionCount
+            && request.resource.data.note == contractAfterOf(contractId).submission.note
+            && request.resource.data.attachments == contractAfterOf(contractId).submission.attachments
+            // Only this contract's own evidence photos (free plan, Phase S6).
+            && evidenceListValid(contractId, request.resource.data.attachments)
+            && request.resource.data.submittedAt == request.time
+            && request.resource.data.submittedBy == request.auth.uid)
+          // Client, older contract: the first record, with the revision.
+          || (clientRevisionRecordAllowed(submissionId)
+            && request.resource.data.keys().hasOnly(['number', 'revisionNote', 'revisionRequestedAt',
+                                                     'note', 'attachments', 'submittedAt'])
+            && request.resource.data.get('note', '') == contractData().get('submission', {}).get('note', '')
+            && request.resource.data.get('attachments', []) == contractData().get('submission', {}).get('attachments', [])
+            && request.resource.data.get('submittedAt', null) == contractData().get('submittedAt', null)));
+        allow update: if isAuthenticated() && clientRevisionRecordAllowed(submissionId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['number', 'revisionNote', 'revisionRequestedAt']);
+        allow delete: if false;
+      }
+      // The client's revision request on the submission it answers.
+      function clientRevisionRecordAllowed(submissionId) {
+        let c = contractData();
+        let a = contractAfterOf(contractId);
+        return c.clientId == request.auth.uid && stageSubmitted(c)
+          && a.get('revisionCount', 0) == revisionsOf(c) + 1
+          && submissionNumberOk(submissionId, a)
+          && request.resource.data.number == a.submissionCount
+          && request.resource.data.revisionNote == a.revisionNote
+          && request.resource.data.revisionRequestedAt == request.time;
       }
     }
 
@@ -486,7 +1030,10 @@ service cloud.firestore {
                            get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.clientReviewed == false) ||
                           (get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerId == request.auth.uid &&
                            get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.clientId == request.resource.data.revieweeId &&
-                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerReviewed == false))
+                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerReviewed == false)) &&
+                         // Free plan (Phase S5): the reviewee's rating ledger
+                         // takes this review in the same write.
+                         getAfter(/databases/$(database)/documents/ratings/$(request.resource.data.revieweeId)).data.lastReviewId == reviewId
                        ));
       allow update: if isAdmin() || (isAuthenticated() &&
                        resource.data.revieweeId == request.auth.uid &&
@@ -495,11 +1042,104 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── Rating ledger (free plan, Phase S5; was aggregateReviewRating) ────
+    // One per person: how many reviews, their sum and the average (one
+    // decimal). It moves only together with a new review of that person, by
+    // exactly that review. Owners copy it onto their account and public
+    // profile (the users rules accept only these values).
+    function ratingLedgerAllowed(userId) {
+      let after = request.resource.data;
+      let rid = after.get('lastReviewId', '');
+      let review = getAfter(/databases/$(database)/documents/reviews/$(rid)).data;
+      let count0 = resource == null ? 0 : resource.data.get('count', 0);
+      let sum0 = resource == null ? 0 : resource.data.get('sum', 0);
+      return after.keys().hasOnly(['count', 'sum', 'average', 'lastReviewId', 'updatedAt'])
+        && rid is string && rid.size() > 0
+        && !exists(/databases/$(database)/documents/reviews/$(rid))
+        && review.revieweeId == userId && review.reviewerId == request.auth.uid
+        && after.count == count0 + 1
+        && after.sum == sum0 + review.rating
+        && after.average == math.round((after.sum * 1.0) / after.count * 10) / 10.0
+        && after.updatedAt == request.time;
+    }
+    match /ratings/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && userId != request.auth.uid && ratingLedgerAllowed(userId);
+      allow delete: if isAdmin();
+    }
+
     // ── Chats / Messages (Phase 4B) ───────────────────────────────────────
-    // Conversations are created only by trusted functions (openChatCall, and
-    // hiring in Phase 4A), which check a real relationship. The preview,
-    // ordering time and unread counts are kept by onChatMessageCreated; a
-    // member may only mark the conversation read for themselves.
+    // Free plan (Phase S5): a member's app opens a conversation, and the
+    // rules check the same relationship openChatCall did. Each message is
+    // written together with the chat's preview, time and the recipient's
+    // unread count (+1). A member may also mark it read for themselves.
+    function nameOk(name, u) {
+      return name == u.get('displayName', '') || name == 'SkillBridge user';
+    }
+    function photoOk(photo, u) {
+      return photo == null || photo == u.get('photoUrl', null);
+    }
+    function chatCreateAllowed(chatId) {
+      let d = request.resource.data;
+      let me = request.auth.uid;
+      let ids = d.participantIds;
+      let other = ids[0] == me ? ids[1] : ids[0];
+      let otherUser = get(/databases/$(database)/documents/users/$(other)).data;
+      let meUser = currentUserData();
+      return isActiveUser()
+        && ids is list && ids.size() == 2 && me in ids && other != me
+        && otherUser.get('isActive', true) == true
+        && d.keys().hasOnly(['participantIds', 'participantNames', 'participantPhotos', 'lastMessage',
+                             'lastMessageSenderId', 'lastMessageType', 'lastMessageAt', 'unreadCount',
+                             'lastReadAt', 'createdAt', 'createdBy', 'relatedJobId', 'relatedJobTitle'])
+        && d.lastMessage == '' && d.lastMessageSenderId == '' && d.lastMessageType == 'none'
+        && d.lastMessageAt == request.time && d.createdAt == request.time && d.createdBy == me
+        && d.unreadCount.keys().hasOnly([me, other])
+        && d.unreadCount.get(me, -1) == 0 && d.unreadCount.get(other, -1) == 0
+        && d.lastReadAt.keys().size() == 0
+        && d.participantNames.keys().hasOnly([me, other])
+        && nameOk(d.participantNames.get(me, ''), meUser) && nameOk(d.participantNames.get(other, ''), otherUser)
+        && d.participantPhotos.keys().hasOnly([me, other])
+        && photoOk(d.participantPhotos.get(me, null), meUser) && photoOk(d.participantPhotos.get(other, null), otherUser)
+        && (jobChatAllowed(chatId, d, ids, me) || directChatAllowed(chatId, d, me, other, otherUser));
+    }
+    // About a job: its client and a worker who may write about it (writing
+    // about a public open job, applied, or selected/hired).
+    function jobChatAllowed(chatId, d, ids, me) {
+      let job = jobDoc(d.relatedJobId);
+      let worker = ids[0] == job.clientId ? ids[1] : ids[0];
+      return 'relatedJobId' in d && job.clientId in ids
+        && chatId == d.relatedJobId + '_' + worker
+        && d.get('relatedJobTitle', '') == job.title
+        && ((worker == me && isWorker() && isPublicOpenJob(job))
+          || exists(/databases/$(database)/documents/proposals/$(d.relatedJobId + '_' + worker))
+          || job.get('selectedWorkerId', null) == worker);
+    }
+    // Outside a job: only an active client starts one, with an active worker.
+    function directChatAllowed(chatId, d, me, other, otherUser) {
+      return !('relatedJobId' in d) && !('relatedJobTitle' in d)
+        && chatId == 'direct_' + me + '_' + other
+        && isClient() && otherUser.get('role', '') == 'worker';
+    }
+    function chatSummaryAllowed(chatId) {
+      let me = request.auth.uid;
+      let before = resource.data;
+      let after = request.resource.data;
+      let ids = before.participantIds;
+      let other = ids[0] == me ? ids[1] : ids[0];
+      let mid = after.get('lastMessageId', '');
+      return me in ids
+        && after.diff(before).affectedKeys().hasOnly(['lastMessage', 'lastMessageSenderId', 'lastMessageType',
+                                                       'lastMessageAt', 'lastMessageId', 'unreadCount'])
+        && after.lastMessageSenderId == me && after.lastMessageAt == request.time
+        && after.lastMessage is string && after.lastMessage.size() <= 130
+        && mid is string && mid != before.get('lastMessageId', '')
+        && !exists(/databases/$(database)/documents/chats/$(chatId)/messages/$(mid))
+        && getAfter(/databases/$(database)/documents/chats/$(chatId)/messages/$(mid)).data.senderId == me
+        && after.lastMessageType == getAfter(/databases/$(database)/documents/chats/$(chatId)/messages/$(mid)).data.type
+        && after.unreadCount.diff(before.get('unreadCount', {})).affectedKeys().hasOnly([other])
+        && after.unreadCount.get(other, 0) == before.get('unreadCount', {}).get(other, 0) + 1;
+    }
     function chatMarkReadAllowed() {
       let me = request.auth.uid;
       let after = request.resource.data;
@@ -515,8 +1155,8 @@ service cloud.firestore {
     match /chats/{chatId} {
       // Members and staff only, so no-one can probe which chats exist.
       allow read: if isAuthenticated() && (isAdmin() || request.auth.uid in resource.data.participantIds);
-      allow create: if isAdmin();
-      allow update: if isAuthenticated() && (isAdmin() || chatMarkReadAllowed());
+      allow create: if isAuthenticated() && (isAdmin() || chatCreateAllowed(chatId));
+      allow update: if isAuthenticated() && (isAdmin() || chatMarkReadAllowed() || chatSummaryAllowed(chatId));
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
@@ -533,10 +1173,13 @@ service cloud.firestore {
           return exists(/databases/$(database)/documents/users/$(other))
             && get(/databases/$(database)/documents/users/$(other)).data.get('isActive', true) == true;
         }
-        // Photos live under the sender's own folder for this message.
+        // Free plan (Phase S6): photos are this chat's private files for this
+        // message, added by the sender (chats/{chat}/media/{message}_p{n}).
         function attachmentOk(path) {
           return path is string
-            && path.matches('chats/' + chatId + '/' + request.auth.uid + '/' + messageId + '/[A-Za-z0-9_-]{1,60}[.](jpg|jpeg|png|webp)');
+            && path.matches('^chats/' + chatId + '/media/' + messageId + '_p[0-9]$')
+            && exists(/databases/$(database)/documents/chats/$(chatId)/media/$(path.split('/')[3]))
+            && get(/databases/$(database)/documents/chats/$(chatId)/media/$(path.split('/')[3])).data.senderId == request.auth.uid;
         }
         function attachmentsValid(d) {
           return d.attachments is list && d.attachments.size() >= 1 && d.attachments.size() <= 3
@@ -562,13 +1205,33 @@ service cloud.firestore {
         allow create: if isAuthenticated() && isChatMember() && isActiveUser()
           && messageId.matches('[A-Za-z0-9_-]{8,64}')
           && recipientActive()
-          && messageValid(request.resource.data);
+          && messageValid(request.resource.data)
+          // The chat summary moves with it (free plan, Phase S5).
+          && getAfter(/databases/$(database)/documents/chats/$(chatId)).data.get('lastMessageId', '') == messageId;
         // The recipient may mark a message read; nothing else changes.
         allow update: if isAuthenticated() && isChatMember()
           && resource.data.senderId != request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
           && request.resource.data.isRead == true;
         allow delete: if isAdmin();
+      }
+
+      // Chat photos (free plan, Phase S6; were in Storage): members only. The
+      // sender adds them before the message that shows them.
+      match /media/{mediaId} {
+        function memberOfThisChat() {
+          return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+        }
+        allow read: if isAuthenticated() && (isAdmin() || memberOfThisChat());
+        allow create: if isAuthenticated() && isActiveUser() && memberOfThisChat()
+          && mediaId.matches('^[A-Za-z0-9_-]{8,64}_p[0-9]$')
+          && request.resource.data.keys().hasOnly(['data', 'contentType', 'senderId', 'messageId', 'createdAt'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.messageId is string
+          && request.resource.data.messageId.matches('^[A-Za-z0-9_-]{8,64}$')
+          && mediaId.matches('^' + request.resource.data.messageId + '_p[0-9]$')
+          && privateFileValid(request.resource.data, false);
+        allow update, delete: if isAdmin();
       }
     }
 
@@ -582,10 +1245,41 @@ service cloud.firestore {
     match /notifications/{notifId} {
       allow read, update, delete: if isAuthenticated() &&
                                      (resource.data.userId == request.auth.uid || isAdmin());
-      // Message, revision and progress notifications come only from trusted
-      // functions, so they can't be forged.
-      allow create: if isAuthenticated()
-        && !(request.resource.data.get('type', '') in ['message', 'revision_requested', 'progress_update']);
+      // Free plan (Phase S5): in-app only (no push without a server). Sent by
+      // the other person's app, so the rules require a real link: a contract
+      // both are party to, a chat both are in, or a job between its client and
+      // a worker who applied or was chosen. Short, unread, at server time.
+      allow create: if isAuthenticated() && notificationAllowed();
+    }
+
+    function notificationAllowed() {
+      let n = request.resource.data;
+      let me = request.auth.uid;
+      let p = n.get('payload', {});
+      return isActiveUser()
+        && n.keys().hasOnly(['userId', 'title', 'body', 'type', 'payload', 'referenceId', 'isRead', 'createdAt'])
+        && n.userId is string && n.userId != me
+        && textBetween(n.title, 1, 100) && n.body is string && n.body.size() <= 400
+        && n.get('type', '') is string && n.get('type', '').size() <= 40
+        && n.get('referenceId', '') is string
+        && n.isRead == false && n.createdAt == request.time
+        && p is map && p.keys().hasOnly(['contractId', 'jobId', 'proposalId', 'chatId', 'messageId'])
+        && ((p.get('contractId', '') != '' && contractPartiesAre(p.contractId, me, n.userId))
+          || (p.get('chatId', '') != '' && chatMembersAre(p.chatId, me, n.userId))
+          || (p.get('jobId', '') != '' && jobLinked(p.jobId, me, n.userId)));
+    }
+    function contractPartiesAre(cid, a, b) {
+      let c = contractAfterOf(cid);
+      return (c.clientId == a && c.workerId == b) || (c.workerId == a && c.clientId == b);
+    }
+    function chatMembersAre(chatId, a, b) {
+      return getAfter(/databases/$(database)/documents/chats/$(chatId)).data.participantIds.hasAll([a, b]);
+    }
+    function jobLinked(jobId, me, other) {
+      let j = jobAfter(jobId);
+      return (j.clientId == other && existsAfter(/databases/$(database)/documents/proposals/$(jobId + '_' + me)))
+        || (j.clientId == me && j.get('selectedWorkerId', null) == other)
+        || (j.get('selectedWorkerId', null) == me && j.clientId == other);
     }
 
     // ── FCM Tokens ────────────────────────────────────────────────────────

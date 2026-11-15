@@ -9,7 +9,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import assert from 'node:assert/strict';
 import {
-  GeoPoint, Timestamp, collection, deleteDoc, deleteField, doc, getDoc, getDocs, limit, orderBy, query,
+  Bytes, GeoPoint, Timestamp, collection, deleteDoc, deleteField, doc, getDoc, getDocs, increment, limit, orderBy, query,
   serverTimestamp, setDoc, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { deleteObject, getBytes, ref, uploadBytes } from 'firebase/storage';
@@ -452,6 +452,23 @@ async function seedMarket() {
   await seed('jobs/other', jobData('c2'));
 }
 
+// Free plan (Phase S3): sending, re-sending and withdrawing move the job's
+// proposal count in the same write.
+async function readAsOwner(path) {
+  let data;
+  await env.withSecurityRulesDisabled(async (ctx) => { data = (await getDoc(doc(ctx.firestore(), path))).data(); });
+  return data;
+}
+function sendBatch(db, jobId, workerId, clientId, extra = {}, by = 1) {
+  return writeBatch(db)
+    .set(doc(db, `proposals/${jobId}_${workerId}`), proposalData(jobId, workerId, clientId, extra))
+    .update(doc(db, `jobs/${jobId}`), { totalProposals: increment(by) });
+}
+function changeBatch(db, jobId, workerId, fields, by) {
+  const b = writeBatch(db).update(doc(db, `proposals/${jobId}_${workerId}`), fields);
+  return by === 0 ? b : b.update(doc(db, `jobs/${jobId}`), { totalProposals: increment(by) });
+}
+
 function acceptBatch(db, { jobId = 'j1', workerId = 'w1', others = [], contract = true } = {}) {
   const b = writeBatch(db);
   b.update(doc(db, `proposals/${jobId}_${workerId}`), { status: 'accepted', decidedAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -488,8 +505,28 @@ async function seedHired({ jobId = 'j1', workerId = 'w1', others = [] } = {}) {
 describe('proposals: submitting', () => {
   beforeEach(seedMarket);
 
-  test('1. a worker submits a proposal to an open job', async () => {
-    await assertSucceeds(setDoc(doc(user('w1'), 'proposals/j1_w1'), proposalData('j1', 'w1', 'c1')));
+  test('1. a worker submits a proposal to an open job (the job count goes up by one)', async () => {
+    await assertSucceeds(sendBatch(user('w1'), 'j1', 'w1', 'c1').commit());
+    assert.equal((await readAsOwner('jobs/j1')).totalProposals, 1);
+  });
+
+  test('S3: a proposal must count itself, exactly once', async () => {
+    await assertFails(setDoc(doc(user('w1'), 'proposals/j1_w1'), proposalData('j1', 'w1', 'c1')));
+    await assertFails(sendBatch(user('w1'), 'j1', 'w1', 'c1', {}, 2).commit());
+    await assertFails(sendBatch(user('w1'), 'j1', 'w1', 'c1', {}, -1).commit());
+    const w1 = user('w1');
+    await assertFails(writeBatch(w1)
+      .set(doc(w1, 'proposals/j1_w1'), proposalData('j1', 'w1', 'c1'))
+      .update(doc(w1, 'jobs/j1'), { totalProposals: increment(1), title: 'Hijacked title' }).commit());
+  });
+
+  test('S3: nobody can move a job count without their own proposal changing', async () => {
+    await assertFails(updateDoc(doc(user('w1'), 'jobs/j1'), { totalProposals: increment(1) }));
+    await assertFails(updateDoc(doc(user('w2'), 'jobs/j1'), { totalProposals: increment(-1) }));
+    await assertFails(updateDoc(doc(user('c1'), 'jobs/j1'), { totalProposals: 40 }));
+    await assertSucceeds(sendBatch(user('w1'), 'j1', 'w1', 'c1').commit());
+    // A second bump riding on an unchanged proposal is refused.
+    await assertFails(updateDoc(doc(user('w1'), 'jobs/j1'), { totalProposals: increment(1) }));
   });
 
   test('2. closed, completed and direct-request jobs cannot receive proposals', async () => {
@@ -508,8 +545,9 @@ describe('proposals: submitting', () => {
   });
 
   test('5. no duplicate proposals: fixed id, one per worker per job', async () => {
-    await assertSucceeds(setDoc(doc(user('w1'), 'proposals/j1_w1'), proposalData('j1', 'w1', 'c1')));
+    await assertSucceeds(sendBatch(user('w1'), 'j1', 'w1', 'c1').commit());
     await assertFails(setDoc(doc(user('w1'), 'proposals/j1_w1'), proposalData('j1', 'w1', 'c1', { proposedRate: 2000 })));
+    await assertFails(sendBatch(user('w1'), 'j1', 'w1', 'c1', { proposedRate: 2000 }).commit());
     await assertFails(setDoc(doc(user('w1'), 'proposals/random123'), proposalData('j1', 'w1', 'c1')));
   });
 
@@ -554,11 +592,22 @@ describe('proposals: changes and reading', () => {
     await assertFails(updateDoc(doc(user('w1'), 'proposals/j1_w1'), { status: 'rejected', closedReason: 'client' }));
   });
 
-  test('withdraw, then re-send while the job is open', async () => {
-    await assertSucceeds(updateDoc(doc(user('w1'), 'proposals/j1_w1'), { status: 'withdrawn', withdrawnAt: serverTimestamp(), updatedAt: serverTimestamp() }));
-    await assertSucceeds(updateDoc(doc(user('w1'), 'proposals/j1_w1'), {
-      status: 'pending', proposedRate: 2200, resubmittedAt: serverTimestamp(), withdrawnAt: null, updatedAt: serverTimestamp(),
-    }));
+  test('withdraw, then re-send while the job is open (count down, then up)', async () => {
+    await seed('jobs/j1', { ...(await readAsOwner('jobs/j1')), totalProposals: 2 });
+    const w = { status: 'withdrawn', withdrawnAt: serverTimestamp(), updatedAt: serverTimestamp() };
+    await assertFails(changeBatch(user('w1'), 'j1', 'w1', w, 0).commit());
+    await assertFails(changeBatch(user('w1'), 'j1', 'w1', w, -2).commit());
+    await assertSucceeds(changeBatch(user('w1'), 'j1', 'w1', w, -1).commit());
+    const r = { status: 'pending', proposedRate: 2200, resubmittedAt: serverTimestamp(), withdrawnAt: null, updatedAt: serverTimestamp() };
+    await assertFails(changeBatch(user('w1'), 'j1', 'w1', r, 0).commit());
+    await assertSucceeds(changeBatch(user('w1'), 'j1', 'w1', r, 1).commit());
+    assert.equal((await readAsOwner('jobs/j1')).totalProposals, 2);
+  });
+
+  test('S3: withdrawing on a job whose count was never kept leaves it at 0', async () => {
+    const w = { status: 'withdrawn', withdrawnAt: serverTimestamp(), updatedAt: serverTimestamp() };
+    await assertFails(changeBatch(user('w1'), 'j1', 'w1', w, -1).commit());
+    await assertSucceeds(changeBatch(user('w1'), 'j1', 'w1', w, 0).commit());
   });
 
   test('a withdrawn proposal cannot be accepted; a declined one cannot be re-sent or accepted', async () => {
@@ -646,7 +695,7 @@ describe('contracts', () => {
     const db = user('c1');
     const b = writeBatch(db);
     b.set(doc(db, 'jobs/dh'), jobData('c1', { title: 'Direct Hire: Electrician', status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }));
-    b.set(doc(db, 'contracts/dh1'), { jobId: 'dh', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending' });
+    b.set(doc(db, 'contracts/dh_w1'), { jobId: 'dh', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending' });
     await assertSucceeds(b.commit());
   });
 
@@ -659,7 +708,7 @@ describe('contracts', () => {
   });
 });
 
-describe('chat (Phase 4B: conversations are opened by the trusted function)', () => {
+describe('chat (Phase 4B; free plan S5: opened by members, checked by the rules)', () => {
   const chat = (jobId, a, b, extra = {}) => ({
     participantIds: [a, b], participantNames: { [a]: 'A', [b]: 'B' }, participantPhotos: { [a]: null, [b]: null },
     lastMessage: '', lastMessageSenderId: '', lastMessageType: 'none', lastMessageAt: serverTimestamp(),
@@ -669,7 +718,20 @@ describe('chat (Phase 4B: conversations are opened by the trusted function)', ()
   const message = (chatId, senderId, extra = {}) => ({
     chatId, senderId, senderName: 'A', content: 'Hello, is the job still open?', type: 'text', isRead: false, createdAt: serverTimestamp(), ...extra,
   });
-  const send = (uid, id, data, chatId = 'j1_w1') => setDoc(doc(user(uid), `chats/${chatId}/messages/${id}`), data);
+  // Free plan (Phase S5): a message is written with the chat's summary and
+  // the recipient's unread count (+1).
+  const members = { j1_w1: ['w1', 'c1'], x_ws: ['c1', 'ws'], x_cs: ['cs', 'w1'], x_gone: ['c1', 'gone'] };
+  const send = (uid, id, data, chatId = 'j1_w1', summary = {}) => {
+    const db = user(uid);
+    const other = (members[chatId] || []).find((x) => x !== uid) || 'w1';
+    return writeBatch(db)
+      .set(doc(db, `chats/${chatId}/messages/${id}`), data)
+      .update(doc(db, `chats/${chatId}`), {
+        lastMessage: 'Hello', lastMessageSenderId: uid, lastMessageType: data.type || 'text',
+        lastMessageAt: serverTimestamp(), lastMessageId: id, [`unreadCount.${other}`]: increment(1), ...summary,
+      })
+      .commit();
+  };
 
   beforeEach(async () => {
     await seedMarket();
@@ -687,13 +749,61 @@ describe('chat (Phase 4B: conversations are opened by the trusted function)', ()
     await assertSucceeds(updateDoc(doc(c1, 'chats/j1_w1/messages/seed_msg_0001'), { isRead: true }));
   });
 
-  test('conversations are created only by the trusted function, never directly', async () => {
-    await assertFails(setDoc(doc(user('w2'), 'chats/j1_w2'), chat('j1', 'w2', 'c1')), 'even about a public open job');
+  // Free plan (Phase S5): members open conversations; the rules check the
+  // relationship openChatCall used to check.
+  const opened = (jobId, a, b, extra = {}) => ({
+    participantIds: [a, b], participantNames: { [a]: 'Test', [b]: 'Test' }, participantPhotos: { [a]: null, [b]: null },
+    lastMessage: '', lastMessageSenderId: '', lastMessageType: 'none', lastMessageAt: serverTimestamp(),
+    unreadCount: { [a]: 0, [b]: 0 }, lastReadAt: {}, createdAt: serverTimestamp(), createdBy: a,
+    ...(jobId ? { relatedJobId: jobId, relatedJobTitle: 'Fix kitchen wiring' } : {}), ...extra,
+  });
+
+  test('S5: conversations open only for a real relationship', async () => {
+    await assertSucceeds(setDoc(doc(user('w2'), 'chats/j1_w2'), opened('j1', 'w2', 'c1')), 'a worker about a public open job');
     await seed('proposals/closed1_w2', proposalData('closed1', 'w2', 'c1'));
-    await assertFails(setDoc(doc(user('c1'), 'chats/closed1_w2'), chat('closed1', 'c1', 'w2')), 'even with a proposal');
-    await assertFails(setDoc(doc(user('c2'), 'chats/direct_c2_w2'), chat(null, 'c2', 'w2')), 'direct chats too');
-    await assertFails(setDoc(doc(user('c1'), 'chats/j1_w1'), chat('j1', 'c1', 'w1')), 'no overwriting an existing chat');
-    await assertSucceeds(setDoc(doc(admin().firestore(), 'chats/direct_c2_w2'), chat(null, 'c2', 'w2')), 'staff / Admin SDK');
+    await assertSucceeds(setDoc(doc(user('c1'), 'chats/closed1_w2'), opened('closed1', 'c1', 'w2')), 'the client with an applicant');
+    await assertSucceeds(setDoc(doc(user('c2'), 'chats/direct_c2_w2'), opened(null, 'c2', 'w2')), 'a client directly with a worker');
+    await assertFails(setDoc(doc(user('w2'), 'chats/direct_w2_c2'), opened(null, 'w2', 'c2')), 'workers do not start direct chats');
+    await assertFails(setDoc(doc(user('c2'), 'chats/j1_w1'), opened('j1', 'c2', 'w1')), 'not the job\'s client');
+    await assertFails(setDoc(doc(user('w2'), 'chats/closed1_w2'), opened('closed1', 'w2', 'c1')), 'already opened by the client');
+    await assertFails(setDoc(doc(user('w1'), 'chats/done1_w1'), opened('done1', 'w1', 'c1')), 'no link to that job');
+    await assertFails(setDoc(doc(user('c1'), 'chats/j1_w9'), opened('j1', 'c1', 'w2')), 'id must name the worker');
+    await assertFails(setDoc(doc(user('c2'), 'chats/direct_c2_ws'), opened(null, 'c2', 'ws')), 'suspended account');
+    await assertFails(setDoc(doc(user('c1'), 'chats/j1_w1'), opened('j1', 'c1', 'w1')), 'no overwriting an existing chat');
+  });
+
+  test('S5: an opened conversation cannot carry faked names, counts or history', async () => {
+    for (const bad of [{ participantNames: { w2: 'Test', c1: 'Admin Support' } }, { unreadCount: { w2: 0, c1: 5 } },
+      { lastMessage: 'Fake history' }, { createdBy: 'c1' }, { participantPhotos: { w2: null, c1: 'https://evil/x.png' } },
+      { relatedJobTitle: 'Another title' }]) {
+      await assertFails(setDoc(doc(user('w2'), 'chats/j1_w2'), opened('j1', 'w2', 'c1', bad)), JSON.stringify(bad));
+    }
+    await assertSucceeds(setDoc(doc(user('w2'), 'chats/j1_w2'), opened('j1', 'w2', 'c1', { participantNames: { w2: 'Test', c1: 'SkillBridge user' } })));
+  });
+
+  test('S5: a message needs its summary, and the summary needs its message', async () => {
+    const c1 = user('c1');
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/messages/msg_alone_01'), message('j1_w1', 'c1')), 'message alone');
+    await assertFails(updateDoc(doc(c1, 'chats/j1_w1'), { lastMessage: 'Hi', lastMessageSenderId: 'c1', lastMessageType: 'text',
+      lastMessageAt: serverTimestamp(), lastMessageId: 'msg_ghost_01', 'unreadCount.w1': increment(1) }), 'summary alone');
+    await assertFails(send('c1', 'msg_twice_01', message('j1_w1', 'c1'), 'j1_w1', { 'unreadCount.w1': increment(2) }), '+2 unread');
+    await assertFails(send('c1', 'msg_self_001', message('j1_w1', 'c1'), 'j1_w1', { 'unreadCount.c1': increment(1) }), 'own count');
+    await assertFails(send('c1', 'msg_spoof_01', message('j1_w1', 'c1'), 'j1_w1', { lastMessageSenderId: 'w1' }), 'spoofed sender');
+    await assertSucceeds(send('c1', 'msg_ok_00001', message('j1_w1', 'c1')));
+  });
+
+  test('S5: notifications only between people with a real link (in-app)', async () => {
+    const n = (to, payload, extra = {}) => ({ userId: to, title: 'New message from Ayesha', body: 'Hi', type: 'message',
+      payload, isRead: false, createdAt: serverTimestamp(), ...extra });
+    await assertSucceeds(setDoc(doc(user('c1'), 'notifications/n1'), n('w1', { chatId: 'j1_w1', messageId: 'm1' })));
+    await assertFails(setDoc(doc(user('c2'), 'notifications/n2'), n('w1', { chatId: 'j1_w1' })), 'not in that chat');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n3'), n('w2', { chatId: 'j1_w1' })), 'recipient not in that chat');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n4'), n('w1', {})), 'no link');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n5'), n('w1', { chatId: 'j1_w1' }, { body: 'x'.repeat(401) })), 'too long');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n6'), n('c1', { chatId: 'j1_w1' })), 'not to yourself');
+    await assertFails(setDoc(doc(user('w2'), 'notifications/n7'), n('c1', { jobId: 'j1' }, { type: 'proposal' })), 'no proposal behind it');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n8'), n('w1', { chatId: 'j1_w1' }, { isRead: true })));
+    await assertFails(setDoc(doc(user('c1'), 'notifications/n9'), n('w1', { chatId: 'j1_w1' }, { createdAt: Timestamp.now() })), 'device time');
   });
 
   test('15. unrelated users cannot read job chats', async () => {
@@ -736,21 +846,44 @@ describe('chat (Phase 4B: conversations are opened by the trusted function)', ()
     await assertFails(deleteDoc(doc(user('w1'), 'chats/j1_w1/messages/seed_msg_0001')));
   });
 
-  test("photo messages point only at the sender's own folder for that message", async () => {
+  // Free plan (Phase S6): chat photos are private files in the chat
+  // (chats/{chat}/media/{message}_p{n}), added by the sender first.
+  const jpgBytes = (n = 1024) => Bytes.fromUint8Array(new Uint8Array(n).fill(7));
+  const media = (sender, messageId, extra = {}) => ({ data: jpgBytes(), contentType: 'image/jpeg', senderId: sender,
+    messageId, createdAt: serverTimestamp(), ...extra });
+
+  test("photo messages point only at the sender's own photos for that message", async () => {
     const id = 'msg_photo_001';
+    const c1 = user('c1');
+    await assertSucceeds(setDoc(doc(c1, `chats/j1_w1/media/${id}_p1`), media('c1', id)));
+    await assertSucceeds(setDoc(doc(c1, `chats/j1_w1/media/${id}_p2`), media('c1', id, { contentType: 'image/png' })));
     const photo = (paths, extra = {}) => message('j1_w1', 'c1', { type: 'image', content: '', attachments: paths, ...extra });
-    await assertSucceeds(send('c1', id, photo([`chats/j1_w1/c1/${id}/p1.jpg`, `chats/j1_w1/c1/${id}/p2.png`])));
+    await seed('chats/j1_w1/media/msg_photo_002_p1', media('w1', 'msg_photo_002'));
     const bad = [
-      [`chats/j1_w1/w1/msg_photo_002/p1.jpg`],          // someone else's folder
-      [`chats/j1_w1/c1/msg_other_01/p1.jpg`],           // another message
-      [`chats/other/c1/msg_photo_002/p1.jpg`],          // another chat
-      [`chats/j1_w1/c1/msg_photo_002/p1.pdf`],          // not a photo
-      [`chats/j1_w1/c1/msg_photo_002/../x.jpg`],        // path tricks
+      ['chats/j1_w1/media/msg_photo_002_p1'],           // someone else's photo
+      ['chats/j1_w1/media/msg_photo_009_p1'],           // missing
+      [`chats/j1_w1/media/${id}_p1`],                   // another message's photo
+      ['chats/other/media/msg_photo_002_p1'],           // another chat
+      ['chats/j1_w1/media/msg_photo_002_p1/../x'],      // path tricks
       [],
-      ['a', 'b', 'c', 'd'].map((n) => `chats/j1_w1/c1/msg_photo_002/${n}.jpg`),
+      ['1', '2', '3', '4'].map((n) => `chats/j1_w1/media/msg_photo_002_p${n}`),
     ];
     for (const paths of bad) await assertFails(send('c1', 'msg_photo_002', photo(paths)), JSON.stringify(paths));
-    await assertFails(send('c1', 'msg_photo_003', message('j1_w1', 'c1', { attachments: [`chats/j1_w1/c1/msg_photo_003/p.jpg`] })), 'text messages carry no attachments');
+    await assertSucceeds(send('c1', id, photo([`chats/j1_w1/media/${id}_p1`, `chats/j1_w1/media/${id}_p2`])));
+    await assertFails(send('c1', 'msg_photo_003', message('j1_w1', 'c1', { attachments: [`chats/j1_w1/media/${id}_p1`] })), 'text messages carry no attachments');
+  });
+
+  test('S6: chat photos are private files: members only, the sender as themselves, small images only', async () => {
+    const c1 = user('c1');
+    await assertFails(setDoc(doc(user('c2'), 'chats/j1_w1/media/msg_x_000001_p1'), media('c2', 'msg_x_000001')), 'not a member');
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000002_p1'), media('w1', 'msg_x_000002')), 'as someone else');
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000003_p1'), media('c1', 'msg_x_000003', { data: jpgBytes(716801) })), 'too large');
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000004_p1'), media('c1', 'msg_x_000004', { contentType: 'application/pdf' })), 'not a photo');
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000005_p1'), media('c1', 'msg_x_000099')), 'id must match its message');
+    await assertSucceeds(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000006_p1'), media('c1', 'msg_x_000006')));
+    await assertFails(setDoc(doc(c1, 'chats/j1_w1/media/msg_x_000006_p1'), media('c1', 'msg_x_000006')), 'never replaced');
+    await assertSucceeds(getDoc(doc(user('w1'), 'chats/j1_w1/media/msg_x_000006_p1')));
+    await assertFails(getDoc(doc(user('c2'), 'chats/j1_w1/media/msg_x_000006_p1')), 'outsiders cannot read');
   });
 
   test('no messages to suspended or deleted accounts; suspended accounts cannot post', async () => {
@@ -762,12 +895,11 @@ describe('chat (Phase 4B: conversations are opened by the trusted function)', ()
     await assertFails(send('c1', 'msg_000000c3', message('x_gone', 'c1'), 'x_gone'), 'recipient deleted');
   });
 
-  test('message, revision and progress notifications cannot be forged', async () => {
+  test('notifications without a link to the recipient are refused (free plan, Phase S5)', async () => {
     const n = (type) => ({ userId: 'w1', title: 'New message from Ayesha', body: 'Hi', type, isRead: false, createdAt: serverTimestamp() });
-    for (const type of ['message', 'revision_requested', 'progress_update']) {
+    for (const type of ['message', 'revision_requested', 'progress_update', 'proposal']) {
       await assertFails(setDoc(doc(user('c1'), `notifications/forged_${type}`), n(type)), type);
     }
-    await assertSucceeds(setDoc(doc(user('c1'), 'notifications/other'), n('proposal')), 'unchanged for older flows (see report)');
   });
 });
 
@@ -825,16 +957,94 @@ describe('profiles: private account vs public profile', () => {
     await assertFails(getDoc(doc(anonDb(), 'publicProfiles/w1')));
   });
 
-  test('public profiles cannot be written by anyone but the trusted function', async () => {
-    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), publicProfile('w1', 'worker', { phoneNumber: '+923001234567' })));
-    await assertFails(updateDoc(doc(user('w1'), 'publicProfiles/w1'), { displayName: 'Changed' }));
-    await assertFails(updateDoc(doc(user('w1'), 'publicProfiles/w1'), { 'workerProfile.isVerified': true }));
-    await assertFails(setDoc(doc(user('c1'), 'publicProfiles/w1'), publicProfile('w1', 'worker')));
-    await assertFails(deleteDoc(doc(user('w1'), 'publicProfiles/w1')));
+  test('only the owner writes a public profile, and only public, matching values (free plan)', async () => {
+    const own = (extra = {}) => ({ uid: 'w1', role: 'worker', displayName: 'Bilal', city: 'Lahore', isActive: true,
+      isCnicVerified: false, isEmailVerified: false, isPhoneVerified: false, ...extra });
+    await assertSucceeds(setDoc(doc(user('w1'), 'publicProfiles/w1'), own({
+      location: new GeoPoint(31.52, 74.36), geohash: 'ttsg2abcd', locationAccuracy: 'approximate',
+      workerProfile: { headline: 'Electrician', hourlyRate: 800, location: new GeoPoint(31.52, 74.36) },
+    })));
+    await assertSucceeds(updateDoc(doc(user('w1'), 'publicProfiles/w1'), { displayName: 'Bilal A.' }));
+    // Nothing private can be published.
+    for (const leak of [{ phoneNumber: '+923001234567' }, { email: 'w1@example.com' }, { address: 'House 5' },
+      { fcmToken: 't' }, { workerProfile: { headline: 'x', totalEarnings: 90000 } },
+      { workerProfile: { headline: 'x', verificationStatus: 'verified' } }]) {
+      await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own(leak)));
+    }
+    // Someone else's profile, a different uid, or no account behind it.
+    await assertFails(setDoc(doc(user('c1'), 'publicProfiles/w1'), own()));
+    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own({ uid: 'w2' })));
+    await assertFails(setDoc(doc(user('w9'), 'publicProfiles/w9'), own({ uid: 'w9' })));
+  });
+
+  test('public profiles cannot fake role, status, reputation or badges', async () => {
+    const own = (extra = {}) => ({ uid: 'w1', role: 'worker', displayName: 'Bilal', isActive: true,
+      isCnicVerified: false, ...extra });
+    for (const fake of [{ role: 'client' }, { role: 'admin' }, { isActive: false }, { isCnicVerified: true },
+      { rating: 5 }, { totalReviews: 40 }, { workerProfile: { isVerified: true } },
+      { workerProfile: { averageRating: 4.9 } }, { workerProfile: { totalReviews: 12 } },
+      { workerProfile: { totalJobsCompleted: 50 } }]) {
+      await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own(fake)), JSON.stringify(fake));
+    }
+    // Badges confirmed by the sign-in account are accepted.
+    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own({ isEmailVerified: true })));
+    await assertSucceeds(setDoc(doc(env.authenticatedContext('w1', { email_verified: true }).firestore(), 'publicProfiles/w1'),
+      own({ isEmailVerified: true })));
+    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own({ isPhoneVerified: true })));
+    // Reputation equal to the private account is accepted.
+    await seed('users/w2', privateProfile('w2', 'worker', { rating: 4.5, totalReviews: 2,
+      workerProfile: { averageRating: 4.5, totalReviews: 2, totalJobsCompleted: 3, isVerified: true } }));
+    await assertSucceeds(setDoc(doc(user('w2'), 'publicProfiles/w2'), { uid: 'w2', role: 'worker', isActive: true,
+      isCnicVerified: false, rating: 4.5, totalReviews: 2,
+      workerProfile: { averageRating: 4.5, totalReviews: 2, totalJobsCompleted: 3, isVerified: true } }));
+  });
+
+  test('public profile locations are ~1 km only, and clients publish no worker profile', async () => {
+    const own = (extra = {}) => ({ uid: 'w1', role: 'worker', isActive: true, isCnicVerified: false, ...extra });
+    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'), own({ location: new GeoPoint(31.520412, 74.358734) })));
+    await assertFails(setDoc(doc(user('w1'), 'publicProfiles/w1'),
+      own({ workerProfile: { location: new GeoPoint(31.5204, 74.3587) } })));
+    await assertFails(setDoc(doc(user('c1'), 'publicProfiles/c1'), { uid: 'c1', role: 'client', isActive: true,
+      isCnicVerified: false, workerProfile: { headline: 'x' } }));
+  });
+
+  test('owners may remove their own public profile; nobody else can', async () => {
+    await assertFails(deleteDoc(doc(user('c1'), 'publicProfiles/w1')));
+    await assertSucceeds(deleteDoc(doc(user('w1'), 'publicProfiles/w1')));
   });
 
   test('owners still update their own account as before', async () => {
     await assertSucceeds(updateDoc(doc(user('w1'), 'users/w1'), { displayName: 'Bilal A.', fcmToken: 'token-y' }));
+  });
+});
+
+describe('users: reputation numbers are never self-set (shown publicly)', () => {
+  test('new accounts start with no reputation', async () => {
+    await assertSucceeds(setDoc(doc(user('n1'), 'users/n1'), { ...baseProfile('n1', 'worker'), rating: 5, totalReviews: 0,
+      workerProfile: { headline: 'x', averageRating: 0, totalReviews: 0, totalJobsCompleted: 0 } }));
+    await assertFails(setDoc(doc(user('n2'), 'users/n2'), { ...baseProfile('n2', 'worker'), rating: 4.9, totalReviews: 30 }));
+    await assertFails(setDoc(doc(user('n3'), 'users/n3'), { ...baseProfile('n3', 'worker'), totalReviews: 3 }));
+    await assertFails(setDoc(doc(user('n4'), 'users/n4'), { ...baseProfile('n4', 'worker'),
+      workerProfile: { averageRating: 4.8 } }));
+    await assertFails(setDoc(doc(user('n5'), 'users/n5'), { ...baseProfile('n5', 'worker'),
+      workerProfile: { totalJobsCompleted: 12 } }));
+  });
+
+  test('owners cannot change, add, remove or reset reputation', async () => {
+    await seed('users/w1', { ...baseProfile('w1', 'worker'), rating: 3.2, totalReviews: 5,
+      workerProfile: { headline: 'x', averageRating: 3.2, totalReviews: 5, totalJobsCompleted: 4 } });
+    await seed('users/w2', baseProfile('w2', 'worker'));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { rating: 5 }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { totalReviews: 50 }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { rating: deleteField() }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { 'workerProfile.averageRating': 5 }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { 'workerProfile.totalJobsCompleted': 40 }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { 'workerProfile.totalReviews': deleteField() }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { workerProfile: deleteField() }));
+    await assertFails(updateDoc(doc(user('w2'), 'users/w2'), { rating: 4.9 }));
+    // Editing other details keeps working, and a missing rating may start at the default.
+    await assertSucceeds(updateDoc(doc(user('w1'), 'users/w1'), { displayName: 'New', 'workerProfile.headline': 'Senior' }));
+    await assertSucceeds(updateDoc(doc(user('w2'), 'users/w2'), { rating: 5, totalReviews: 0 }));
   });
 });
 
@@ -908,10 +1118,24 @@ describe('hired worker identity', () => {
 
   test('withdraw and re-send still work on a proposal that carries a copied job status', async () => {
     await seed('proposals/j1_w1', proposalData('j1', 'w1', 'c1', { jobStatus: 'open' }));
-    await assertSucceeds(updateDoc(doc(user('w1'), 'proposals/j1_w1'), { status: 'withdrawn', withdrawnAt: serverTimestamp(), updatedAt: serverTimestamp() }));
-    await assertSucceeds(updateDoc(doc(user('w1'), 'proposals/j1_w1'), {
+    await assertSucceeds(changeBatch(user('w1'), 'j1', 'w1', { status: 'withdrawn', withdrawnAt: serverTimestamp(), updatedAt: serverTimestamp() }, 0).commit());
+    await assertSucceeds(changeBatch(user('w1'), 'j1', 'w1', {
       status: 'pending', resubmittedAt: serverTimestamp(), updatedAt: serverTimestamp(), withdrawnAt: deleteField(),
-    }));
+    }, 1).commit());
+  });
+
+  test('S3: the client copies the job\'s real status onto its proposals, nothing else', async () => {
+    await seed('proposals/j1_w2', proposalData('j1', 'w2', 'c1'));
+    const c1 = user('c1');
+    // Closing the job and copying the status in one write.
+    await assertSucceeds(writeBatch(c1)
+      .update(doc(c1, 'jobs/j1'), { status: 'cancelled', updatedAt: serverTimestamp() })
+      .update(doc(c1, 'proposals/j1_w2'), { jobStatus: 'cancelled' }).commit());
+    // Afterwards only the real status is accepted.
+    await assertFails(updateDoc(doc(c1, 'proposals/j1_w2'), { jobStatus: 'completed' }));
+    await assertFails(updateDoc(doc(c1, 'proposals/j1_w2'), { jobStatus: 'cancelled', proposedRate: 1 }));
+    await assertFails(updateDoc(doc(user('w2'), 'proposals/j1_w2'), { jobStatus: 'cancelled' }));
+    await assertFails(updateDoc(doc(user('c2'), 'proposals/j1_w2'), { jobStatus: 'cancelled' }));
   });
 
   test('a public open job is still readable by any active user (no hired worker on it)', async () => {
@@ -1009,7 +1233,7 @@ describe('Phase 4A contracts: access and protected fields', () => {
       const db = user('c1');
       const b = writeBatch(db);
       b.set(doc(db, 'jobs/dh'), jobData('c1', { title: 'Direct Hire: Electrician', status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }));
-      b.set(doc(db, 'contracts/dh1'), { jobId: 'dh', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending', ...extra });
+      b.set(doc(db, 'contracts/dh_w1'), { jobId: 'dh', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending', ...extra });
       return b.commit();
     };
     await assertFails(make({ status: 'active' }));
@@ -1044,9 +1268,14 @@ describe('Phase 4A: contract-linked chat', () => {
       }));
       await assertFails(updateDoc(doc(user(who), 'chats/j1_w1'), { participantIds: ['c1', 'w1', who] }));
     }
-    await assertSucceeds(setDoc(doc(user('w1'), 'chats/j1_w1/messages/msg_onway_001'), {
-      chatId: 'j1_w1', senderId: 'w1', senderName: 'Bilal', content: 'On my way.', type: 'text', isRead: false, createdAt: serverTimestamp(),
-    }));
+    const w1 = user('w1');
+    await assertSucceeds(writeBatch(w1)
+      .set(doc(w1, 'chats/j1_w1/messages/msg_onway_001'), {
+        chatId: 'j1_w1', senderId: 'w1', senderName: 'Bilal', content: 'On my way.', type: 'text', isRead: false, createdAt: serverTimestamp(),
+      })
+      .update(doc(w1, 'chats/j1_w1'), { lastMessage: 'On my way.', lastMessageSenderId: 'w1', lastMessageType: 'text',
+        lastMessageAt: serverTimestamp(), lastMessageId: 'msg_onway_001', 'unreadCount.c1': increment(1) })
+      .commit());
   });
 });
 
@@ -1250,5 +1479,380 @@ describe('Phase 4B storage: chat photos and evidence after a revision', () => {
     await seed('contracts/j1_w1', contractData({ workStartedAt: Timestamp.now() }));
     await assertSucceeds(put('w1', 'contracts/j1_w1/evidence/once.jpg'));
     await assertFails(put('w1', 'contracts/j1_w1/evidence/once.jpg'));
+  });
+});
+
+// ── Free plan, Phase S4: hiring and the work lifecycle by transaction ─────
+// With no Cloud Functions the parties' apps write each step; these tests
+// pin the rules' state machine: the exact write each step needs, and the
+// near-misses (wrong price, wrong person, wrong stage, missing half).
+const ts = serverTimestamp;
+const hiredContract = (extra = {}) => ({
+  jobId: 'j1', jobTitle: 'Fix kitchen wiring', jobDescription: 'Two sockets and one light need rewiring safely.',
+  proposalId: 'j1_w1', clientId: 'c1', clientName: 'Ayesha', clientPhotoUrl: null,
+  workerId: 'w1', workerName: 'Bilal', workerPhotoUrl: null,
+  agreedRate: 2500, rateType: 'fixed', estimatedDuration: '1 day', totalAmount: 2500,
+  commissionRate: 0.1, commissionAmount: 250, workerEarnings: 2250,
+  paymentStatus: 'unpaid', paymentProviderState: 'not_configured', serviceCity: 'Lahore', serviceArea: 'Gulberg',
+  status: 'active', acceptedAt: ts(), startDate: ts(), workStartedAt: null, submittedAt: null,
+  completedAt: null, cancelledAt: null, clientReviewed: false, workerReviewed: false,
+  createdAt: ts(), updatedAt: ts(), ...extra,
+});
+function hireTx(db, { contract = hiredContract(), proposal = true, job = true, others = ['w2'], jobExtra = {} } = {}) {
+  const b = writeBatch(db);
+  if (proposal) b.update(doc(db, 'proposals/j1_w1'), { status: 'accepted', decidedAt: ts(), updatedAt: ts() });
+  if (job) b.update(doc(db, 'jobs/j1'), { status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal', updatedAt: ts(), ...jobExtra });
+  for (const o of others) {
+    b.update(doc(db, `proposals/j1_${o}`), { status: 'rejected', closedReason: 'filled', decidedAt: ts(), updatedAt: ts(), jobStatus: 'assigned' });
+  }
+  if (contract) b.set(doc(db, 'contracts/j1_w1'), contract);
+  b.set(doc(collection(db, 'notifications')), { userId: 'w1', title: 'Proposal accepted', body: 'x', type: 'contract_created',
+    payload: { contractId: 'j1_w1', jobId: 'j1' }, isRead: false, createdAt: ts() });
+  return b.commit();
+}
+
+describe('S4: accepting a proposal creates the contract (free plan)', () => {
+  beforeEach(async () => {
+    await seedMarket();
+    await seed('proposals/j1_w1', proposalData('j1', 'w1', 'c1'));
+    await seed('proposals/j1_w2', proposalData('j1', 'w2', 'c1', { workerName: 'Kamran' }));
+  });
+
+  test('the job owner hires in one write: proposal, job, other applicants, contract', async () => {
+    await assertSucceeds(hireTx(user('c1')));
+    const c = await readAsOwner('contracts/j1_w1');
+    assert.equal(c.commissionAmount, 250);
+    assert.equal((await readAsOwner('proposals/j1_w2')).jobStatus, 'assigned');
+  });
+
+  test('the contract terms must come from the proposal and job', async () => {
+    for (const bad of [{ agreedRate: 1, totalAmount: 1 }, { commissionAmount: 0, workerEarnings: 2500 },
+      { workerEarnings: 2400 }, { commissionRate: 0.05 }, { workerId: 'w2' }, { clientId: 'c2' },
+      { jobTitle: 'Different' }, { status: 'completed' }, { paymentStatus: 'paid' }, { workStartedAt: Timestamp.now() },
+      { serviceAddress: 'House 1' }, { workerName: 'Someone else' }, { rateType: 'hourly' }]) {
+      await assertFails(hireTx(user('c1'), { contract: hiredContract(bad) }), JSON.stringify(bad));
+    }
+  });
+
+  test('every half of the hire is required', async () => {
+    await assertFails(hireTx(user('c1'), { proposal: false }));
+    await assertFails(hireTx(user('c1'), { job: false }));
+    await assertFails(hireTx(user('c1'), { contract: false }));
+    await assertFails(hireTx(user('c1'), { jobExtra: { budgetMax: 1 } }));
+  });
+
+  test('only the job owner, on an open job, from a pending proposal', async () => {
+    await assertFails(hireTx(user('c2')));
+    await assertFails(hireTx(user('w1')));
+    await seed('proposals/j1_w1', proposalData('j1', 'w1', 'c1', { status: 'withdrawn' }));
+    await assertFails(hireTx(user('c1')));
+  });
+
+  test('a hire cannot be repeated', async () => {
+    await assertSucceeds(hireTx(user('c1')));
+    await assertFails(hireTx(user('c1'), { others: [] }));
+  });
+});
+
+describe('S4: answering a direct request (free plan)', () => {
+  beforeEach(async () => { await seedMarket(); });
+  const drContract = (extra = {}) => ({
+    jobId: 'dr', jobTitle: 'Fix kitchen wiring', jobDescription: 'Two sockets and one light need rewiring safely.',
+    proposalId: 'direct_request', clientId: 'c1', clientName: 'Ayesha', clientPhotoUrl: null,
+    workerId: 'w2', workerName: 'Kamran', workerPhotoUrl: null, agreedRate: 3000, priceMin: 2000,
+    rateType: 'fixed', estimatedDuration: '', totalAmount: 3000, commissionRate: 0.1, commissionAmount: 300,
+    workerEarnings: 2700, paymentStatus: 'unpaid', paymentProviderState: 'not_configured',
+    serviceCity: 'Lahore', serviceArea: 'Gulberg', status: 'active', acceptedAt: ts(), startDate: ts(),
+    workStartedAt: null, submittedAt: null, completedAt: null, cancelledAt: null,
+    clientReviewed: false, workerReviewed: false, createdAt: ts(), updatedAt: ts(), ...extra,
+  });
+  const answer = (db, uid, contract, job = true) => {
+    const b = writeBatch(db);
+    if (job) b.update(doc(db, 'jobs/dr'), { status: 'assigned', selectedWorkerName: 'Kamran', updatedAt: ts() });
+    b.set(doc(db, `contracts/dr_${uid}`), contract);
+    return b.commit();
+  };
+
+  test('the requested worker accepts at the client\'s budget (a range stays a range)', async () => {
+    await assertSucceeds(answer(user('w2'), 'w2', drContract()));
+  });
+
+  test('a different price, a missing job step, or another worker is refused', async () => {
+    await assertFails(answer(user('w2'), 'w2', drContract({ agreedRate: 9000, totalAmount: 9000, commissionAmount: 900, workerEarnings: 8100 })));
+    await assertFails(answer(user('w2'), 'w2', drContract({ priceMin: null })));
+    await assertFails(answer(user('w2'), 'w2', drContract(), false));
+    await assertFails(answer(user('w1'), 'w1', drContract({ workerId: 'w1' })));
+  });
+
+  test('declining cancels the job', async () => {
+    await assertSucceeds(updateDoc(doc(user('w2'), 'jobs/dr'), { status: 'cancelled', updatedAt: ts() }));
+  });
+});
+
+describe('S4: the work lifecycle (free plan)', () => {
+  const started = { workStartedAt: Timestamp.now() };
+  const submitted = {
+    ...started, submittedAt: Timestamp.now(), submissionCount: 1,
+    submission: { note: 'Replaced both sockets.', attachments: [], submittedAt: Timestamp.now() },
+  };
+  beforeEach(async () => {
+    await seedMarket();
+    await seed('jobs/j1', jobData('c1', { status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }));
+    await seed('contracts/j1_w1', contractData());
+  });
+  const at = (status, contract) => Promise.all([
+    seed('jobs/j1', jobData('c1', { status, selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' })),
+    seed('contracts/j1_w1', contractData(contract)),
+  ]);
+
+  test('start: the hired worker, with the job moving to in progress', async () => {
+    const start = (db, job = true) => {
+      const b = writeBatch(db).update(doc(db, 'contracts/j1_w1'), { workStartedAt: ts(), updatedAt: ts() });
+      if (job) b.update(doc(db, 'jobs/j1'), { status: 'in_progress', updatedAt: ts() });
+      return b.commit();
+    };
+    await assertFails(start(user('c1')));
+    await assertFails(start(user('w2')));
+    await assertFails(start(user('w1'), false));
+    await assertSucceeds(start(user('w1')));
+    await assertFails(start(user('w1'))); // only once
+  });
+
+  test('submit: after starting, with the submission record; sharing ends', async () => {
+    const submit = (db, { record = true, count = 1, note = 'Replaced both sockets and tested.' } = {}) => {
+      const b = writeBatch(db);
+      if (record) b.set(doc(db, `contracts/j1_w1/submissions/${count}`), { number: count, note, attachments: [], submittedAt: ts(), submittedBy: 'w1' });
+      b.update(doc(db, 'contracts/j1_w1'), { submittedAt: ts(), submission: { note, attachments: [], submittedAt: ts() }, submissionCount: count, updatedAt: ts() });
+      b.delete(doc(db, 'contracts/j1_w1/live/location'));
+      return b.commit();
+    };
+    await assertFails(submit(user('w1'))); // not started
+    await at('in_progress', started);
+    await assertFails(submit(user('w1'), { record: false }));
+    await assertFails(submit(user('w1'), { count: 2 }));
+    await assertFails(submit(user('w1'), { note: 'short' }));
+    await assertFails(submit(user('c1')));
+    await assertSucceeds(submit(user('w1')));
+  });
+
+  test('confirm: the client, after submission; the worker is credited exactly one job', async () => {
+    const confirm = (db, { credit = 1, cid = 'j1_w1', job = true } = {}) => {
+      const b = writeBatch(db).update(doc(db, 'contracts/j1_w1'), { status: 'completed', completedAt: ts(), endDate: ts(), updatedAt: ts() });
+      if (job) b.update(doc(db, 'jobs/j1'), { status: 'completed', updatedAt: ts() });
+      if (credit) b.update(doc(db, 'users/w1'), { 'workerProfile.totalJobsCompleted': increment(credit), lastCompletedContractId: cid });
+      b.delete(doc(db, 'contracts/j1_w1/live/location'));
+      return b.commit();
+    };
+    await at('in_progress', started);
+    await assertFails(confirm(user('c1'))); // nothing submitted yet
+    await at('in_progress', submitted);
+    await assertFails(confirm(user('w1')));
+    await assertFails(confirm(user('c1'), { credit: 0 }));
+    await assertFails(confirm(user('c1'), { credit: 2 }));
+    await assertFails(confirm(user('c1'), { cid: 'other_w1' }));
+    await assertFails(confirm(user('c1'), { job: false }));
+    await assertSucceeds(confirm(user('c1')));
+    assert.equal((await readAsOwner('users/w1')).workerProfile.totalJobsCompleted, 1);
+    // No second credit for the same (now completed) contract.
+    await assertFails(updateDoc(doc(user('c1'), 'users/w1'), { 'workerProfile.totalJobsCompleted': increment(1), lastCompletedContractId: 'j1_w1' }));
+  });
+
+  test('cancel: either party before submission, with a listed reason; the job follows', async () => {
+    const cancel = (db, uid, role, extra = {}) => writeBatch(db)
+      .update(doc(db, 'contracts/j1_w1'), { status: 'cancelled', cancelledAt: ts(), cancelledBy: uid, cancelledByRole: role,
+        cancelReason: 'no_longer_needed', cancelNote: '', updatedAt: ts(), ...extra })
+      .update(doc(db, 'jobs/j1'), { status: 'cancelled', updatedAt: ts() })
+      .delete(doc(db, 'contracts/j1_w1/live/location'))
+      .commit();
+    await assertFails(cancel(user('c1'), 'c1', 'worker'));
+    await assertFails(cancel(user('c1'), 'c1', 'client', { cancelReason: 'spite' }));
+    await assertFails(cancel(user('c1'), 'w1', 'client'));
+    await assertFails(cancel(user('c2'), 'c2', 'client'));
+    await assertSucceeds(cancel(user('c1'), 'c1', 'client'));
+    await at('in_progress', submitted);
+    await assertFails(cancel(user('w1'), 'w1', 'worker'));
+  });
+
+  test('shareAddress: the client, with an optional real pin', async () => {
+    const share = (db, extra = {}) => updateDoc(doc(db, 'contracts/j1_w1'),
+      { serviceAddress: 'House 7, Street 3, Gulberg III', addressSharedAt: ts(), updatedAt: ts(), ...extra });
+    await assertSucceeds(share(user('c1')));
+    await assertSucceeds(share(user('c1'), { serviceLocation: new GeoPoint(31.51, 74.34), serviceLocationSetAt: ts() }));
+    await assertFails(share(user('c1'), { serviceLocation: new GeoPoint(0, 0), serviceLocationSetAt: ts() }));
+    // A new pin needs its time too (re-sending the stored pin is a no-op).
+    await assertFails(share(user('c1'), { serviceLocation: new GeoPoint(31.52, 74.35) }));
+    await assertFails(share(user('w1')));
+    await assertFails(share(user('c1'), { serviceAddress: 'abc' }));
+    await assertSucceeds(share(user('c1'), { serviceLocation: deleteField(), serviceLocationSetAt: deleteField() }));
+  });
+
+  test('requestRevision: the client, on submitted work, at most three rounds', async () => {
+    const note = 'Please also fix the hall light switch.';
+    const ask = (db, round) => writeBatch(db)
+      .update(doc(db, 'contracts/j1_w1'), { revisionCount: round, revisionRequestedAt: ts(), revisionNote: note, submissionCount: round, updatedAt: ts() })
+      .set(doc(db, `contracts/j1_w1/submissions/${round}`), { number: round, revisionNote: note, revisionRequestedAt: ts() }, { merge: true })
+      .commit();
+    await at('in_progress', submitted);
+    await seed('contracts/j1_w1/submissions/1', { number: 1, note: 'Replaced both sockets.', attachments: [], submittedAt: Timestamp.now(), submittedBy: 'w1' });
+    await assertFails(ask(user('w1'), 1));
+    await assertSucceeds(ask(user('c1'), 1));
+    await at('in_progress', { ...submitted, submissionCount: 4, revisionCount: 3 });
+    await seed('contracts/j1_w1/submissions/4', { number: 4, note: 'x', attachments: [], submittedAt: Timestamp.now(), submittedBy: 'w1' });
+    await assertFails(ask(user('c1'), 4));
+  });
+
+  test('progressUpdate: the hired worker, the update and the contract together, once per id', async () => {
+    const post = (db, id, { update = true, contract = true, author = 'w1' } = {}) => {
+      const b = writeBatch(db);
+      if (update) b.set(doc(db, `contracts/j1_w1/updates/${id}`), { note: 'On my way with parts.', authorId: author, authorRole: 'worker', createdAt: ts() });
+      if (contract) b.update(doc(db, 'contracts/j1_w1'), { lastUpdateAt: ts(), updateCount: increment(1), lastUpdateId: id, updatedAt: ts() });
+      return b.commit();
+    };
+    await assertFails(post(user('w1'), 'req_00000001', { update: false }));
+    await assertFails(post(user('w1'), 'req_00000001', { contract: false }));
+    await assertFails(post(user('c1'), 'req_00000001', { author: 'c1' }));
+    await assertFails(post(user('w1'), 'bad id!'));
+    await assertSucceeds(post(user('w1'), 'req_00000001'));
+    await assertFails(post(user('w1'), 'req_00000001'));
+    await assertSucceeds(post(user('w1'), 'req_00000002'));
+  });
+});
+
+describe('S4: booking requests answered by the worker (free plan)', () => {
+  beforeEach(async () => {
+    await seedUsers();
+    await seed('jobs/dh', jobData('c1', { title: 'Direct Hire: Electrician', status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }));
+    await seed('contracts/dh_w1', { jobId: 'dh', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending', clientName: 'Ayesha', workerName: 'Bilal' });
+  });
+
+  test('the worker accepts', async () => {
+    await assertFails(updateDoc(doc(user('c1'), 'contracts/dh_w1'), { status: 'active', respondedAt: ts(), acceptedAt: ts(), workStartedAt: null, submittedAt: null, updatedAt: ts() }));
+    await assertSucceeds(updateDoc(doc(user('w1'), 'contracts/dh_w1'), { status: 'active', respondedAt: ts(), acceptedAt: ts(), workStartedAt: null, submittedAt: null, updatedAt: ts() }));
+  });
+
+  test('the worker declines; the job is cancelled with it', async () => {
+    const w1 = user('w1');
+    await assertSucceeds(writeBatch(w1)
+      .update(doc(w1, 'contracts/dh_w1'), { status: 'rejected', respondedAt: ts(), updatedAt: ts() })
+      .update(doc(w1, 'jobs/dh'), { status: 'cancelled', updatedAt: ts() }).commit());
+  });
+
+  test('a booking must use the job_worker id', async () => {
+    const db = user('c1');
+    await assertFails(writeBatch(db)
+      .set(doc(db, 'jobs/dh2'), jobData('c1', { title: 'Direct Hire: Electrician', status: 'assigned', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }))
+      .set(doc(db, 'contracts/random123'), { jobId: 'dh2', proposalId: 'direct_hire', clientId: 'c1', workerId: 'w1', paymentStatus: 'unpaid', status: 'pending' })
+      .commit());
+  });
+});
+
+// ── Free plan, Phase S5: reviews and the rating ledger ────────────────────
+describe('S5: reviews move the reviewee\'s rating ledger (free plan)', () => {
+  beforeEach(async () => {
+    await seedUsers();
+    await seed('contracts/j1_w1', contractData({ status: 'completed' }));
+    await seed('contracts/j2_w1', contractData({ jobId: 'j2', proposalId: 'j2_w1', status: 'completed' }));
+  });
+  const review = (cid, extra = {}) => ({
+    contractId: cid, jobId: 'j1', reviewerId: 'c1', reviewerName: 'Ayesha', revieweeId: 'w1', revieweeName: 'Bilal',
+    rating: 5, comment: 'Great work.', reviewType: 'client_to_worker', isVerifiedCustomer: true, createdAt: serverTimestamp(), ...extra,
+  });
+  const write = (db, cid, ledger, { withReview = true, withLedger = true } = {}) => {
+    const b = writeBatch(db);
+    if (withReview) b.set(doc(db, `reviews/${cid}_c1`), review(cid, { rating: ledger.rating ?? 5 }));
+    b.update(doc(db, `contracts/${cid}`), { clientReviewed: true });
+    if (withLedger) b.set(doc(db, 'ratings/w1'), { count: ledger.count, sum: ledger.sum, average: ledger.average,
+      lastReviewId: `${cid}_c1`, updatedAt: serverTimestamp() });
+    return b.commit();
+  };
+
+  test('a review and its ledger step go together, with the right numbers', async () => {
+    await assertFails(write(user('c1'), 'j1_w1', { count: 1, sum: 5, average: 5 }, { withLedger: false }), 'review alone');
+    await assertFails(write(user('c1'), 'j1_w1', { count: 1, sum: 5, average: 5 }, { withReview: false }), 'ledger alone');
+    await assertFails(write(user('c1'), 'j1_w1', { count: 2, sum: 5, average: 2.5 }), 'wrong count');
+    await assertFails(write(user('c1'), 'j1_w1', { count: 1, sum: 4, average: 4 }), 'wrong sum');
+    await assertFails(write(user('c1'), 'j1_w1', { count: 1, sum: 5, average: 4.9 }), 'wrong average');
+    await assertSucceeds(write(user('c1'), 'j1_w1', { count: 1, sum: 5, average: 5 }));
+    await assertSucceeds(write(user('c1'), 'j2_w1', { count: 2, sum: 9, average: 4.5, rating: 4 }));
+  });
+
+  test('averages are kept to one decimal', async () => {
+    await seed('ratings/w1', { count: 2, sum: 9, average: 4.5, lastReviewId: 'old', updatedAt: Timestamp.now() });
+    await assertSucceeds(write(user('c1'), 'j1_w1', { count: 3, sum: 13, average: 4.3, rating: 4 }));
+  });
+
+  test('nobody writes a ledger directly, not even its owner', async () => {
+    await assertFails(setDoc(doc(user('w1'), 'ratings/w1'), { count: 9, sum: 45, average: 5, lastReviewId: 'x', updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(user('c1'), 'ratings/w1'), { count: 9, sum: 45, average: 5, lastReviewId: 'x', updatedAt: serverTimestamp() }));
+  });
+
+  test('owners copy their ledger onto their account, and nothing else', async () => {
+    await seed('users/w1', { ...baseProfile('w1', 'worker'), rating: 5, totalReviews: 0,
+      workerProfile: { headline: 'x', averageRating: 0, totalReviews: 0, totalJobsCompleted: 1 } });
+    await seed('ratings/w1', { count: 2, sum: 9, average: 4.5, lastReviewId: 'old', updatedAt: Timestamp.now() });
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { rating: 4.9, totalReviews: 2 }));
+    await assertSucceeds(updateDoc(doc(user('w1'), 'users/w1'), { rating: 4.5, totalReviews: 2,
+      'workerProfile.averageRating': 4.5, 'workerProfile.totalReviews': 2 }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { 'workerProfile.totalJobsCompleted': 5 }));
+  });
+});
+
+// ── Free plan, Phase S6: private files in Firestore ───────────────────────
+describe('S6: work evidence and ID documents are private files', () => {
+  const file = (extra = {}) => ({ data: Bytes.fromUint8Array(new Uint8Array(2048).fill(9)), contentType: 'image/jpeg',
+    createdAt: serverTimestamp(), ...extra });
+  beforeEach(async () => {
+    await seedMarket();
+    await seed('jobs/j1', jobData('c1', { status: 'in_progress', selectedWorkerId: 'w1', selectedWorkerName: 'Bilal' }));
+    await seed('contracts/j1_w1', contractData({ workStartedAt: Timestamp.now() }));
+  });
+
+  test('evidence: only the hired worker, while the work is in progress; the two parties read it', async () => {
+    await assertFails(setDoc(doc(user('c1'), 'contracts/j1_w1/evidence/p1'), file({ uploadedBy: 'c1' })));
+    await assertFails(setDoc(doc(user('w1'), 'contracts/j1_w1/evidence/p1'), file({ uploadedBy: 'w2' })));
+    await assertFails(setDoc(doc(user('w1'), 'contracts/j1_w1/evidence/p1'), file({ uploadedBy: 'w1', data: Bytes.fromUint8Array(new Uint8Array(716801)) })));
+    await assertSucceeds(setDoc(doc(user('w1'), 'contracts/j1_w1/evidence/p1'), file({ uploadedBy: 'w1' })));
+    await assertFails(setDoc(doc(user('w1'), 'contracts/j1_w1/evidence/p1'), file({ uploadedBy: 'w1' })), 'never replaced');
+    await assertSucceeds(getDoc(doc(user('c1'), 'contracts/j1_w1/evidence/p1')));
+    await assertFails(getDoc(doc(user('c2'), 'contracts/j1_w1/evidence/p1')));
+    await seed('contracts/j1_w1', contractData());
+    await assertFails(setDoc(doc(user('w1'), 'contracts/j1_w1/evidence/p2'), file({ uploadedBy: 'w1' })), 'not started');
+  });
+
+  test('a submission may show only this contract\'s own evidence', async () => {
+    await seed('contracts/j1_w1/evidence/p1', { ...file({ uploadedBy: 'w1' }), createdAt: Timestamp.now() });
+    await seed('contracts/other_w1/evidence/p1', { ...file({ uploadedBy: 'w1' }), createdAt: Timestamp.now() });
+    const submit = (attachments) => {
+      const db = user('w1');
+      const note = 'Replaced both sockets and tested.';
+      return writeBatch(db)
+        .set(doc(db, 'contracts/j1_w1/submissions/1'), { number: 1, note, attachments, submittedAt: serverTimestamp(), submittedBy: 'w1' })
+        .update(doc(db, 'contracts/j1_w1'), { submittedAt: serverTimestamp(), submission: { note, attachments, submittedAt: serverTimestamp() }, submissionCount: 1, updatedAt: serverTimestamp() })
+        .commit();
+    };
+    await assertFails(submit(['contracts/other_w1/evidence/p1']), 'another contract');
+    await assertFails(submit(['contracts/j1_w1/evidence/missing']), 'missing');
+    await assertSucceeds(submit(['contracts/j1_w1/evidence/p1']));
+  });
+
+  test('ID documents: the owner adds them, only the owner and staff read them', async () => {
+    await assertSucceeds(setDoc(doc(user('w1'), 'users/w1/verificationDocs/cnic_front_1'), file()));
+    await assertSucceeds(setDoc(doc(user('w1'), 'users/w1/verificationDocs/supporting_1'), file({ contentType: 'application/pdf' })));
+    await assertFails(setDoc(doc(user('w2'), 'users/w1/verificationDocs/cnic_back_1'), file()), 'someone else');
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/verificationDocs/cnic_back_2'), file({ contentType: 'text/html' })), 'type');
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/verificationDocs/cnic_back_3'), file({ extra: 'x' })), 'unknown field');
+    await assertSucceeds(getDoc(doc(user('w1'), 'users/w1/verificationDocs/cnic_front_1')));
+    await assertSucceeds(getDoc(doc(admin().firestore(), 'users/w1/verificationDocs/cnic_front_1')));
+    await assertFails(getDoc(doc(user('c1'), 'users/w1/verificationDocs/cnic_front_1')), 'clients cannot read');
+    await assertSucceeds(deleteDoc(doc(user('w1'), 'users/w1/verificationDocs/supporting_1')));
+  });
+
+  test('the private verification record may point at the new document place', async () => {
+    await assertSucceeds(setDoc(doc(user('w1'), 'users/w1/private/verification'), {
+      cnicNumber: '35202-1234567-1', documents: ['users/w1/verificationDocs/cnic_front_1'], submittedAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/private/verification'), {
+      cnicNumber: '35202-1234567-1', documents: ['users/w2/verificationDocs/cnic_front_1'], submittedAt: serverTimestamp(),
+    }));
   });
 });

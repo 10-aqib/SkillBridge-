@@ -280,7 +280,8 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
 
   Future<void> _pick(_DocSlot slot, String key) async {
     final l = context.l10n;
-    final file = await pickProfileImage(context);
+    // Kept privately in Firestore: shrink so it fits the private size limit.
+    final file = await pickProfileImage(context, maxSide: 1400, quality: 70);
     if (file == null || !mounted) return;
     final media = ref.read(profileMediaServiceProvider);
     final previous = slot.path;

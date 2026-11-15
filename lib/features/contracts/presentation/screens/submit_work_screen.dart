@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skill_bridge/core/media/private_media.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
@@ -17,7 +18,7 @@ import 'package:skill_bridge/shared/design_system/design_system.dart';
 typedef EvidencePicker = Future<({Uint8List bytes, String contentType})?> Function();
 
 Future<({Uint8List bytes, String contentType})?> _pickWithImagePicker() async {
-  final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, maxHeight: 1600, imageQuality: 80);
+  final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1280, maxHeight: 1280, imageQuality: 70);
   if (file == null) return null;
   final bytes = await file.readAsBytes();
   final type = file.mimeType ?? (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
@@ -33,7 +34,8 @@ class SubmitWorkScreen extends ConsumerStatefulWidget {
   final EvidencePicker? picker;
 
   static const int maxPhotos = 3;
-  static const int maxBytes = 5 * 1024 * 1024;
+  // Kept privately in Firestore (free plan, Phase S6).
+  static const int maxBytes = privateMediaMaxBytes;
 
   @override
   ConsumerState<SubmitWorkScreen> createState() => _SubmitWorkScreenState();

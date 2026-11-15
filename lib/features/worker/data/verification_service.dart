@@ -27,7 +27,8 @@ class VerificationSubmission {
 
 /// CNIC + document submission, stored at users/{uid}/private/verification.
 /// The firestore rules make that document readable only by its owner and staff,
-/// and the documents themselves live in the owner/staff-only Storage folder.
+/// and the documents themselves are private files in users/{uid}/verificationDocs
+/// (owner and staff only; free plan, Phase S6).
 class VerificationService {
   VerificationService(this._firestore);
 
@@ -51,8 +52,8 @@ class VerificationService {
     });
   }
 
-  /// [documentPaths] are Storage paths returned by
-  /// ProfileMediaService.uploadVerificationDocument — never download URLs.
+  /// [documentPaths] are the private file paths returned by
+  /// ProfileMediaService.uploadVerificationDocument — never public links.
   Future<void> submit({
     required String uid,
     required String cnic,

@@ -12,9 +12,9 @@ final contractRemoteDataSourceProvider = Provider<ContractRemoteDataSource>((ref
   return ContractRemoteDataSourceImpl(ref.watch(firestoreProvider));
 });
 
-/// Trusted hiring and lifecycle steps (Cloud Functions).
+/// Hiring and lifecycle steps (transactions checked by the rules).
 final contractActionsProvider = Provider<ContractActions>((ref) {
-  return ContractActionsImpl(ref.watch(firebaseFunctionsProvider), ref.watch(firebaseStorageProvider));
+  return ContractActionsImpl(ref.watch(firestoreProvider), ref.watch(firebaseAuthProvider));
 });
 
 /// A refused read is final; other failures retry a few times.

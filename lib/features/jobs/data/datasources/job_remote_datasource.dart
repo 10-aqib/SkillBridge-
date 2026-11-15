@@ -134,10 +134,28 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
   @override
   Future<void> setJobStatus(String jobId, String status) async {
     try {
-      await _firestore.collection(FirestorePaths.jobs).doc(jobId).update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      final jobRef = _firestore.collection(FirestorePaths.jobs).doc(jobId);
+      final batch = _firestore.batch()
+        ..update(jobRef, {
+          'status': status,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      // Applicants follow the job through their proposal's `jobStatus` (they
+      // can't read a job that is no longer public). Free plan: the client's
+      // app copies it in the same write; the rules accept only the job's real
+      // status.
+      final clientId = (await jobRef.get()).data()?['clientId'] as String?;
+      if (clientId != null && clientId.isNotEmpty) {
+        final proposals = await _firestore
+            .collection(FirestorePaths.proposals)
+            .where('jobId', isEqualTo: jobId)
+            .where('clientId', isEqualTo: clientId)
+            .get();
+        for (final p in proposals.docs.take(450)) {
+          if (p.data()['jobStatus'] != status) batch.update(p.reference, {'jobStatus': status});
+        }
+      }
+      await batch.commit();
     } catch (e) {
       throw ServerException('Failed to update job: $e');
     }

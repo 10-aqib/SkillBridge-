@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skill_bridge/core/media/image_host.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/core/services/profile_media_service.dart';
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
@@ -13,7 +14,7 @@ import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Lets the person choose camera or gallery (gallery only on web).
-Future<XFile?> pickProfileImage(BuildContext context, {bool allowCamera = true}) async {
+Future<XFile?> pickProfileImage(BuildContext context, {bool allowCamera = true, double maxSide = 1600, int quality = 85}) async {
   final l = context.l10n;
   ImageSource? source = ImageSource.gallery;
   if (allowCamera && !kIsWeb) {
@@ -37,7 +38,7 @@ Future<XFile?> pickProfileImage(BuildContext context, {bool allowCamera = true})
   }
   if (source == null) return null;
   try {
-    return await ImagePicker().pickImage(source: source, maxWidth: 1600, maxHeight: 1600, imageQuality: 85);
+    return await ImagePicker().pickImage(source: source, maxWidth: maxSide, maxHeight: maxSide, imageQuality: quality);
   } catch (_) {
     if (context.mounted) _snack(context, l.mediaPickerUnavailable, error: true);
     return null;
@@ -48,6 +49,8 @@ String mediaErrorText(AppLocalizations l, Object e) {
   if (e is MediaUploadException) {
     return switch (e.code) {
       'too-large' => l.mediaTooLarge,
+      'too-large-private' => l.mediaTooLargePrivate,
+      'not-configured' => l.mediaNotConfigured,
       'unsupported-type' => l.mediaUnsupportedType,
       'permission-denied' => l.mediaPermissionDenied,
       _ => l.mediaUploadFailed,
@@ -118,6 +121,12 @@ class _ProfilePhotoPickerState extends ConsumerState<ProfilePhotoPicker> {
   Widget build(BuildContext context) {
     final c = context.sb;
     final l = context.l10n;
+    // Free plan: without the image host the photo can't be changed, so it is
+    // shown as a plain avatar (no camera badge, not a button).
+    final canChange = ref.watch(publicPhotoUploadsProvider);
+    if (!canChange) {
+      return SbAvatar(name: widget.user.displayName, imageUrl: widget.user.photoUrl, size: widget.size);
+    }
     return Semantics(
       button: true,
       label: l.profileChangePhoto,
@@ -240,6 +249,11 @@ class _PortfolioManagerState extends ConsumerState<PortfolioManager> {
     final t = Theme.of(context).textTheme;
     final images = _images;
     final canAdd = images.length < widget.maxImages && widget.user.workerProfile != null;
+    // Free plan: without the image host nothing can be added; say so instead
+    // of showing an empty grid.
+    if (images.isEmpty && !ref.watch(publicPhotoUploadsProvider)) {
+      return Text(l.mediaNotConfigured, style: t.bodyMedium!.copyWith(color: c.textSecondary));
+    }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Text(l.portfolioCount(images.length, widget.maxImages), style: t.bodySmall),
@@ -284,7 +298,7 @@ class _PortfolioManagerState extends ConsumerState<PortfolioManager> {
                       ),
               ),
             ]),
-          if (canAdd)
+          if (canAdd && ref.watch(publicPhotoUploadsProvider))
             Semantics(
               button: true,
               label: l.portfolioAdd,

@@ -6,6 +6,7 @@ import 'package:skill_bridge/config/router/app_router.dart';
 import 'package:skill_bridge/config/theme/sb/sb_theme.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/providers/language_provider.dart';
+import 'package:skill_bridge/core/services/public_profile_sync.dart';
 import 'package:skill_bridge/shared/widgets/connectivity_banner.dart';
 
 class App extends ConsumerWidget {
@@ -14,6 +15,9 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // Keeps the signed-in person's public profile in step (free plan: no
+    // Cloud Functions to do it).
+    ref.watch(publicProfileSyncProvider);
 
     return MaterialApp.router(
       title: 'Skill Bridge',

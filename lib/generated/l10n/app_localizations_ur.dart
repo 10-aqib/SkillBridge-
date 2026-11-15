@@ -738,7 +738,14 @@ class AppLocalizationsUr extends AppLocalizations {
   String get mediaPickerUnavailable => 'کیمرہ یا گیلری نہیں کھل سکی۔';
 
   @override
-  String get mediaTooLarge => 'فائل 5 MB سے بڑی ہے۔ چھوٹی فائل منتخب کریں۔';
+  String get mediaTooLarge => 'فائل 2 MB سے بڑی ہے۔ چھوٹی فائل منتخب کریں۔';
+
+  @override
+  String get mediaTooLargePrivate =>
+      'چھوٹا کرنے کے بعد بھی تصویر بہت بڑی ہے۔ کوئی اور تصویر آزمائیں۔';
+
+  @override
+  String get mediaNotConfigured => 'تصویر اپ لوڈ ابھی دستیاب نہیں۔';
 
   @override
   String get mediaUnsupportedType => 'JPG، PNG یا WebP تصویر استعمال کریں۔';
@@ -1216,7 +1223,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get verificationDocsHelp =>
-      'واضح تصاویر، چاروں کونے نظر آئیں۔ ہر ایک زیادہ سے زیادہ 5 MB۔';
+      'واضح تصاویر، چاروں کونے نظر آئیں۔ تصاویر خود چھوٹی ہو جاتی ہیں؛ PDF کا سائز 700 KB سے کم ہو۔';
 
   @override
   String get verificationDocFront => 'شناختی کارڈ — سامنے';
@@ -2595,7 +2602,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get contractRemovePhoto => 'تصویر ہٹائیں';
 
   @override
-  String get contractPhotoTooLarge => 'یہ تصویر 5 MB سے بڑی ہے';
+  String get contractPhotoTooLarge => 'چھوٹا کرنے کے بعد بھی تصویر بہت بڑی ہے';
 
   @override
   String contractUploading(int current, int total) {
@@ -2895,7 +2902,8 @@ class AppLocalizationsUr extends AppLocalizations {
       'یہ اکاؤنٹ اب فعال نہیں۔ آپ پرانے پیغامات پڑھ سکتے ہیں لیکن نئے نہیں بھیج سکتے۔';
 
   @override
-  String get chatPhotoTooLarge => 'ہر تصویر 5 MB سے کم ہونی چاہیے۔';
+  String get chatPhotoTooLarge =>
+      'چھوٹا کرنے کے بعد بھی تصویر بہت بڑی ہے۔ کوئی اور تصویر آزمائیں۔';
 
   @override
   String get chatPhotoType => 'JPEG، PNG یا WebP تصویر استعمال کریں۔';

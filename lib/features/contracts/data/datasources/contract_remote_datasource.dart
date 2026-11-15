@@ -2,10 +2,12 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/media/private_media.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
 import 'package:skill_bridge/core/errors/app_exception.dart';
+import 'package:skill_bridge/features/contracts/data/datasources/contract_transactions.dart';
 import 'package:skill_bridge/features/contracts/data/models/contract_activity.dart';
 import 'package:skill_bridge/features/contracts/data/models/contract_model.dart';
 import 'package:uuid/uuid.dart';
@@ -75,8 +77,9 @@ abstract class ContractRemoteDataSource {
   Stream<List<ContractSubmission>> watchSubmissions(String contractId);
 }
 
-/// Hiring and lifecycle steps, decided by the trusted Cloud Functions
-/// (functions/src/contracts.ts). The app never writes contract status.
+/// Hiring and lifecycle steps. Free plan (Phase S4): Firestore transactions
+/// whose every write is checked by the rules' contract state machine
+/// (contract_transactions.dart; was functions/src/contracts.ts).
 abstract class ContractActions {
   Future<String> acceptProposal(String proposalId);
 
@@ -103,12 +106,12 @@ abstract class ContractActions {
   /// A fresh id for [postProgressUpdate].
   String newRequestId();
 
-  /// Uploads one evidence photo to the contract's private folder and returns
-  /// its storage path (allowed only while the worker's work is in progress).
+  /// Stores one evidence photo privately for the contract and returns its
+  /// path (allowed only while the worker's work is in progress).
   Future<String> uploadEvidence(String contractId, Uint8List bytes, {String contentType = 'image/jpeg'});
 
   /// A stored evidence photo's bytes, read with the signed-in party's
-  /// access (no shareable download link is created).
+  /// access (there is no shareable link).
   Future<Uint8List?> evidenceBytes(String path);
 }
 
@@ -170,7 +173,8 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
       });
 
       // 2. The pending contract (the worker accepts or declines it).
-      final contractRef = _contracts.doc();
+      // `{jobId}_{workerId}`, like every contract (the rules link them by it).
+      final contractRef = _contracts.doc('${jobRef.id}_$workerId');
       const commissionRate = 0.10;
       final commissionAmount = totalAmount * commissionRate;
       batch.set(contractRef, {
@@ -218,7 +222,8 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
         'referenceId': contractRef.id,
         'payload': {'contractId': contractRef.id, 'jobId': jobRef.id},
         'isRead': false,
-        'createdAt': Timestamp.fromDate(now),
+        // Server time: the notification rules require it (free plan, Phase S5).
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
@@ -271,75 +276,103 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
 }
 
 class ContractActionsImpl implements ContractActions {
-  ContractActionsImpl(this._functions, this._storage);
-  final FirebaseFunctions _functions;
-  final FirebaseStorage _storage;
+  ContractActionsImpl(this._db, this._auth);
+  final FirebaseFirestore _db;
+  final FirebaseAuth _auth;
 
-  Future<Map<String, dynamic>> _call(String name, Map<String, dynamic> data) async {
-    final result = await _functions.httpsCallable(name).call<Map<String, dynamic>>(data);
-    return Map<String, dynamic>.from(result.data);
+  /// Free plan (Phase S4): the steps run as Firestore transactions checked
+  /// by the rules (contract_transactions.dart), not Cloud Functions.
+  ContractTransactions get _tx {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw const ContractException(ContractFailure.notAllowed, 'Please sign in.');
+    return ContractTransactions(_db, uid);
   }
 
-  Future<void> _action(String contractId, String action, [Map<String, dynamic> extra = const {}]) =>
-      _call('contractActionCall', {'contractId': contractId, 'action': action, ...extra});
+  Future<T> _run<T>(Future<T> Function(ContractTransactions t) step) async {
+    try {
+      return await step(_tx);
+    } on ContractStepException catch (e) {
+      throw ContractException(switch (e.problem) {
+        ContractStepProblem.notAllowed => ContractFailure.notAllowed,
+        ContractStepProblem.wrongState => ContractFailure.wrongState,
+        ContractStepProblem.invalid => ContractFailure.invalid,
+      }, e.message);
+    } on FirebaseException catch (e) {
+      throw ContractException(contractFailureOf(e), e.message);
+    }
+  }
 
   @override
-  Future<String> acceptProposal(String proposalId) async =>
-      (await _call('acceptProposalCall', {'proposalId': proposalId}))['contractId'] as String;
+  Future<String> acceptProposal(String proposalId) => _run((t) => t.acceptProposal(proposalId));
 
   @override
-  Future<String?> respondToDirectRequest(String jobId, {required bool accept}) async =>
-      (await _call('directRequestCall', {'jobId': jobId, 'accept': accept}))['contractId'] as String?;
+  Future<String?> respondToDirectRequest(String jobId, {required bool accept}) =>
+      _run((t) => t.respondToDirectRequest(jobId, accept: accept));
 
   @override
-  Future<void> respondToRequest(String contractId, {required bool accept}) => _action(contractId, 'respond', {'accept': accept});
+  Future<void> respondToRequest(String contractId, {required bool accept}) => _run((t) => t.respond(contractId, accept: accept));
 
   @override
-  Future<void> startWork(String contractId) => _action(contractId, 'start');
+  Future<void> startWork(String contractId) => _run((t) => t.start(contractId));
 
   @override
   Future<void> submitWork(String contractId, {required String note, List<String> attachments = const []}) =>
-      _action(contractId, 'submit', {'note': note, 'attachments': attachments});
+      _run((t) => t.submit(contractId, note: note, attachments: attachments));
 
   @override
-  Future<void> confirmCompletion(String contractId) => _action(contractId, 'confirm');
+  Future<void> confirmCompletion(String contractId) => _run((t) => t.confirm(contractId));
 
   @override
   Future<void> cancel(String contractId, {required String reason, String note = ''}) =>
-      _action(contractId, 'cancel', {'reason': reason, if (note.trim().isNotEmpty) 'note': note.trim()});
+      _run((t) => t.cancel(contractId, reason: reason, note: note));
 
   @override
   Future<void> shareAddress(String contractId, String address, {LatLng? location, bool clearLocation = false}) =>
-      _action(contractId, 'shareAddress', {
-        'address': address,
-        if (location != null) 'location': {'lat': location.latitude, 'lng': location.longitude} else if (clearLocation) 'location': null,
+      _run((t) => t.shareAddress(contractId, address,
+          lat: location?.latitude, lng: location?.longitude, clearLocation: location == null && clearLocation));
+
+  @override
+  Future<void> requestRevision(String contractId, {required String note}) => _run((t) async {
+        final r = await t.requestRevision(contractId, note: note);
+        // Sent after the step (in-app only), so a refused notice never undoes it.
+        await t.notifyAfter(r.workerId, 'Changes requested', '${r.name} asked for changes to "${r.title}".',
+            'revision_requested', contractId, r.jobId);
       });
 
   @override
-  Future<void> requestRevision(String contractId, {required String note}) =>
-      _action(contractId, 'requestRevision', {'note': note.trim()});
-
-  @override
-  Future<void> postProgressUpdate(String contractId, {required String requestId, required String note}) =>
-      _action(contractId, 'progressUpdate', {'requestId': requestId, 'note': note.trim()});
+  Future<void> postProgressUpdate(String contractId, {required String requestId, required String note}) => _run((t) async {
+        final r = await t.progressUpdate(contractId, requestId: requestId, note: note);
+        if (r == null) return; // a retry: already saved
+        final text = note.trim();
+        await t.notifyAfter(r.clientId, 'Progress update',
+            '${r.name}: ${text.length > 80 ? '${text.substring(0, 77)}…' : text}', 'progress_update', contractId, r.jobId);
+      });
 
   @override
   String newRequestId() => const Uuid().v4();
 
+  /// Free plan (Phase S6): kept privately in Firestore (the two parties and
+  /// staff), at `contracts/{id}/evidence/{photo}`; the rules allow it only
+  /// from the hired worker while the work is in progress.
   @override
-  Future<String> uploadEvidence(String contractId, Uint8List bytes, {String contentType = 'image/jpeg'}) async {
-    final ext = contentType == 'image/png' ? 'png' : 'jpg';
-    final path = 'contracts/$contractId/evidence/${DateTime.now().millisecondsSinceEpoch}.$ext';
-    await _storage.ref(path).putData(bytes, SettableMetadata(contentType: contentType));
-    return path;
+  Future<String> uploadEvidence(String contractId, Uint8List bytes, {String contentType = 'image/jpeg'}) {
+    final uid = _auth.currentUser?.uid ?? '';
+    final type = privateImageTypes.contains(contentType) ? contentType : 'image/jpeg';
+    return PrivateMedia.put(
+      _db.collection(FirestorePaths.contracts).doc(contractId).collection('evidence')
+          .doc('p${DateTime.now().millisecondsSinceEpoch}'),
+      bytes,
+      contentType: type,
+      extra: {'uploadedBy': uid},
+    );
   }
 
   @override
-  Future<Uint8List?> evidenceBytes(String path) => _storage.ref(path).getData(5 * 1024 * 1024);
+  Future<Uint8List?> evidenceBytes(String path) => PrivateMedia.read(_db, path);
 }
 
 /// Job status that matches a contract status change (kept for reference and
-/// tests; the contract functions apply the same mapping on the server).
+/// tests; the contract steps apply the same mapping).
 String jobStatusForContractStatus(String contractStatus) => switch (contractStatus) {
       'active' => 'in_progress',
       'rejected' || 'cancelled' => 'cancelled',

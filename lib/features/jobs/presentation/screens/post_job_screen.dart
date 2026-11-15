@@ -9,6 +9,7 @@ import 'package:skill_bridge/core/constants/pakistan_constants.dart';
 import 'package:skill_bridge/core/enums/job_status.dart';
 import 'package:skill_bridge/core/enums/job_type.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/core/media/image_host.dart';
 import 'package:skill_bridge/core/services/profile_media_service.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
@@ -466,15 +467,18 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                       ),
                   ]),
                 ]),
-                section(l.jobFormSectionPhotos, subtitle: l.jobFormPhotosHelp(PostJobScreen.maxPhotos), children: [
-                  _PhotoGrid(
-                    photos: _photos,
-                    uploading: _uploading,
-                    canAdd: !busy && _photos.length < PostJobScreen.maxPhotos,
-                    onAdd: _addPhoto,
-                    onRemove: _removePhoto,
-                  ),
-                ]),
+                // Free plan: photo uploads need the image host; without it the
+                // section is shown only for a job that already has photos.
+                if (ref.watch(publicPhotoUploadsProvider) || _photos.isNotEmpty)
+                  section(l.jobFormSectionPhotos, subtitle: l.jobFormPhotosHelp(PostJobScreen.maxPhotos), children: [
+                    _PhotoGrid(
+                      photos: _photos,
+                      uploading: _uploading,
+                      canAdd: !busy && _photos.length < PostJobScreen.maxPhotos && ref.watch(publicPhotoUploadsProvider),
+                      onAdd: _addPhoto,
+                      onRemove: _removePhoto,
+                    ),
+                  ]),
               ]),
             ),
           ],

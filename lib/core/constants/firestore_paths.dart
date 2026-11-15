@@ -1,9 +1,14 @@
 class FirestorePaths {
   static const String users = 'users';
 
-  /// Public view of users/{uid} (no phone, email or addresses). Written only
-  /// by Cloud Functions; read this for anyone other than the signed-in user.
+  /// Public view of users/{uid} (no phone, email or addresses). Written by the
+  /// owner's app and checked by the rules (PublicProfileSync); read this for
+  /// anyone other than the signed-in user.
   static const String publicProfiles = 'publicProfiles';
+
+  /// Rating ledger per person (count, sum, average); moved only with a
+  /// new review (free plan, Phase S5).
+  static const String ratings = 'ratings';
 
   /// A worker's live position, readable by the clients of their active jobs.
   /// Written only by Cloud Functions.

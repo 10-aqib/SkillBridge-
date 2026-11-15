@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
 import 'package:skill_bridge/core/enums/proposal_status.dart';
+import 'package:skill_bridge/features/contracts/data/datasources/contract_transactions.dart';
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
 import 'package:skill_bridge/features/proposals/data/models/proposal_model.dart';
 import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
@@ -36,10 +37,10 @@ abstract class ProposalRemoteDataSource {
   Future<void> markViewed(String proposalId);
   Future<void> rejectProposal(String proposalId);
 
-  /// Hires the worker through the trusted acceptProposalCall function: in one
-  /// server transaction it accepts this proposal, assigns the job, closes the
-  /// other pending proposals and creates the contract and job chat. Returns
-  /// the contract id; repeating the call returns the same contract.
+  /// Hires the worker: in one transaction checked by the rules it accepts
+  /// this proposal, assigns the job, closes the other pending proposals and
+  /// creates the contract (the job chat opens when either party messages).
+  /// Returns the contract id; repeating it returns the same contract.
   Future<String> acceptProposal({
     required ProposalEntity proposal,
     required JobEntity job,
@@ -55,9 +56,9 @@ abstract class ProposalRemoteDataSource {
 
 class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions? _functions;
+  final FirebaseAuth? _auth;
 
-  ProposalRemoteDataSourceImpl(this._firestore, [this._functions]);
+  ProposalRemoteDataSourceImpl(this._firestore, [this._auth]);
 
   CollectionReference<Map<String, dynamic>> get _proposals => _firestore.collection(FirestorePaths.proposals);
 
@@ -75,6 +76,11 @@ class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
       // A second create for the same id is refused by the rules (no duplicates).
       batch.set(ref, proposal.toCreateMap());
     }
+    // The job's proposal count moves in the same write (free plan: no Cloud
+    // Function keeps it; the rules check it changes by exactly one).
+    batch.update(_firestore.collection(FirestorePaths.jobs).doc(proposal.jobId), {
+      'totalProposals': FieldValue.increment(1),
+    });
     batch.set(_firestore.collection(FirestorePaths.notifications).doc(), {
       'userId': proposal.clientId,
       'title': 'New Proposal Received',
@@ -96,11 +102,33 @@ class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
   }
 
   @override
-  Future<void> withdrawProposal(String proposalId) => _proposals.doc(proposalId).update({
-        'status': ProposalStatus.withdrawn.value,
-        'withdrawnAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+  Future<void> withdrawProposal(String proposalId) async {
+    final withdrawn = {
+      'status': ProposalStatus.withdrawn.value,
+      'withdrawnAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    // Proposal ids are `{jobId}_{workerId}`; the job's count goes down in the
+    // same write.
+    final cut = proposalId.lastIndexOf('_');
+    final jobId = cut > 0 ? proposalId.substring(0, cut) : '';
+    if (jobId.isNotEmpty) {
+      final batch = _firestore.batch()
+        ..update(_proposals.doc(proposalId), withdrawn)
+        ..update(_firestore.collection(FirestorePaths.jobs).doc(jobId), {
+          'totalProposals': FieldValue.increment(-1),
+        });
+      try {
+        await batch.commit();
+        return;
+      } on FirebaseException catch (e) {
+        // Jobs from before the count was kept may read 0: the rules then keep
+        // it at 0, so withdraw without touching the count.
+        if (e.code != 'permission-denied') rethrow;
+      }
+    }
+    await _proposals.doc(proposalId).update(withdrawn);
+  }
 
   @override
   Future<void> markViewed(String proposalId) =>
@@ -121,16 +149,22 @@ class ProposalRemoteDataSourceImpl implements ProposalRemoteDataSource {
     required String clientName,
     String? clientPhotoUrl,
   }) async {
+    // Free plan (Phase S4): one transaction checked by the rules (was the
+    // acceptProposalCall function).
+    final uid = (_auth ?? FirebaseAuth.instance).currentUser?.uid;
+    if (uid == null) throw const ProposalException(ProposalFailure.notAllowed);
     try {
-      final result = await (_functions ?? FirebaseFunctions.instance)
-          .httpsCallable('acceptProposalCall')
-          .call<Map<String, dynamic>>({'proposalId': proposal.id});
-      return (result.data['contractId'] as String?) ?? proposal.id;
-    } on FirebaseFunctionsException catch (e) {
+      return await ContractTransactions(_firestore, uid).acceptProposal(proposal.id);
+    } on ContractStepException catch (e) {
+      throw ProposalException(switch (e.problem) {
+        ContractStepProblem.wrongState => ProposalFailure.jobUnavailable,
+        ContractStepProblem.notAllowed => ProposalFailure.notAllowed,
+        ContractStepProblem.invalid => ProposalFailure.other,
+      });
+    } on FirebaseException catch (e) {
       throw ProposalException(switch (e.code) {
-        // The job is no longer open, or the proposal is no longer pending.
-        'failed-precondition' || 'not-found' => ProposalFailure.jobUnavailable,
         'permission-denied' || 'unauthenticated' => ProposalFailure.notAllowed,
+        'failed-precondition' || 'not-found' || 'aborted' => ProposalFailure.jobUnavailable,
         'unavailable' || 'deadline-exceeded' => ProposalFailure.network,
         _ => ProposalFailure.other,
       });

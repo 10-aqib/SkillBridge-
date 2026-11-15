@@ -5,6 +5,14 @@ import 'package:skill_bridge/core/errors/app_exception.dart';
 import 'package:skill_bridge/core/providers/firebase_providers.dart';
 import 'package:skill_bridge/features/reviews/data/models/review_model.dart';
 
+/// The rating ledger after one more review of [rating] stars: count, sum and
+/// the average to one decimal (exactly as the rules compute it).
+Map<String, num> nextRatingLedger(Map<String, dynamic> ledger, num rating) {
+  final count = ((ledger['count'] as num?) ?? 0).toInt() + 1;
+  final sum = ((ledger['sum'] as num?) ?? 0) + rating;
+  return {'count': count, 'sum': sum, 'average': (sum / count * 10).round() / 10.0};
+}
+
 abstract class ReviewRemoteDataSource {
   Future<void> submitReview({
     required ReviewModel review,
@@ -26,40 +34,31 @@ class ReviewRemoteDataSourceImpl implements ReviewRemoteDataSource {
     required bool isClientReview,
   }) async {
     try {
-      final batch = _firestore.batch();
-
-      // Save review document
-      final reviewRef = _firestore
-          .collection(FirestorePaths.reviews)
-          .doc('${review.contractId}_${review.reviewerId}');
-      batch.set(reviewRef, review.toMap());
-
-      // Update corresponding review flag in contract
-      final contractRef = _firestore
-          .collection(FirestorePaths.contracts)
-          .doc(review.contractId);
-
-      if (isClientReview) {
-        batch.update(contractRef, {'clientReviewed': true});
-      } else {
-        batch.update(contractRef, {'workerReviewed': true});
-      }
-
-      // Create notification for reviewee
-      final notifRef = _firestore
-          .collection(FirestorePaths.notifications)
-          .doc();
-      batch.set(notifRef, {
-        'userId': review.revieweeId,
-        'title': 'New Review Received',
-        'body':
-            '${review.reviewerName} rated you ${review.rating} stars: "${review.comment}"',
-        'type': 'review_received',
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
+      final reviewId = '${review.contractId}_${review.reviewerId}';
+      final reviewRef = _firestore.collection(FirestorePaths.reviews).doc(reviewId);
+      final contractRef = _firestore.collection(FirestorePaths.contracts).doc(review.contractId);
+      final ledgerRef = _firestore.collection(FirestorePaths.ratings).doc(review.revieweeId);
+      // Free plan (Phase S5; was aggregateReviewRating): the review, the
+      // contract's review flag and the reviewee's rating ledger in one
+      // transaction. The rules check the ledger moves by exactly this review.
+      await _firestore.runTransaction((tx) async {
+        final ledger = (await tx.get(ledgerRef)).data() ?? const <String, dynamic>{};
+        final next = nextRatingLedger(ledger, review.rating);
+        tx.set(reviewRef, review.toMap());
+        tx.update(contractRef, {isClientReview ? 'clientReviewed' : 'workerReviewed': true});
+        tx.set(ledgerRef, {...next, 'lastReviewId': reviewId, 'updatedAt': FieldValue.serverTimestamp()});
+        final comment = review.comment.length > 200 ? '${review.comment.substring(0, 197)}…' : review.comment;
+        tx.set(_firestore.collection(FirestorePaths.notifications).doc(), {
+          'userId': review.revieweeId,
+          'title': 'New Review Received',
+          'body': '${review.reviewerName} rated you ${review.rating} stars: "$comment"',
+          'type': 'review_received',
+          'payload': {'contractId': review.contractId},
+          'referenceId': review.contractId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
       });
-
-      await batch.commit();
     } catch (e) {
       throw ServerException('Failed to submit review: $e');
     }

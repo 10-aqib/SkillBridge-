@@ -737,7 +737,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediaPickerUnavailable => 'Couldn\'t open the camera or gallery.';
 
   @override
-  String get mediaTooLarge => 'That file is over 5 MB. Choose a smaller one.';
+  String get mediaTooLarge => 'That file is over 2 MB. Choose a smaller one.';
+
+  @override
+  String get mediaTooLargePrivate =>
+      'That photo is too large even after shrinking. Try another photo.';
+
+  @override
+  String get mediaNotConfigured => 'Photo uploads aren\'t available yet.';
 
   @override
   String get mediaUnsupportedType => 'Use a JPG, PNG or WebP image.';
@@ -1216,7 +1223,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verificationDocsHelp =>
-      'Clear photos, all four corners visible. Max 5 MB each.';
+      'Clear photos, all four corners visible. Photos are shrunk automatically; a PDF must be under 700 KB.';
 
   @override
   String get verificationDocFront => 'CNIC — front';
@@ -2587,7 +2594,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contractRemovePhoto => 'Remove photo';
 
   @override
-  String get contractPhotoTooLarge => 'That photo is over 5 MB';
+  String get contractPhotoTooLarge =>
+      'That photo is too large even after shrinking';
 
   @override
   String contractUploading(int current, int total) {
@@ -2888,7 +2896,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'This account is no longer active. You can read past messages but can\'t send new ones.';
 
   @override
-  String get chatPhotoTooLarge => 'Each photo must be under 5 MB.';
+  String get chatPhotoTooLarge =>
+      'That photo is too large even after shrinking. Try another one.';
 
   @override
   String get chatPhotoType => 'Use a JPEG, PNG or WebP photo.';

@@ -1,0 +1,697 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ──────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function currentUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'admin' || request.auth.token.role == 'SUPER_ADMIN');
+    }
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN';
+    }
+    function isClient() {
+      return isAuthenticated() && currentUserData().role == 'client';
+    }
+    function isWorker() {
+      return isAuthenticated() && currentUserData().role == 'worker';
+    }
+    
+    // ── Validation Helpers ────────────────────────────────────────────────
+    function isValidGeoPoint(point) {
+      return point != null 
+          && point is latlng
+          // latlng exposes latitude()/longitude() as methods; reading them
+          // as fields failed for every GeoPoint (Phase 4B fix).
+          && point.latitude() >= -90.0 && point.latitude() <= 90.0
+          && point.longitude() >= -180.0 && point.longitude() <= 180.0;
+    }
+    
+    // Checks if the user is updating location fields safely
+    // Absent, cleared (null — e.g. a job without a map pin) or a valid point.
+    function isValidLocationUpdate(data) {
+      return !('location' in data) || data.location == null || isValidGeoPoint(data.location);
+    }
+
+    // Roles a person may give themselves. Staff roles are set only by Admin SDK
+    // tooling (custom claims), never through client writes.
+    function isSelfServiceRole(role) {
+      return role in ['client', 'worker'];
+    }
+
+    // Role may stay the same, or be chosen once when it is missing/empty
+    // (legacy Google sign-ups stored role ''). It can never become 'admin'.
+    function roleChangeAllowed() {
+      let before = resource.data.get('role', '');
+      let after = request.resource.data.get('role', '');
+      return after == before || (before == '' && isSelfServiceRole(after));
+    }
+
+    // A suspended account cannot reactivate itself.
+    function activeFlagUnchanged() {
+      return request.resource.data.get('isActive', true) == resource.data.get('isActive', true);
+    }
+
+    // Owners may (re)submit for verification ('pending') but never mark
+    // themselves verified or rejected.
+    function workerVerificationStatusAllowed() {
+      let before = resource.data.get('workerProfile', {}).get('verificationStatus', '');
+      let after = request.resource.data.get('workerProfile', {}).get('verificationStatus', '');
+      return after == before || after == 'pending';
+    }
+
+    // CNIC belongs in users/{uid}/private/verification. Owners may keep or
+    // remove a legacy public copy, but never add or change one.
+    function publicCnicNotAddedOrChanged() {
+      return !('cnicNumber' in request.resource.data)
+        || request.resource.data.cnicNumber == resource.data.get('cnicNumber', null);
+    }
+
+    // Verification document entries must be files in the owner's private folder.
+    function isOwnVerificationPath(userId, path) {
+      return path is string
+        && path.matches('^users/' + userId + '/verificationDocuments/[^/]+$');
+    }
+
+    function isProtectedProfileDataUnchanged() {
+      return roleChangeAllowed()
+        && activeFlagUnchanged()
+        && publicCnicNotAddedOrChanged()
+        && workerVerificationStatusAllowed()
+        && ((!('isVerified' in request.resource.data) && !('isVerified' in resource.data))
+          || (('isVerified' in request.resource.data) && ('isVerified' in resource.data)
+            && request.resource.data.isVerified == resource.data.isVerified)
+          || (('isVerified' in request.resource.data) && !('isVerified' in resource.data)
+            && request.resource.data.isVerified == false))
+        && ((!('isCnicVerified' in request.resource.data) && !('isCnicVerified' in resource.data))
+          || (('isCnicVerified' in request.resource.data) && ('isCnicVerified' in resource.data)
+            && request.resource.data.isCnicVerified == resource.data.isCnicVerified)
+          || (('isCnicVerified' in request.resource.data) && !('isCnicVerified' in resource.data)
+            && request.resource.data.isCnicVerified == false))
+        // Reputation numbers are shown publicly (publicProfiles), so owners can
+        // never set them: kept as stored, or (field not stored yet) only the
+        // starting values (Phase S2; previously any value could be added).
+        && statKept(request.resource.data, resource.data, 'rating', 5)
+        && statKept(request.resource.data, resource.data, 'totalReviews', 0)
+        // A worker profile, once stored, can't be removed (that would reset
+        // its stats on re-creation).
+        && ((!('workerProfile' in request.resource.data) && !('workerProfile' in resource.data))
+          || ((!('workerProfile' in resource.data)
+              && (!('isVerified' in request.resource.data.workerProfile) || request.resource.data.workerProfile.isVerified == false)
+              && startingWorkerStats(request.resource.data.workerProfile))
+            || (('workerProfile' in resource.data)
+              && (!('isVerified' in request.resource.data.workerProfile) || !('isVerified' in resource.data.workerProfile) || request.resource.data.workerProfile.isVerified == resource.data.workerProfile.isVerified)
+              && statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'averageRating', 0)
+              && statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'totalReviews', 0)
+              && statKept(request.resource.data.workerProfile, resource.data.workerProfile, 'totalJobsCompleted', 0))));
+    }
+
+    // A reputation number is unchanged (and can't be removed, which would
+    // let a bad rating be reset), or (not stored before) absent or its
+    // starting value. A rating starts at 5 (the app's default) or 0.
+    function statKept(after, before, field, start) {
+      return (field in before && field in after && after[field] == before[field])
+        || (!(field in before) && (!(field in after) || after[field] == start
+            || (field == 'rating' && after[field] == 0)));
+    }
+    function startingWorkerStats(wp) {
+      return wp.get('averageRating', 0) == 0
+        && wp.get('totalReviews', 0) == 0
+        && wp.get('totalJobsCompleted', 0) == 0;
+    }
+    // New accounts start with no reputation.
+    function startingStats(d) {
+      return (d.get('rating', 5) == 5 || d.get('rating', 5) == 0)
+        && d.get('totalReviews', 0) == 0
+        && startingWorkerStats(d.get('workerProfile', {}));
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // The full account (phone, email, push token, addresses, earnings,
+      // verification fields) is private: the owner and staff only. Everyone
+      // else reads publicProfiles/{uid}, kept by a trusted function.
+      allow read: if isOwner(userId) || isAdmin();
+      // Self-created profiles: client/worker (or '' = role not chosen yet, kept
+      // for older app versions), active, and never pre-verified.
+      allow create: if isOwner(userId)
+                    && request.resource.data.get('role', '') in ['', 'client', 'worker']
+                    && request.resource.data.get('isActive', true) == true
+                    && request.resource.data.get('isCnicVerified', false) == false
+                    && !('cnicNumber' in request.resource.data)
+                    && request.resource.data.get('workerProfile', {}).get('isVerified', false) == false
+                    && request.resource.data.get('workerProfile', {}).get('verificationStatus', '') in ['', 'pending']
+                    && startingStats(request.resource.data)
+                    && isValidLocationUpdate(request.resource.data);
+      allow update: if (isOwner(userId) && isValidLocationUpdate(request.resource.data)
+                        && isProtectedProfileDataUnchanged()) || isAdmin();
+      allow delete: if isAdmin();
+
+      // Private verification submission (CNIC + document storage paths).
+      // Readable only by the owner and staff; never part of public profiles.
+      match /private/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update: if isAdmin() || (
+          isOwner(userId)
+          && docId == 'verification'
+          && request.resource.data.keys().hasOnly(['cnicNumber', 'documents', 'status', 'submittedAt', 'updatedAt'])
+          && request.resource.data.get('status', 'pending') == 'pending'
+          && request.resource.data.cnicNumber is string
+          && request.resource.data.cnicNumber.matches('^[0-9]{5}-[0-9]{7}-[0-9]$')
+          && request.resource.data.documents is list
+          && request.resource.data.documents.size() >= 1
+          && request.resource.data.documents.size() <= 3
+          && isOwnVerificationPath(userId, request.resource.data.documents[0])
+          && (request.resource.data.documents.size() < 2
+              || isOwnVerificationPath(userId, request.resource.data.documents[1]))
+          && (request.resource.data.documents.size() < 3
+              || isOwnVerificationPath(userId, request.resource.data.documents[2]))
+        );
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ── Public profiles ───────────────────────────────────────────────────
+    // Allowlisted public view of users/{uid}: no phone, email, CNIC, push
+    // token, addresses, earnings or verification data; worker areas ~1 km.
+    //
+    // Free plan (no Cloud Functions, Phase S2): the owner's app writes its
+    // own public profile. The rules decide what it may contain:
+    // - only allowlisted fields (nothing private can be published);
+    // - everything other people rely on (role, active, rating, reviews,
+    //   verified badges, jobs completed) must equal the private account,
+    //   which the owner cannot change (see isProtectedProfileDataUnchanged);
+    // - "email/phone verified" only when the sign-in token says so;
+    // - locations only at ~1 km precision (2 decimal places).
+    // Self-description (name, bio, skills, rates…) is the owner's own text.
+    function publicUserKeys() {
+      return ['uid', 'displayName', 'photoUrl', 'role', 'isActive', 'city',
+        'isEmailVerified', 'isPhoneVerified', 'isCnicVerified', 'createdAt',
+        'rating', 'totalReviews', 'location', 'geohash', 'locationAccuracy',
+        'workerProfile', 'updatedAt'];
+    }
+    function publicWorkerKeys() {
+      return ['headline', 'bio', 'categoryId', 'categoryName', 'skills', 'experience',
+        'hourlyRate', 'dailyRate', 'availability', 'isVerified', 'city',
+        'serviceRadius', 'totalJobsCompleted', 'averageRating', 'totalReviews',
+        'coverImage', 'languages', 'responseTime', 'portfolioImages', 'beforeAfterImages',
+        'certifications', 'location', 'geohash', 'locationAccuracy'];
+    }
+    // ~1.1 km: the point has at most 2 decimal places.
+    function isCoarse(p) {
+      return isValidGeoPoint(p)
+        && math.abs(p.latitude() * 100 - math.round(p.latitude() * 100)) < 0.0001
+        && math.abs(p.longitude() * 100 - math.round(p.longitude() * 100)) < 0.0001;
+    }
+    function sameAs(pub, priv, field) {
+      return pub.get(field, null) == priv.get(field, null);
+    }
+    function publicWorkerValid(pub, priv) {
+      let wp = pub.get('workerProfile', null);
+      let src = priv.get('workerProfile', {});
+      return wp == null || (
+        wp is map
+        && priv.get('role', '') == 'worker'
+        && wp.keys().hasOnly(publicWorkerKeys())
+        && sameAs(wp, src, 'isVerified')
+        && sameAs(wp, src, 'averageRating')
+        && sameAs(wp, src, 'totalReviews')
+        && sameAs(wp, src, 'totalJobsCompleted')
+        && (!('location' in wp) || isCoarse(wp.location))
+        && (!('certifications' in wp) || (wp.certifications is list && wp.certifications.size() <= 20)));
+    }
+    function publicProfileValid(userId) {
+      let pub = request.resource.data;
+      let priv = get(/databases/$(database)/documents/users/$(userId)).data;
+      return pub.keys().hasOnly(publicUserKeys())
+        && pub.get('uid', '') == userId
+        && sameAs(pub, priv, 'role')
+        && sameAs(pub, priv, 'isActive')
+        && sameAs(pub, priv, 'isCnicVerified')
+        && sameAs(pub, priv, 'rating')
+        && sameAs(pub, priv, 'totalReviews')
+        && sameAs(pub, priv, 'createdAt')
+        && (pub.get('isEmailVerified', false) != true || request.auth.token.email_verified == true)
+        && (pub.get('isPhoneVerified', false) != true || request.auth.token.get('phone_number', null) != null)
+        && (!('location' in pub) || pub.location == null || isCoarse(pub.location))
+        && publicWorkerValid(pub, priv);
+    }
+    match /publicProfiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId)
+        && exists(/databases/$(database)/documents/users/$(userId))
+        && publicProfileValid(userId);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // A worker's live position: the worker, staff, and the clients of jobs
+    // currently assigned to that worker (viewerIds, set by the function).
+    // Unused by the app (live tracking uses contracts/{id}/live/location),
+    // and with no Cloud Functions nothing writes it: kept closed.
+    match /liveLocations/{workerId} {
+      allow read: if isOwner(workerId) || isAdmin()
+        || (isAuthenticated() && request.auth.uid in resource.data.viewerIds);
+      allow write: if false;
+    }
+
+    // ── Jobs ──────────────────────────────────────────────────────────────
+    // Each operation has exactly one allow statement, so no broader rule can
+    // widen a narrower one (allow statements are OR-combined).
+
+    function isActiveUser() {
+      return currentUserData().get('isActive', true) == true;
+    }
+
+    // Listed in the job feed: open and not a direct request to one worker.
+    // Plain field access on purpose: with .get(field, default) the emulator
+    // allowed a status-only query that returned other workers' direct requests.
+    function isPublicOpenJob(data) {
+      return data.status == 'open' && data.selectedWorkerId == null;
+    }
+
+    // Every field a job may hold. Anything else (e.g. moderation flags) can
+    // only be written by staff.
+    function jobKeysAllowed(data) {
+      return data.keys().hasOnly([
+        'clientId', 'clientName', 'clientPhotoUrl', 'title', 'description',
+        'categoryId', 'categoryName', 'requiredSkills', 'jobType',
+        'budgetMin', 'budgetMax', 'budgetType', 'budgetBand',
+        'location', 'geohash', 'locationAccuracy', 'locationUpdatedAt',
+        'address', 'city', 'status', 'urgency', 'images', 'totalProposals',
+        'selectedWorkerId', 'selectedWorkerName', 'startDate', 'endDate',
+        'createdAt', 'updatedAt', 'isPaid', 'searchKeywords']);
+    }
+
+    function jobContentValid(d) {
+      return d.title is string && d.title.size() >= 5 && d.title.size() <= 100
+        && d.description is string && d.description.size() >= 10 && d.description.size() <= 2000
+        && d.categoryName is string && d.categoryName.size() > 0 && d.categoryName.size() <= 60
+        && d.requiredSkills is list && d.requiredSkills.size() <= 15
+        && d.budgetType in ['fixed', 'hourly', 'daily']
+        && d.budgetMin is number && d.budgetMin >= 0
+        && d.budgetMax is number && d.budgetMax >= d.budgetMin && d.budgetMax <= 10000000
+        && d.status in ['open', 'assigned', 'in_progress', 'completed', 'cancelled']
+        && (!('images' in d) || (d.images is list && d.images.size() <= 6))
+        && (!('searchKeywords' in d) || (d.searchKeywords is list && d.searchKeywords.size() <= 300))
+        && isValidLocationUpdate(d);
+    }
+
+    function jobCreateAllowed() {
+      let d = request.resource.data;
+      return isClient() && isActiveUser()
+        && d.clientId == request.auth.uid
+        && d.createdAt == request.time
+        && d.get('totalProposals', 0) == 0
+        && d.get('isPaid', false) == false
+        && jobKeysAllowed(d) && jobContentValid(d)
+        && (isPublicOpenJob(d)
+          // Direct request / direct hire to one worker (not to yourself).
+          || (d.status in ['open', 'assigned']
+            && d.selectedWorkerId is string && d.selectedWorkerId != request.auth.uid));
+    }
+
+    // The owning client: edit while open, close, reopen, hire, finish.
+    function ownerJobUpdateAllowed(jobId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return before.clientId == request.auth.uid && isActiveUser()
+        && !changed.hasAny(['clientId', 'createdAt', 'totalProposals', 'isPaid'])
+        && jobKeysAllowed(after) && jobContentValid(after)
+        && (
+          // Edit an open job; assignment stays as it is.
+          (before.status == 'open' && after.status == 'open'
+            && !changed.hasAny(['selectedWorkerId', 'selectedWorkerName']))
+          // Close.
+          || (before.status == 'open' && after.status == 'cancelled'
+            && changed.hasOnly(['status', 'updatedAt']))
+          // Reopen a closed public job.
+          || (before.status == 'cancelled' && after.status == 'open'
+            && before.get('selectedWorkerId', null) == null
+            && changed.hasOnly(['status', 'updatedAt']))
+          // Hiring (open → assigned) and every later step (start, complete,
+          // cancel) are made by the trusted contract functions, which keep the
+          // job, proposals and contract consistent. Owners cannot do them here.
+        );
+    }
+
+    // The worker a job is assigned or directly requested from: status only.
+    function assignedWorkerJobUpdateAllowed() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return before.get('selectedWorkerId', null) == request.auth.uid && isActiveUser()
+        && changed.hasOnly(['status', 'selectedWorkerName', 'updatedAt'])
+        // Older direct requests (no contract) can only be declined here.
+        // Starting and finishing work go through the contract functions, and
+        // a worker can never mark a job completed.
+        && before.status == 'open' && after.status == 'cancelled';
+    }
+
+    match /jobs/{jobId} {
+      // Owner, the selected worker, staff, or anyone active for public open
+      // jobs. Feed queries must filter status == 'open' and
+      // selectedWorkerId == null to be allowed. Other applicants cannot read
+      // a job once it is no longer public (it names the hired worker); they
+      // follow its status through proposals/{id}.jobStatus instead.
+      allow read: if isAuthenticated() && (
+        isAdmin()
+        || resource.data.clientId == request.auth.uid
+        || resource.data.selectedWorkerId == request.auth.uid
+        || (isPublicOpenJob(resource.data) && isActiveUser()));
+      allow create: if isAuthenticated() && (isAdmin() || jobCreateAllowed());
+      allow update: if isAuthenticated() && (
+        isAdmin() || ownerJobUpdateAllowed(jobId) || assignedWorkerJobUpdateAllowed());
+      // Published jobs are kept for history; clients close them instead.
+      allow delete: if isAdmin();
+    }
+
+    // ── Proposals ─────────────────────────────────────────────────────────
+    // One proposal per worker per job: the document id is
+    // `{jobId}_{workerId}`, so a second create is refused and a withdrawn
+    // proposal is re-sent by updating the same document. `totalProposals`
+    // on the job is kept by a Cloud Function (syncJobProposalCount).
+    function jobDoc(jobId) {
+      return get(/databases/$(database)/documents/jobs/$(jobId)).data;
+    }
+    function jobAfter(jobId) {
+      return getAfter(/databases/$(database)/documents/jobs/$(jobId)).data;
+    }
+
+    function proposalKeysAllowed(d) {
+      return d.keys().hasOnly([
+        'jobId', 'jobTitle', 'workerId', 'workerName', 'workerPhotoUrl', 'clientId',
+        'coverLetter', 'proposedRate', 'rateType', 'estimatedDuration', 'status',
+        'createdAt', 'updatedAt', 'viewedAt', 'decidedAt', 'withdrawnAt',
+        'resubmittedAt', 'closedReason', 'workerRating', 'jobStatus']);
+    }
+
+    function proposalContentValid(d) {
+      return d.coverLetter is string && d.coverLetter.size() >= 30 && d.coverLetter.size() <= 2000
+        && d.proposedRate is number && d.proposedRate > 0 && d.proposedRate <= 10000000
+        && d.rateType in ['fixed', 'hourly', 'daily']
+        && d.estimatedDuration is string && d.estimatedDuration.size() >= 2 && d.estimatedDuration.size() <= 60;
+    }
+
+    function proposalCreateAllowed(proposalId) {
+      let d = request.resource.data;
+      let job = jobDoc(d.jobId);
+      return isWorker() && isActiveUser()
+        && proposalId == d.jobId + '_' + request.auth.uid
+        && d.workerId == request.auth.uid
+        && d.status == 'pending'
+        && d.createdAt == request.time
+        && proposalKeysAllowed(d) && proposalContentValid(d)
+        // Decisions, counters and ratings are never set by the worker.
+        && !d.keys().hasAny(['viewedAt', 'decidedAt', 'withdrawnAt', 'resubmittedAt', 'closedReason', 'workerRating', 'jobStatus'])
+        && isPublicOpenJob(job)
+        && job.clientId != request.auth.uid
+        && d.clientId == job.clientId
+        && d.jobTitle == job.title;
+    }
+
+    function proposalUpdateAllowed(proposalId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return isActiveUser()
+        // jobStatus is copied from the job by a trusted function only.
+        && !changed.hasAny(['jobId', 'jobTitle', 'workerId', 'clientId', 'createdAt', 'workerRating', 'jobStatus'])
+        && proposalKeysAllowed(after)
+        && (
+          // Worker withdraws a pending proposal.
+          (before.workerId == request.auth.uid && before.status == 'pending' && after.status == 'withdrawn'
+            && changed.hasOnly(['status', 'updatedAt', 'withdrawnAt']))
+          // Worker re-sends a withdrawn proposal while the job is still open.
+          || (before.workerId == request.auth.uid && before.status == 'withdrawn' && after.status == 'pending'
+            && changed.hasOnly(['status', 'updatedAt', 'resubmittedAt', 'withdrawnAt', 'viewedAt',
+                                'coverLetter', 'proposedRate', 'rateType', 'estimatedDuration',
+                                'workerName', 'workerPhotoUrl'])
+            && proposalContentValid(after) && isPublicOpenJob(jobDoc(before.jobId)))
+          // Client opens a pending proposal (shown to the worker as "Viewed").
+          || (before.clientId == request.auth.uid && before.status == 'pending' && after.status == 'pending'
+            && changed.hasOnly(['viewedAt']) && !('viewedAt' in before) && after.viewedAt == request.time)
+          // Client declines (or it closes because someone else was hired).
+          || (before.clientId == request.auth.uid && before.status == 'pending' && after.status == 'rejected'
+            && changed.hasOnly(['status', 'updatedAt', 'decidedAt', 'closedReason'])
+            && after.closedReason in ['client', 'filled'])
+          // Accepting is done only by the acceptProposalCall function, which
+          // creates the contract in the same transaction.
+        );
+    }
+
+    match /proposals/{proposalId} {
+      // Only the worker who sent it, the client it was sent to, and staff.
+      allow read: if isAuthenticated() && (
+        isAdmin()
+        || resource.data.workerId == request.auth.uid
+        || resource.data.clientId == request.auth.uid);
+      allow create: if isAuthenticated() && proposalCreateAllowed(proposalId);
+      allow update: if isAuthenticated() && (isAdmin() || proposalUpdateAllowed(proposalId));
+      // Kept for history; workers withdraw instead.
+      allow delete: if isAdmin();
+    }
+
+    // ── Contracts ─────────────────────────────────────────────────────────
+    // Proposal contracts are created only by acceptProposalCall, and every
+    // status change (accept/decline a booking, start, submit, confirm,
+    // cancel, share address) goes through contractActionCall. Clients may
+    // still send a booking request: a pending contract for a direct hire of
+    // their own job, created with no lifecycle data. Payment fields stay with
+    // staff and the payment provider.
+    function contractCreateAllowed() {
+      let d = request.resource.data;
+      return isClient() && isActiveUser()
+        && d.clientId == request.auth.uid
+        && d.workerId is string && d.workerId != request.auth.uid
+        && d.paymentStatus == 'unpaid'
+        && d.status == 'pending'
+        && d.proposalId == 'direct_hire'
+        && !d.keys().hasAny(['acceptedAt', 'respondedAt', 'workStartedAt', 'submittedAt', 'submission',
+                             'completedAt', 'cancelledAt', 'cancelledBy', 'cancelledByRole', 'cancelReason'])
+        && jobAfter(d.jobId).clientId == request.auth.uid
+        && jobAfter(d.jobId).selectedWorkerId == d.workerId;
+    }
+
+    // After completion each party may record that they reviewed (set when
+    // writing their review). Nothing else on a contract is user-writable.
+    function contractReviewFlagAllowed() {
+      let before = resource.data;
+      let changed = request.resource.data.diff(before).affectedKeys();
+      return before.status == 'completed'
+        && ((before.clientId == request.auth.uid && changed.hasOnly(['clientReviewed'])
+              && before.get('clientReviewed', false) == false && request.resource.data.clientReviewed == true)
+          || (before.workerId == request.auth.uid && changed.hasOnly(['workerReviewed'])
+              && before.get('workerReviewed', false) == false && request.resource.data.workerReviewed == true));
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.clientId == request.auth.uid ||
+                      resource.data.workerId == request.auth.uid ||
+                      isAdmin());
+      allow create: if isAuthenticated() && (isAdmin() || contractCreateAllowed());
+      allow update: if isAuthenticated() && (isAdmin() || contractReviewFlagAllowed());
+      allow delete: if isAdmin();
+
+      function contractData() {
+        return get(/databases/$(database)/documents/contracts/$(contractId)).data;
+      }
+      function isContractParty() {
+        let c = contractData();
+        return request.auth.uid == c.clientId || request.auth.uid == c.workerId;
+      }
+      // Submitted work waiting for the client (see stageOf in contracts.ts).
+      function awaitingReview(c) {
+        return (c.get('submissionCount', null) is int && c.submissionCount > c.get('revisionCount', 0))
+          || (!(c.get('submissionCount', null) is int) && c.get('submittedAt', null) != null);
+      }
+      // Live location for this contract only: the hired worker, while the
+      // contract is active and the work is not waiting for review, at server
+      // time. The function deletes it when work is submitted, completed or
+      // cancelled; the worker deletes it to stop sharing.
+      function liveLocationValid(d) {
+        let c = contractData();
+        return c.workerId == request.auth.uid && c.status == 'active' && !awaitingReview(c) && isActiveUser()
+          && d.keys().hasOnly(['workerId', 'position', 'accuracy', 'heading', 'speed', 'updatedAt', 'startedAt'])
+          && d.workerId == request.auth.uid
+          && isValidGeoPoint(d.position)
+          && (!('accuracy' in d) || (d.accuracy is number && d.accuracy >= 0 && d.accuracy <= 100000))
+          // Direction of travel (degrees from north) and speed (m/s), optional
+          // (Navigation phase 8). 100 m/s is far above any road speed.
+          && (!('heading' in d) || (d.heading is number && d.heading >= 0 && d.heading <= 360))
+          && (!('speed' in d) || (d.speed is number && d.speed >= 0 && d.speed <= 100))
+          && d.updatedAt == request.time;
+      }
+
+      match /live/{docId} {
+        allow read: if isAuthenticated() && (isAdmin() || isContractParty());
+        allow create: if isAuthenticated() && docId == 'location'
+          && liveLocationValid(request.resource.data) && request.resource.data.startedAt == request.time;
+        // Same session (start time kept), or sharing started again (a new
+        // start time, at server time only).
+        allow update: if isAuthenticated() && docId == 'location'
+          && liveLocationValid(request.resource.data)
+          && (request.resource.data.startedAt == resource.data.startedAt || request.resource.data.startedAt == request.time);
+        allow delete: if isAuthenticated() && (isAdmin() || contractData().workerId == request.auth.uid);
+      }
+
+      // Progress updates and submission history: written only by
+      // contractActionCall; readable by the two parties and staff.
+      match /updates/{updateId} {
+        allow read: if isAuthenticated() && (isAdmin() || isContractParty());
+        allow write: if false;
+      }
+      match /submissions/{submissionId} {
+        allow read: if isAuthenticated() && (isAdmin() || isContractParty());
+        allow write: if false;
+      }
+    }
+
+    // ── Reviews ───────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       (isAdmin() || (
+                         request.resource.data.reviewerId == request.auth.uid &&
+                         request.resource.data.contractId is string &&
+                         reviewId == request.resource.data.contractId + '_' + request.auth.uid &&
+                         exists(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)) &&
+                         get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.status == 'completed' &&
+                         request.resource.data.isVerifiedCustomer == true &&
+                         request.resource.data.rating is number &&
+                         request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+                         ((get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.clientId == request.auth.uid &&
+                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerId == request.resource.data.revieweeId &&
+                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.clientReviewed == false) ||
+                          (get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerId == request.auth.uid &&
+                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.clientId == request.resource.data.revieweeId &&
+                           get(/databases/$(database)/documents/contracts/$(request.resource.data.contractId)).data.workerReviewed == false))
+                       ));
+      allow update: if isAdmin() || (isAuthenticated() &&
+                       resource.data.revieweeId == request.auth.uid &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['workerReply', 'workerReplyAt']));
+      allow delete: if isAdmin();
+    }
+
+    // ── Chats / Messages (Phase 4B) ───────────────────────────────────────
+    // Conversations are created only by trusted functions (openChatCall, and
+    // hiring in Phase 4A), which check a real relationship. The preview,
+    // ordering time and unread counts are kept by onChatMessageCreated; a
+    // member may only mark the conversation read for themselves.
+    function chatMarkReadAllowed() {
+      let me = request.auth.uid;
+      let after = request.resource.data;
+      let changed = after.diff(resource.data).affectedKeys();
+      return me in resource.data.participantIds
+        && changed.hasOnly(['lastReadAt', 'unreadCount'])
+        && after.get('lastReadAt', {}).diff(resource.data.get('lastReadAt', {})).affectedKeys().hasOnly([me])
+        && after.get('unreadCount', {}).diff(resource.data.get('unreadCount', {})).affectedKeys().hasOnly([me])
+        && after.lastReadAt[me] == request.time
+        && after.get('unreadCount', {}).get(me, 0) == 0;
+    }
+
+    match /chats/{chatId} {
+      // Members and staff only, so no-one can probe which chats exist.
+      allow read: if isAuthenticated() && (isAdmin() || request.auth.uid in resource.data.participantIds);
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() && (isAdmin() || chatMarkReadAllowed());
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        function chatData() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data;
+        }
+        function isChatMember() {
+          return request.auth.uid in chatData().participantIds;
+        }
+        // Messages to a suspended or deleted account are refused.
+        function recipientActive() {
+          let ids = chatData().participantIds;
+          let other = ids[0] == request.auth.uid ? ids[1] : ids[0];
+          return exists(/databases/$(database)/documents/users/$(other))
+            && get(/databases/$(database)/documents/users/$(other)).data.get('isActive', true) == true;
+        }
+        // Photos live under the sender's own folder for this message.
+        function attachmentOk(path) {
+          return path is string
+            && path.matches('chats/' + chatId + '/' + request.auth.uid + '/' + messageId + '/[A-Za-z0-9_-]{1,60}[.](jpg|jpeg|png|webp)');
+        }
+        function attachmentsValid(d) {
+          return d.attachments is list && d.attachments.size() >= 1 && d.attachments.size() <= 3
+            && attachmentOk(d.attachments[0])
+            && (d.attachments.size() < 2 || attachmentOk(d.attachments[1]))
+            && (d.attachments.size() < 3 || attachmentOk(d.attachments[2]));
+        }
+        function messageValid(d) {
+          return d.keys().hasOnly(['chatId', 'senderId', 'senderName', 'senderPhotoUrl', 'content', 'type',
+                                   'isRead', 'createdAt', 'attachments'])
+            && d.senderId == request.auth.uid
+            && d.chatId == chatId
+            && d.createdAt == request.time
+            && d.isRead == false
+            && d.content is string && d.content.size() <= 5000
+            && ((d.type == 'text' && d.content.trim().size() > 0 && !('attachments' in d))
+              || (d.type == 'image' && attachmentsValid(d)));
+        }
+
+        allow read: if isAuthenticated() && (isAdmin() || isChatMember());
+        // Members post as themselves, at server time, with a client-chosen id
+        // so a retry can never create a second copy (create-only).
+        allow create: if isAuthenticated() && isChatMember() && isActiveUser()
+          && messageId.matches('[A-Za-z0-9_-]{8,64}')
+          && recipientActive()
+          && messageValid(request.resource.data);
+        // The recipient may mark a message read; nothing else changes.
+        allow update: if isAuthenticated() && isChatMember()
+          && resource.data.senderId != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+          && request.resource.data.isRead == true;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ── Categories ────────────────────────────────────────────────────────
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read, update, delete: if isAuthenticated() &&
+                                     (resource.data.userId == request.auth.uid || isAdmin());
+      // Message, revision and progress notifications come only from trusted
+      // functions, so they can't be forged.
+      allow create: if isAuthenticated()
+        && !(request.resource.data.get('type', '') in ['message', 'revision_requested', 'progress_update']);
+    }
+
+    // ── FCM Tokens ────────────────────────────────────────────────────────
+    match /fcmTokens/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // ── User reports ─────────────────────────────────────────────────────
+    match /reports/{reportId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.targetUserId is string
+        && request.resource.data.targetUserId != request.auth.uid
+        && request.resource.data.status == 'open';
+      allow read: if isAuthenticated()
+        && (resource.data.reporterId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+  }
+}

@@ -23,7 +23,7 @@ class WorkerRemoteDataSourceImpl implements WorkerRemoteDataSource {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Discovery reads public profiles only: no phone, email or addresses, and
-  // worker locations coarsened to about 1 km (see functions/src/profiles.ts).
+  // worker locations coarsened to about 1 km (see core/services/public_profile_sync.dart).
   @override
   Stream<List<UserModel>> getWorkersStream() {
     final query = _firestore

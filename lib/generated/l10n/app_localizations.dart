@@ -1487,8 +1487,20 @@ abstract class AppLocalizations {
   /// No description provided for @mediaTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'That file is over 5 MB. Choose a smaller one.'**
+  /// **'That file is over 2 MB. Choose a smaller one.'**
   String get mediaTooLarge;
+
+  /// No description provided for @mediaTooLargePrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'That photo is too large even after shrinking. Try another photo.'**
+  String get mediaTooLargePrivate;
+
+  /// No description provided for @mediaNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo uploads aren\'t available yet.'**
+  String get mediaNotConfigured;
 
   /// No description provided for @mediaUnsupportedType.
   ///
@@ -2309,7 +2321,7 @@ abstract class AppLocalizations {
   /// No description provided for @verificationDocsHelp.
   ///
   /// In en, this message translates to:
-  /// **'Clear photos, all four corners visible. Max 5 MB each.'**
+  /// **'Clear photos, all four corners visible. Photos are shrunk automatically; a PDF must be under 700 KB.'**
   String get verificationDocsHelp;
 
   /// No description provided for @verificationDocFront.
@@ -4703,7 +4715,7 @@ abstract class AppLocalizations {
   /// No description provided for @contractPhotoTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'That photo is over 5 MB'**
+  /// **'That photo is too large even after shrinking'**
   String get contractPhotoTooLarge;
 
   /// No description provided for @contractUploading.
@@ -5237,7 +5249,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatPhotoTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'Each photo must be under 5 MB.'**
+  /// **'That photo is too large even after shrinking. Try another one.'**
   String get chatPhotoTooLarge;
 
   /// No description provided for @chatPhotoType.
