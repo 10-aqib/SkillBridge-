@@ -53,6 +53,12 @@ class NearbyWorkerEntity {
   final bool isAvailable;
   final double matchScore;
 
+  /// Admin-approved verification badge (workerProfile.isVerified).
+  final bool isVerified;
+
+  /// Number of reviews behind [rating]; 0 means "New" (no rating to show).
+  final int reviewCount;
+
   NearbyWorkerEntity({
     required this.workerId,
     required this.name,
@@ -64,6 +70,8 @@ class NearbyWorkerEntity {
     required this.distanceKm,
     this.isAvailable = true,
     this.matchScore = 0.0,
+    this.isVerified = false,
+    this.reviewCount = 0,
   });
 
   NearbyWorkerEntity copyWith({
@@ -77,6 +85,8 @@ class NearbyWorkerEntity {
     double? distanceKm,
     bool? isAvailable,
     double? matchScore,
+    bool? isVerified,
+    int? reviewCount,
   }) {
     return NearbyWorkerEntity(
       workerId: workerId ?? this.workerId,
@@ -89,6 +99,8 @@ class NearbyWorkerEntity {
       distanceKm: distanceKm ?? this.distanceKm,
       isAvailable: isAvailable ?? this.isAvailable,
       matchScore: matchScore ?? this.matchScore,
+      isVerified: isVerified ?? this.isVerified,
+      reviewCount: reviewCount ?? this.reviewCount,
     );
   }
 }

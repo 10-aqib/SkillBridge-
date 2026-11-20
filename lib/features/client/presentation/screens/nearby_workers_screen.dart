@@ -735,11 +735,9 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                                   ),
                                 ),
                                 Text(
-                                  AppL10n.select(
-                                    context,
-                                    en: '${selectedWorker.category}',
-                                    ur: '★ ${selectedWorker.rating}',
-                                  ),
+                                  // Category in both languages (Urdu showed
+                                  // a raw rating such as "★ 0.0" here).
+                                  selectedWorker.category,
                                   style: AppTextStyles.labelCaption.copyWith(
                                     color: context.mutedColor,
                                   ),
@@ -900,11 +898,12 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                                 ),
                               ),
                             ),
-                            Icon(
-                              Icons.verified_rounded,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
+                            if (worker.isVerified)
+                              Icon(
+                                Icons.verified_rounded,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
                           ],
                         ),
                         Text(
@@ -918,7 +917,7 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
                           children: [
                             _buildDistanceChip(worker.distanceKm, context),
                             const SizedBox(width: 8),
-                            _buildRatingChip(worker.rating, context),
+                            _buildRatingChip(worker, context),
                           ],
                         ),
                       ],
@@ -1036,7 +1035,10 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
     );
   }
 
-  Widget _buildRatingChip(double rating, BuildContext context) {
+  /// Star and average when the worker has reviews; "New" otherwise, so a
+  /// worker without reviews never shows an invented 0.0 rating.
+  Widget _buildRatingChip(NearbyWorkerEntity worker, BuildContext context) {
+    final hasReviews = worker.reviewCount > 0;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -1046,10 +1048,14 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 13, color: AppColors.amberWarm),
-          const SizedBox(width: 4),
+          if (hasReviews) ...[
+            const Icon(Icons.star_rounded, size: 13, color: AppColors.amberWarm),
+            const SizedBox(width: 4),
+          ],
           Text(
-            rating.toStringAsFixed(1),
+            hasReviews
+                ? worker.rating.toStringAsFixed(1)
+                : context.l10n.publicProfileNew,
             style: AppTextStyles.labelCaption.copyWith(
               color: AppColors.amberWarm,
               fontWeight: FontWeight.w700,

@@ -22,17 +22,32 @@ class GetNearbyWorkersUseCase {
         );
         
         final distKm = userLocation.distanceTo(workerLoc);
+        final profile = user.workerProfile;
+        // Same rating source as the client home cards: the worker profile's
+        // ledger copy when it has reviews, else the account's.
+        final profileHasReviews = (profile?.totalReviews ?? 0) > 0;
+        final reviewCount =
+            profileHasReviews ? profile!.totalReviews : user.totalReviews;
 
         workers.add(
           NearbyWorkerEntity(
             workerId: user.uid,
             name: user.displayName,
-            category: user.workerProfile?.categoryName ?? 'Worker',
-            hourlyRate: user.workerProfile?.hourlyRate ?? 0.0,
-            rating: user.rating,
+            category: profile?.categoryName ?? 'Worker',
+            hourlyRate: profile?.hourlyRate ?? 0.0,
+            rating: reviewCount == 0
+                ? 0.0
+                : (profileHasReviews ? profile!.averageRating : user.rating),
             profilePicture: user.photoUrl,
             location: workerLoc,
             distanceKm: distKm,
+            // 'available' | 'busy' | 'offline'; missing means a new profile,
+            // which starts as available.
+            isAvailable:
+                (profile?.availability ?? 'available').toLowerCase() ==
+                    'available',
+            isVerified: profile?.isVerified ?? false,
+            reviewCount: reviewCount,
           ),
         );
       }
