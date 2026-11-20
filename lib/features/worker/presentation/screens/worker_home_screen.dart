@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/enums/job_type.dart';
+import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
 import 'package:skill_bridge/features/worker/presentation/widgets/worker_earnings_chart.dart';
@@ -33,6 +34,7 @@ class WorkerHomeScreen extends ConsumerStatefulWidget {
 
 class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
   String _availability = 'Available';
+  bool _savingAvailability = false;
 
   @override
   void initState() {
@@ -55,18 +57,35 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
     });
   }
 
+  /// Saves first and only then shows the new status, so the worker never
+  /// sees a status that clients don't. 'Unavailable' is stored as 'offline',
+  /// the value the rest of the app (Availability enum, profile screen,
+  /// client cards) understands.
   Future<void> _updateAvailability(String val) async {
-    setState(() => _availability = val);
     final user = ref.read(currentUserProvider);
-    if (user != null) {
-      try {
-        await ref.read(updateUserProfileUseCaseProvider).call(
-              uid: user.uid,
-              data: {
-                'workerProfile.availability': val.toLowerCase(),
-              },
-            );
-      } catch (_) {}
+    if (user == null || _savingAvailability || val == _availability) return;
+    final stored = switch (val) {
+      'Busy' => 'busy',
+      'Unavailable' => 'offline',
+      _ => 'available',
+    };
+    setState(() => _savingAvailability = true);
+    final result = await ref.read(updateUserProfileUseCaseProvider).call(
+          uid: user.uid,
+          data: {'workerProfile.availability': stored},
+        );
+    if (!mounted) return;
+    setState(() {
+      _savingAvailability = false;
+      if (result.isRight()) _availability = val;
+    });
+    if (result.isLeft()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.profileSaveFailed),
+          backgroundColor: const Color(0xFFEF5350),
+        ),
+      );
     }
   }
 
@@ -240,6 +259,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       const SizedBox(width: 8),
                       // Change pill button
                       PopupMenuButton<String>(
+                        enabled: !_savingAvailability,
                         onSelected: _updateAvailability,
                         color: _card,
                         shape: RoundedRectangleBorder(
