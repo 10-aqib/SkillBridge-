@@ -1,1 +1,4 @@
 .test-build/
+
+# Test password for scripts/seed-test-workers.js (local emulator only)
+scripts/.seed-workers.local.json
