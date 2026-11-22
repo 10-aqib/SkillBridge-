@@ -59,3 +59,6 @@ firebase_app_id_file.json
 # *.g.dart
 # *.freezed.dart
 ios/Flutter/GoogleMaps.local.xcconfig
+# Non-secret Cloud Functions settings (NADRA flags, all false). Never put secrets in them.
+!functions/.env.skill-bridge-c68c3
+!functions/.env.demo-skillbridge

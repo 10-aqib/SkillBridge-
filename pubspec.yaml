@@ -43,16 +43,14 @@ dependencies:
   uuid: ^4.5.1
   geolocator: ^13.0.2
   share_plus: ^10.1.4
-  # Used directly by the map, routing and search services (was transitive).
+  # Used directly by the image upload client (was transitive).
   http: ^1.6.0
 
-  # ── Maps & navigation (OpenStreetMap stack; no API key) ──
-  flutter_map: ^8.3.2
-  latlong2: ^0.10.1
-  flutter_tts: ^4.2.5
-  # 1.6.1+ needs win32 6, which share_plus 10 doesn't allow; 1.6.0 is the
-  # newest that resolves without touching share_plus.
-  wakelock_plus: ^1.5.2
+  # ── Maps (Google Maps Platform; keys come from .env at build time) ──
+  google_maps_flutter: ^2.18.1
+  # Loads the Maps JavaScript API on web only when a web key is configured
+  # (was transitive).
+  web: ^1.1.1
 
   # ── Firebase ──
   firebase_core: ^4.12.1
@@ -77,6 +75,8 @@ dev_dependencies:
   json_serializable: ^6.8.0
   riverpod_generator: ^4.0.4
   mocktail: ^1.0.4
+  # Fakes the image picker in widget tests (was transitive via image_picker).
+  image_picker_platform_interface: ^2.11.1
 
 flutter:
   uses-material-design: true

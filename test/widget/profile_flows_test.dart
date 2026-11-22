@@ -21,6 +21,7 @@ import 'package:skill_bridge/features/worker/data/verification_service.dart';
 import 'package:skill_bridge/features/worker/presentation/screens/verification_screen.dart';
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
+import 'package:skill_bridge/features/account/account_deletion_service.dart';
 import 'package:skill_bridge/shared/widgets/profile/settings_view.dart';
 
 import '../helpers/test_app.dart';
@@ -59,6 +60,17 @@ class FakeAuthRepository implements AuthRepository {
 }
 
 class MockFirestore extends Mock implements FirebaseFirestore {}
+
+class FakeDeletion extends AccountDeletionService {
+  FakeDeletion(this.problem) : super(() => throw StateError('unused'));
+  final AccountDeletionProblem? problem;
+  int calls = 0;
+  @override
+  Future<void> deleteMyAccount() async {
+    calls++;
+    if (problem != null) throw AccountDeletionException(problem!);
+  }
+}
 
 class RecordingVerificationService extends VerificationService {
   RecordingVerificationService() : super(MockFirestore());
@@ -362,6 +374,102 @@ void main() {
       expect(ProfileMediaService.contentTypeFor('evil.exe'), isNull);
       expect(ProfileMediaService.contentTypeFor('x.svg', mimeType: 'text/html'), isNull);
       expect(ProfileMediaService.maxBytes, 2 * 1024 * 1024, reason: 'matches the image host upload preset (free plan, Phase S6)');
+    });
+  });
+
+  group('Phase G6: settings', () {
+    testWidgets('push switches save all three settings; with push off the others are disabled', (tester) async {
+      await pumpScreen(tester, const SettingsView(), _user('w1', role: 'worker'), extra: [
+        notificationPrefsProvider.overrideWith((ref) => Stream.value(const {'messages': false})),
+      ]);
+      await tester.tap(find.text(l.settingsPushWork));
+      await tester.pumpAndSettle();
+      expect(repo.updates.last, {'notificationPrefs': {'push': true, 'messages': false, 'work': false}});
+      await tester.tap(find.text(l.settingsPushAll));
+      await tester.pumpAndSettle();
+      expect(repo.updates.last['notificationPrefs'], {'push': false, 'messages': false, 'work': true});
+    });
+
+    testWidgets('no password change for accounts without a password (Google / no Firebase)', (tester) async {
+      await pumpScreen(tester, const SettingsView(), _user('w1', role: 'worker'));
+      expect(find.text(l.settingsChangePassword), findsNothing);
+      expect(find.text(l.settingsDeleteAccount), findsOneWidget);
+    });
+
+    testWidgets('delete account: asks first; on success signs out and returns to Welcome', (tester) async {
+      final deletion = FakeDeletion(null);
+      await pumpScreen(tester, const SettingsView(), _user('w1', role: 'worker'), extra: [
+        accountDeletionServiceProvider.overrideWithValue(deletion),
+      ]);
+      await tester.scrollUntilVisible(find.text(l.settingsDeleteAccount), 200);
+      await tester.tap(find.text(l.settingsDeleteAccount));
+      await tester.pumpAndSettle();
+      expect(find.text(l.deleteAccountTitle), findsOneWidget);
+      await tester.tap(find.text(l.cancel));
+      await tester.pumpAndSettle();
+      expect(deletion.calls, 0, reason: 'cancel deletes nothing');
+
+      await tester.tap(find.text(l.settingsDeleteAccount));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.deleteAccountConfirm));
+      await tester.pumpAndSettle();
+      expect(deletion.calls, 1);
+      expect(repo.signOuts, 1);
+      expect(find.text('WELCOME'), findsOneWidget);
+    });
+
+    for (final (problem, text) in [
+      (AccountDeletionProblem.activeContracts, 'deleteAccountActive'),
+      (AccountDeletionProblem.notAvailable, 'deleteAccountUnavailable'),
+      (AccountDeletionProblem.failed, 'deleteAccountFailed'),
+    ]) {
+      testWidgets('delete account refused ($problem): explained, still signed in', (tester) async {
+        await pumpScreen(tester, const SettingsView(), _user('w1', role: 'worker'), extra: [
+          accountDeletionServiceProvider.overrideWithValue(FakeDeletion(problem)),
+        ]);
+        await tester.scrollUntilVisible(find.text(l.settingsDeleteAccount), 200);
+        await tester.tap(find.text(l.settingsDeleteAccount));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l.deleteAccountConfirm));
+        await tester.pumpAndSettle();
+        final texts = {
+          'deleteAccountActive': l.deleteAccountActive,
+          'deleteAccountUnavailable': l.deleteAccountUnavailable,
+          'deleteAccountFailed': l.deleteAccountFailed,
+        };
+        expect(find.text(texts[text]!), findsOneWidget);
+        expect(repo.signOuts, 0);
+      });
+    }
+
+    testWidgets('delete account needing a fresh sign-in: offers to sign in again', (tester) async {
+      await pumpScreen(tester, const SettingsView(), _user('w1', role: 'worker'), extra: [
+        accountDeletionServiceProvider.overrideWithValue(FakeDeletion(AccountDeletionProblem.recentLoginRequired)),
+      ]);
+      await tester.scrollUntilVisible(find.text(l.settingsDeleteAccount), 200);
+      await tester.tap(find.text(l.settingsDeleteAccount));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.deleteAccountConfirm));
+      await tester.pumpAndSettle();
+      expect(find.text(l.deleteAccountRecentLogin), findsOneWidget);
+      await tester.tap(find.text(l.deleteAccountSignInAgain));
+      await tester.pumpAndSettle();
+      expect(repo.signOuts, 1);
+      expect(find.text('WELCOME'), findsOneWidget);
+    });
+
+    test('server error codes map to clear reasons', () {
+      expect(AccountDeletionService.problemFor('failed-precondition', 'recent-login-required'), AccountDeletionProblem.recentLoginRequired);
+      expect(AccountDeletionService.problemFor('failed-precondition', 'active-contracts'), AccountDeletionProblem.activeContracts);
+      expect(AccountDeletionService.problemFor('not-found', null), AccountDeletionProblem.notAvailable);
+      expect(AccountDeletionService.problemFor('unavailable', null), AccountDeletionProblem.offline);
+      expect(AccountDeletionService.problemFor('internal', 'x'), AccountDeletionProblem.failed);
+    });
+
+    test('without Firebase the service reports "not available" (no crash)', () async {
+      final service = AccountDeletionService(() => throw StateError('no app'));
+      await expectLater(service.deleteMyAccount(),
+          throwsA(isA<AccountDeletionException>().having((e) => e.problem, 'problem', AccountDeletionProblem.notAvailable)));
     });
   });
 }

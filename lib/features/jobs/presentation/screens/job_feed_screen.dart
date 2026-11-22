@@ -175,7 +175,13 @@ class _JobFeedScreenState extends ConsumerState<JobFeedScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.jobFeedTitle)),
+      appBar: AppBar(title: Text(l.jobFeedTitle), actions: [
+        IconButton(
+          tooltip: l.savedJobsTitle,
+          icon: const Icon(Icons.bookmarks_outlined),
+          onPressed: () => context.push(RouteNames.workerSavedJobsPath),
+        ),
+      ]),
       body: RefreshIndicator(
         onRefresh: _feed.refresh,
         child: CustomScrollView(

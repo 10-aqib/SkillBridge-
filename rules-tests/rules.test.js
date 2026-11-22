@@ -202,24 +202,40 @@ describe('storage', () => {
   });
 
   test('profile photos and portfolio stay public; only the owner can write', async () => {
-    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/profile/avatar.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/portfolio/a.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertSucceeds(getBytes(ref(anon(), 'users/w1/portfolio/a.jpg')));
-    await assertFails(uploadBytes(ref(st('c1'), 'users/w1/portfolio/b.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/profile/avatar1.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/portfolio/p1.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertSucceeds(getBytes(ref(anon(), 'users/w1/portfolio/p1.jpg')));
+    await assertSucceeds(getBytes(ref(st('c1'), 'users/w1/profile/avatar1.jpg')));
+    await assertFails(uploadBytes(ref(st('c1'), 'users/w1/portfolio/p2.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(uploadBytes(ref(anon(), 'users/w1/profile/x1.jpg'), png, { contentType: 'image/jpeg' }));
   });
 
-  test('owner can delete their own portfolio image; others cannot', async () => {
-    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/portfolio/a.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertFails(deleteObject(ref(st('c1'), 'users/w1/portfolio/a.jpg')));
-    await assertSucceeds(deleteObject(ref(st('w1'), 'users/w1/portfolio/a.jpg')));
+  test('owner can delete their own photos; others cannot', async () => {
+    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/portfolio/del1.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(deleteObject(ref(st('c1'), 'users/w1/portfolio/del1.jpg')));
+    await assertSucceeds(deleteObject(ref(st('w1'), 'users/w1/portfolio/del1.jpg')));
+    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/profile/del2.png'), png, { contentType: 'image/png' }));
+    await assertSucceeds(deleteObject(ref(st('w1'), 'users/w1/profile/del2.png')));
   });
 
-  test('files directly under users/{uid}/ stay public (unchanged behaviour)', async () => {
-    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/legacy.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertSucceeds(getBytes(ref(anon(), 'users/w1/legacy.jpg')));
+  test('Phase G4: only JPEG/PNG/WebP under 2 MB, a plain name, never overwriting', async () => {
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/doc.pdf'), pdf, { contentType: 'application/pdf' }), 'pdf');
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/x.gif'), png, { contentType: 'image/gif' }), 'gif');
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/x.svg'), png, { contentType: 'image/svg+xml' }), 'svg');
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/big.jpg'), new Uint8Array(2 * 1024 * 1024), { contentType: 'image/jpeg' }), '2 MB');
+    await assertSucceeds(uploadBytes(ref(st('w1'), 'users/w1/profile/once.webp'), png, { contentType: 'image/webp' }));
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/once.webp'), png, { contentType: 'image/webp' }), 'overwrite');
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/bad name!.jpg'), png, { contentType: 'image/jpeg' }), 'name');
   });
 
-  test('non-image, non-PDF uploads are rejected', async () => {
+  test('Phase G4: no other folders and no files directly under users/{uid}/', async () => {
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/legacy.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/other/a.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(uploadBytes(ref(st('w1'), 'users/w1/profile/deep/a.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(getBytes(ref(anon(), 'users/w1/other/a.jpg')));
+  });
+
+  test('non-image uploads are rejected', async () => {
     await assertFails(uploadBytes(ref(st('w1'), 'users/w1/portfolio/x.txt'), pdf, { contentType: 'text/plain' }));
   });
 });
@@ -428,9 +444,9 @@ describe('storage: job photos', () => {
     await assertFails(uploadBytes(ref(st('c1'), 'jobs/j1/photo.jpg'), png, { contentType: 'image/jpeg' }));
   });
   test('job photos live in the client\'s own folder: owner writes, anyone reads', async () => {
-    await assertSucceeds(uploadBytes(ref(st('c1'), 'users/c1/jobPhotos/a.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertFails(uploadBytes(ref(st('c2'), 'users/c1/jobPhotos/b.jpg'), png, { contentType: 'image/jpeg' }));
-    await assertSucceeds(getBytes(ref(env.unauthenticatedContext().storage(), 'users/c1/jobPhotos/a.jpg')));
+    await assertSucceeds(uploadBytes(ref(st('c1'), 'users/c1/jobPhotos/jp1.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(uploadBytes(ref(st('c2'), 'users/c1/jobPhotos/jp2.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertSucceeds(getBytes(ref(env.unauthenticatedContext().storage(), 'users/c1/jobPhotos/jp1.jpg')));
   });
 });
 
@@ -804,6 +820,31 @@ describe('chat (Phase 4B; free plan S5: opened by members, checked by the rules)
     await assertFails(setDoc(doc(user('w2'), 'notifications/n7'), n('c1', { jobId: 'j1' }, { type: 'proposal' })), 'no proposal behind it');
     await assertFails(setDoc(doc(user('c1'), 'notifications/n8'), n('w1', { chatId: 'j1_w1' }, { isRead: true })));
     await assertFails(setDoc(doc(user('c1'), 'notifications/n9'), n('w1', { chatId: 'j1_w1' }, { createdAt: Timestamp.now() })), 'device time');
+  });
+
+  test('G5: the recipient may only mark a notification read; nobody else may touch it; the server fields are off limits', async () => {
+    const n = { userId: 'w1', title: 'New message', body: 'Hi', type: 'message', payload: { chatId: 'j1_w1' }, isRead: false, createdAt: serverTimestamp() };
+    await assertSucceeds(setDoc(doc(user('c1'), 'notifications/g5a'), n));
+    await assertFails(setDoc(doc(user('c1'), 'notifications/g5b'), { ...n, verifiedAt: serverTimestamp() }), 'client cannot claim verified');
+    await assertFails(setDoc(doc(user('c1'), 'notifications/g5c'), { ...n, pushedAt: serverTimestamp() }), 'client cannot claim pushed');
+    await assertSucceeds(updateDoc(doc(user('w1'), 'notifications/g5a'), { isRead: true, readAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(user('w1'), 'notifications/g5a'), { title: 'Edited' }), 'recipient cannot rewrite');
+    await assertFails(updateDoc(doc(user('w1'), 'notifications/g5a'), { isRead: 'yes' }), 'isRead must be a bool');
+    await assertFails(updateDoc(doc(user('c1'), 'notifications/g5a'), { isRead: false }), 'sender cannot touch it');
+    await assertFails(getDoc(doc(user('c1'), 'notifications/g5a')), 'sender cannot read it');
+    await assertSucceeds(deleteDoc(doc(user('w1'), 'notifications/g5a')), 'recipient can clear it');
+  });
+
+  test('G5: push tokens: one document per person, own only, at most 10 devices', async () => {
+    const tokens = (k) => Object.fromEntries(Array.from({ length: k }, (_, i) => [`tok${i}xxxxxxxxxxxxxxxxxxxx:APA91b`, { platform: 'android' }]));
+    await assertSucceeds(setDoc(doc(user('w1'), 'fcmTokens/w1'), { tokens: tokens(2), updatedAt: serverTimestamp() }));
+    await assertSucceeds(getDoc(doc(user('w1'), 'fcmTokens/w1')));
+    await assertFails(getDoc(doc(user('c1'), 'fcmTokens/w1')), "someone else's tokens");
+    await assertFails(setDoc(doc(user('c1'), 'fcmTokens/w1'), { tokens: tokens(1) }), "write someone else's");
+    await assertFails(setDoc(doc(user('w1'), 'fcmTokens/w1'), { tokens: tokens(11) }), 'more than 10 devices');
+    await assertFails(setDoc(doc(user('w1'), 'fcmTokens/w1'), { tokens: tokens(1), role: 'admin' }), 'extra fields');
+    await assertFails(getDoc(doc(anonDb(), 'fcmTokens/w1')));
+    await assertSucceeds(deleteDoc(doc(user('w1'), 'fcmTokens/w1')));
   });
 
   test('15. unrelated users cannot read job chats', async () => {
@@ -1854,5 +1895,116 @@ describe('S6: work evidence and ID documents are private files', () => {
     await assertFails(setDoc(doc(user('w1'), 'users/w1/private/verification'), {
       cnicNumber: '35202-1234567-1', documents: ['users/w2/verificationDocs/cnic_front_1'], submittedAt: serverTimestamp(),
     }));
+  });
+});
+
+describe('maps usage counters (Phase G3, server-only)', () => {
+  test('nobody can read or write mapsUsage from the app, not even for themselves', async () => {
+    await seed('mapsUsage/u1', { windowStart: 1, routes: 5, places: 0, geocode: 0 });
+    await assertFails(getDoc(doc(user('u1'), 'mapsUsage/u1')));
+    await assertFails(setDoc(doc(user('u1'), 'mapsUsage/u1'), { windowStart: 1, routes: 0, places: 0, geocode: 0 }));
+    await assertFails(deleteDoc(doc(user('u1'), 'mapsUsage/u1')));
+    await assertFails(getDoc(doc(user('u2'), 'mapsUsage/u1')));
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'mapsUsage/u1')));
+  });
+});
+
+describe('Phase G6: saved jobs and notification settings', () => {
+  beforeEach(async () => {
+    await seed('users/w1', baseProfile('w1', 'worker'));
+    await seed('users/w2', baseProfile('w2', 'worker'));
+    await seed('jobs/j1', { clientId: 'c1', title: 'Paint a room', status: 'open' });
+  });
+
+  const saved = (extra = {}) => ({ jobId: 'j1', title: 'Paint a room', city: 'Lahore', budgetMin: 1000, budgetMax: 2000,
+    budgetType: 'fixed', savedAt: serverTimestamp(), ...extra });
+
+  test('a worker saves, lists and removes their own bookmarks', async () => {
+    await assertSucceeds(setDoc(doc(user('w1'), 'users/w1/savedJobs/j1'), saved()));
+    await assertSucceeds(getDocs(collection(user('w1'), 'users/w1/savedJobs')));
+    await assertSucceeds(deleteDoc(doc(user('w1'), 'users/w1/savedJobs/j1')));
+  });
+
+  test("nobody else reads or writes them; the id must match a real job; only the snapshot fields", async () => {
+    await assertSucceeds(setDoc(doc(user('w1'), 'users/w1/savedJobs/j1'), saved()));
+    await assertFails(getDocs(collection(user('w2'), 'users/w1/savedJobs')), "someone else's list");
+    await assertFails(setDoc(doc(user('w2'), 'users/w1/savedJobs/j1'), saved()), "write someone else's");
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/savedJobs/j2'), saved({ jobId: 'j2' })), 'job does not exist');
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/savedJobs/j1'), saved({ jobId: 'other' })), 'id mismatch');
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/savedJobs/j1'), saved({ clientPhone: '+92' })), 'extra field');
+    await assertFails(setDoc(doc(user('w1'), 'users/w1/savedJobs/j1'), saved({ savedAt: Timestamp.now() })), 'device time');
+  });
+
+  test('notification settings: three switches, true/false only', async () => {
+    await assertSucceeds(updateDoc(doc(user('w1'), 'users/w1'), { notificationPrefs: { push: true, messages: false, work: true } }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { notificationPrefs: { push: 'yes' } }), 'not a bool');
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { notificationPrefs: { push: true, admin: true } }), 'unknown switch');
+    await assertFails(updateDoc(doc(user('w2'), 'users/w1'), { notificationPrefs: { push: false } }), "someone else's");
+  });
+});
+
+describe('NADRA track: identity verification records', () => {
+  const session = (uid, extra = {}) => ({ userId: uid, userRole: 'worker', provider: 'simulator', test: true, status: 'pending',
+    maskedCnic: '99999-•••••••-1', cnicDigest: 'abc', consentVersion: 'v1', ...extra });
+  beforeEach(async () => {
+    await seed('users/w1', { ...baseProfile('w1', 'worker'), identityVerification: { status: 'pending', verified: false, method: 'fingerprint', provider: 'simulator', test: true, verifiedAt: null } });
+    await seed('users/w2', baseProfile('w2', 'worker'));
+    await seed('identityVerifications/s1', session('w1'));
+    await seed('identityVerifications/s1/events/e1', { type: 'session_created', actor: 'user' });
+    await seed('identityCnicIndex/abc', { userId: 'w1' });
+    await seed('identityTransactions/simulator_REF', { sessionId: 's1' });
+    await seed('serverSecrets/identityPepper', { value: 'x'.repeat(64) });
+  });
+
+  test('1. a user can view their own verification status and session', async () => {
+    await assertSucceeds(getDoc(doc(user('w1'), 'users/w1')));
+    await assertSucceeds(getDoc(doc(user('w1'), 'identityVerifications/s1')));
+    await assertSucceeds(getDocs(query(collection(user('w1'), 'identityVerifications'), where('userId', '==', 'w1'))));
+  });
+
+  test("2–3. a user cannot change their status or set provider 'nadra' with verified true", async () => {
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { 'identityVerification.verified': true }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { identityVerification: { status: 'verified', verified: true, method: 'fingerprint', provider: 'nadra', test: false } }));
+    await assertFails(updateDoc(doc(user('w1'), 'users/w1'), { identityVerification: deleteField() }), 'cannot remove it either');
+    await assertFails(setDoc(doc(user('w2'), 'users/w2'), { ...baseProfile('w2', 'worker'), identityVerification: { verified: true, provider: 'nadra' } }));
+    await assertFails(updateDoc(doc(user('w1'), 'identityVerifications/s1'), { status: 'verified' }));
+    await assertFails(setDoc(doc(user('w1'), 'identityVerifications/s2'), session('w1', { status: 'verified', provider: 'nadra', test: false })), '7. fake results rejected');
+    await assertFails(deleteDoc(doc(user('w1'), 'identityVerifications/s1')));
+  });
+
+  test("4–5. a user cannot read another user's record, CNIC digest index, transactions or the pepper", async () => {
+    await assertFails(getDoc(doc(user('w2'), 'identityVerifications/s1')));
+    await assertFails(getDocs(query(collection(user('w2'), 'identityVerifications'), where('userId', '==', 'w1'))));
+    await assertFails(getDoc(doc(user('w1'), 'identityCnicIndex/abc')));
+    await assertFails(getDoc(doc(user('w1'), 'identityTransactions/simulator_REF')));
+    await assertFails(getDoc(doc(user('w1'), 'serverSecrets/identityPepper')));
+    await assertFails(getDoc(doc(user('w1'), 'identityVerifications/s1/events/e1')), 'audit trail: staff only');
+    await assertFails(getDoc(doc(anonDb(), 'identityVerifications/s1')));
+  });
+
+  test("6. staff can read records and audit trail but cannot set a NADRA result on an account", async () => {
+    const staff = admin().firestore();
+    await assertSucceeds(getDoc(doc(staff, 'identityVerifications/s1')));
+    await assertSucceeds(getDoc(doc(staff, 'identityVerifications/s1/events/e1')));
+    await assertFails(updateDoc(doc(staff, 'users/w1'), { identityVerification: { status: 'verified', verified: true, method: 'fingerprint', provider: 'nadra', test: false } }));
+    await assertFails(updateDoc(doc(staff, 'identityVerifications/s1'), { status: 'verified' }), '8–10. only the backend finalises');
+    await assertSucceeds(updateDoc(doc(staff, 'users/w1'), { isActive: false }), 'normal moderation still works');
+  });
+
+  test('the public profile shows exactly the server-set identity status (no forged badge)', async () => {
+    const real = { status: 'verified', verified: false, method: 'fingerprint', provider: 'simulator', test: true, verifiedAt: null };
+    await seed('users/w9', privateProfile('w9', 'worker', { identityVerification: real }));
+    const own = (extra = {}) => ({ uid: 'w9', role: 'worker', displayName: 'Bilal', city: 'Lahore', isActive: true,
+      isCnicVerified: false, isEmailVerified: false, isPhoneVerified: false, ...extra });
+    await assertFails(setDoc(doc(user('w9'), 'publicProfiles/w9'), own({ identityVerification: { ...real, verified: true, provider: 'nadra', test: false } })), 'forged badge');
+    await assertFails(setDoc(doc(user('w9'), 'publicProfiles/w9'), own()), 'must copy the server status, not hide it');
+    await assertSucceeds(setDoc(doc(user('w9'), 'publicProfiles/w9'), own({ identityVerification: real })));
+  });
+
+  test('9. no identity, fingerprint or CNIC files can be uploaded to Storage', async () => {
+    const st = env.authenticatedContext('w1').storage();
+    await assertFails(uploadBytes(ref(st, 'identity/w1/fingerprint.bin'), png, { contentType: 'application/octet-stream' }));
+    await assertFails(uploadBytes(ref(st, 'users/w1/identity/fp.jpg'), png, { contentType: 'image/jpeg' }));
+    await assertFails(uploadBytes(ref(st, 'users/w1/cnic/front.jpg'), png, { contentType: 'image/jpeg' }));
   });
 });

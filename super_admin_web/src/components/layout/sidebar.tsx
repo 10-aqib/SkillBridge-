@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Handshake,
+  Fingerprint,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ const groups: { title?: string; routes: NavRoute[] }[] = [
     routes: [
       { label: 'Jobs & Contracts', icon: ClipboardList, href: '/adminpanel/jobs' },
       { label: 'Reports & Disputes', icon: AlertTriangle, href: '/adminpanel/reports' },
+      { label: 'Identity Verification', icon: Fingerprint, href: '/adminpanel/identity' },
     ],
   },
   {

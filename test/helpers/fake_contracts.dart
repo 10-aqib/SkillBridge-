@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/features/contracts/data/datasources/contract_remote_datasource.dart';
 import 'package:skill_bridge/features/contracts/data/models/contract_activity.dart';
 import 'package:skill_bridge/features/contracts/data/models/contract_model.dart';
@@ -177,7 +177,7 @@ class FakeContractActions implements ContractActions {
   }
 
   @override
-  Future<void> shareAddress(String contractId, String address, {LatLng? location, bool clearLocation = false}) async {
+  Future<void> shareAddress(String contractId, String address, {GeoCoord? location, bool clearLocation = false}) async {
     await _gate('address:$contractId:$address${location == null ? '' : ':${location.latitude},${location.longitude}'}');
     store.patch(contractId, {
       'serviceAddress': address,

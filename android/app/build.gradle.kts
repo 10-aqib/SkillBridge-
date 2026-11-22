@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -7,6 +9,21 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Google Maps key for Android. It comes only from the build's dart-defines
+// (`flutter build apk --dart-define-from-file=<your env file>`, GOOGLE_MAPS_API_KEY),
+// never from a file in the repo. Without it the app shows "Map unavailable".
+// Restrict the key in Google Cloud to this package + signing SHA-1 and to
+// "Maps SDK for Android" only.
+val dartDefines: Map<String, String> = (project.findProperty("dart-defines") as String?)
+    ?.split(",")
+    ?.mapNotNull { encoded ->
+        runCatching { String(Base64.getDecoder().decode(encoded), Charsets.UTF_8) }.getOrNull()
+    }
+    ?.mapNotNull { pair -> pair.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }
+    ?.toMap()
+    ?: emptyMap()
+val mapsApiKey: String = dartDefines["GOOGLE_MAPS_API_KEY"] ?: ""
 
 android {
     namespace = "com.skillbridge.skill_bridge"
@@ -28,6 +45,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {

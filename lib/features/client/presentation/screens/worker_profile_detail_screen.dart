@@ -17,6 +17,7 @@ import 'package:skill_bridge/features/reviews/data/models/review_model.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_button.dart';
+import 'package:skill_bridge/features/identity/presentation/verification_status_widget.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 
 /// Public worker profile (what clients see). Trust evidence first: identity,
@@ -223,7 +224,7 @@ class _Header extends StatelessWidget {
       ),
       const SizedBox(height: SbSpace.s3),
       Wrap(alignment: WrapAlignment.center, spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
-        if (profile.isVerified) SbStatusBadge.verified(label: l.verificationBadge),
+        IdentityBadges(user: worker),
         available
             ? SbStatusBadge.available(label: l.available)
             : SbStatusBadge.unavailable(label: profile.availability == 'busy' ? l.busy : l.offline),

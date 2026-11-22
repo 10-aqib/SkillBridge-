@@ -769,6 +769,25 @@ class AppLocalizationsUr extends AppLocalizations {
   String get profileChangePhoto => 'پروفائل تصویر تبدیل کریں';
 
   @override
+  String get profileRemovePhoto => 'تصویر ہٹائیں';
+
+  @override
+  String get profileRemovePhotoConfirm => 'اپنی پروفائل تصویر ہٹائیں؟';
+
+  @override
+  String get profileRemovePhotoBody =>
+      'لوگوں کو اس کی جگہ آپ کے نام کے پہلے حروف نظر آئیں گے۔';
+
+  @override
+  String get profilePhotoRemoved => 'پروفائل تصویر ہٹا دی گئی۔';
+
+  @override
+  String get mediaUploadCancelled => 'اپ لوڈ منسوخ کر دیا گیا۔';
+
+  @override
+  String get mediaCancelUpload => 'اپ لوڈ منسوخ کریں';
+
+  @override
   String get portfolioAdd => 'تصویر شامل کریں';
 
   @override
@@ -1131,6 +1150,98 @@ class AppLocalizationsUr extends AppLocalizations {
   String get settingsAccount => 'اکاؤنٹ';
 
   @override
+  String get settingsNotifications => 'اطلاعات';
+
+  @override
+  String get settingsPushAll => 'پش اطلاعات';
+
+  @override
+  String get settingsPushAllBody =>
+      'اس فون پر الرٹ۔ ایپ کے اندر اطلاعات ہمیشہ کام کرتی ہیں۔';
+
+  @override
+  String get settingsPushMessages => 'نئے پیغامات';
+
+  @override
+  String get settingsPushWork => 'کام، تجاویز اور معاہدے';
+
+  @override
+  String get settingsSaveFailed =>
+      'ترتیب محفوظ نہیں ہو سکی۔ اپنا کنکشن چیک کریں۔';
+
+  @override
+  String get settingsChangePassword => 'پاس ورڈ تبدیل کریں';
+
+  @override
+  String get settingsChangePasswordBody =>
+      'ہم آپ کو نیا پاس ورڈ بنانے کا لنک ای میل کریں گے۔';
+
+  @override
+  String get settingsPasswordEmailSent =>
+      'پاس ورڈ تبدیل کرنے کے لنک کے لیے اپنی ای میل دیکھیں۔';
+
+  @override
+  String get settingsDeleteAccount => 'اکاؤنٹ حذف کریں';
+
+  @override
+  String get deleteAccountTitle => 'اپنا اکاؤنٹ حذف کریں؟';
+
+  @override
+  String get deleteAccountBody =>
+      'اس سے آپ کی پروفائل، تصاویر، محفوظ کام، اطلاعات اور سائن اِن ہمیشہ کے لیے حذف ہو جائیں گے۔ جن لوگوں کے ساتھ آپ نے کام کیا، ان کے پاس پرانے کاموں کا ریکارڈ \"حذف شدہ صارف\" کے نام سے رہے گا۔ یہ واپس نہیں ہو سکتا۔';
+
+  @override
+  String get deleteAccountConfirm => 'میرا اکاؤنٹ حذف کریں';
+
+  @override
+  String get deleteAccountWorking => 'آپ کا اکاؤنٹ حذف ہو رہا ہے…';
+
+  @override
+  String get deleteAccountDone => 'آپ کا اکاؤنٹ حذف کر دیا گیا۔';
+
+  @override
+  String get deleteAccountRecentLogin =>
+      'آپ کی حفاظت کے لیے دوبارہ سائن اِن کریں، پھر اکاؤنٹ حذف کریں۔';
+
+  @override
+  String get deleteAccountSignInAgain => 'دوبارہ سائن اِن کریں';
+
+  @override
+  String get deleteAccountActive => 'پہلے اپنے جاری معاہدے مکمل یا منسوخ کریں۔';
+
+  @override
+  String get deleteAccountUnavailable =>
+      'اکاؤنٹ حذف کرنا ابھی دستیاب نہیں۔ براہ کرم سپورٹ سے رابطہ کریں۔';
+
+  @override
+  String get deleteAccountFailed => 'اکاؤنٹ حذف نہیں ہو سکا۔ دوبارہ کوشش کریں۔';
+
+  @override
+  String get savedJobsTitle => 'محفوظ کام';
+
+  @override
+  String get savedJobsEmptyTitle => 'کوئی محفوظ کام نہیں';
+
+  @override
+  String get savedJobsEmptyBody =>
+      'کسی کام کو یہاں رکھنے کے لیے اس پر بُک مارک دبائیں۔';
+
+  @override
+  String get savedJobsLoadError => 'محفوظ کام لوڈ نہیں ہو سکے۔';
+
+  @override
+  String get jobBookmarkAdd => 'کام محفوظ کریں';
+
+  @override
+  String get jobBookmarkRemove => 'محفوظ سے ہٹائیں';
+
+  @override
+  String get jobBookmarkSaved => 'کام محفوظ ہو گیا۔';
+
+  @override
+  String get jobBookmarkRemoved => 'محفوظ کاموں سے ہٹا دیا گیا۔';
+
+  @override
   String get signOut => 'سائن آؤٹ';
 
   @override
@@ -1144,7 +1255,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get verificationTitle => 'شناخت کی تصدیق';
 
   @override
-  String get verificationBadge => 'شناخت تصدیق شدہ';
+  String get verificationBadge => 'شناختی دستاویزات کا جائزہ مکمل';
 
   @override
   String get verificationOpen => 'کھولیں';
@@ -3217,16 +3328,10 @@ class AppLocalizationsUr extends AppLocalizations {
   String get mapRecenter => 'میری لوکیشن دکھائیں';
 
   @override
-  String get mapResetNorth => 'نقشے کا رخ شمال کی طرف کریں';
-
-  @override
   String get mapZoomIn => 'قریب کریں';
 
   @override
   String get mapZoomOut => 'دور کریں';
-
-  @override
-  String get mapAttributionLabel => 'نقشے کے ذرائع';
 
   @override
   String get mapYouAreHere => 'آپ یہاں ہیں';
@@ -3252,8 +3357,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get pickerSearchTooShort => 'کم از کم 3 حروف لکھیں۔';
 
   @override
-  String get pickerSearchAttribution =>
-      'تلاش کے نتائج © OpenStreetMap کے معاونین';
+  String get pickerSearchAttributionGoogle => 'نتائج: گوگل میپس';
 
   @override
   String get pickerMoveHint => 'نقشہ ہلائیں تاکہ پن بالکل درست جگہ پر ہو۔';
@@ -3293,10 +3397,10 @@ class AppLocalizationsUr extends AppLocalizations {
   String get navTitle => 'راستے کی ہدایات';
 
   @override
-  String get navCalculating => 'سڑک کا بہترین راستہ تلاش ہو رہا ہے…';
+  String get navOpenGoogleMaps => 'گوگل میپس میں راستہ';
 
   @override
-  String get navResuming => 'آپ کی لوکیشن دوبارہ حاصل کی جا رہی ہے…';
+  String get navCalculating => 'سڑک کا بہترین راستہ تلاش ہو رہا ہے…';
 
   @override
   String navRouteTo(String place) {
@@ -3304,35 +3408,10 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String get navYourDestination => 'آپ کی منزل';
-
-  @override
   String get navFastest => 'سب سے تیز';
 
   @override
-  String navAlternative(int number) {
-    return 'متبادل $number';
-  }
-
-  @override
-  String navVia(String roads) {
-    return 'براستہ $roads';
-  }
-
-  @override
   String get navStart => 'شروع کریں';
-
-  @override
-  String get navEnd => 'ختم کریں';
-
-  @override
-  String get navEndTitle => 'ہدایات ختم کریں؟';
-
-  @override
-  String get navEndBody => 'قدم بہ قدم ہدایات بند ہو جائیں گی۔';
-
-  @override
-  String get navKeepGoing => 'جاری رکھیں';
 
   @override
   String navArriveAt(String time) {
@@ -3342,30 +3421,6 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get navEstimateNote =>
       'اوقات اندازہ ہیں اور ان میں موجودہ ٹریفک شامل نہیں۔';
-
-  @override
-  String navThen(String instruction) {
-    return 'پھر $instruction';
-  }
-
-  @override
-  String get navNow => 'ابھی';
-
-  @override
-  String get navArrivedTitle => 'آپ پہنچ گئے ہیں';
-
-  @override
-  String navArrivedBody(String place) {
-    return 'آپ $place پر ہیں۔';
-  }
-
-  @override
-  String get navSignalLost =>
-      'GPS سگنل نہیں مل رہا۔ نقشے پر آپ کی آخری معلوم جگہ دکھائی گئی ہے۔';
-
-  @override
-  String get navApproximate =>
-      'صرف اندازاً لوکیشن کی اجازت ہے، اس لیے ہدایات غلط ہو سکتی ہیں۔ SkillBridge کو درست لوکیشن کی اجازت دیں۔';
 
   @override
   String get navErrNoDestination =>
@@ -3389,10 +3444,6 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get navErrNoRoute => 'اس جگہ تک سڑک کا کوئی راستہ نہیں ملا۔';
-
-  @override
-  String get navErrFarFromRoad =>
-      'یہ جگہ سڑک سے بہت دور ہے، اس لیے ہدایات نہیں دی جا سکتیں۔';
 
   @override
   String get navErrOffline =>
@@ -3424,194 +3475,6 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get navUnderAMinute => '1 منٹ سے کم';
-
-  @override
-  String navOnto(String action, String road) {
-    return '$action، پھر $road پر جائیں';
-  }
-
-  @override
-  String get navTurnLeft => 'بائیں مڑیں';
-
-  @override
-  String get navTurnRight => 'دائیں مڑیں';
-
-  @override
-  String get navBearLeft => 'ہلکا سا بائیں مڑیں';
-
-  @override
-  String get navBearRight => 'ہلکا سا دائیں مڑیں';
-
-  @override
-  String get navSharpLeft => 'تیزی سے بائیں مڑیں';
-
-  @override
-  String get navSharpRight => 'تیزی سے دائیں مڑیں';
-
-  @override
-  String get navGoStraight => 'سیدھے چلتے رہیں';
-
-  @override
-  String get navUTurn => 'یو ٹرن لیں';
-
-  @override
-  String get navContinue => 'چلتے رہیں';
-
-  @override
-  String get navMergeLeft => 'بائیں جانب ٹریفک میں شامل ہوں';
-
-  @override
-  String get navMergeRight => 'دائیں جانب ٹریفک میں شامل ہوں';
-
-  @override
-  String get navMerge => 'ٹریفک میں شامل ہوں';
-
-  @override
-  String get navRampLeft => 'بائیں جانب ریمپ لیں';
-
-  @override
-  String get navRampRight => 'دائیں جانب ریمپ لیں';
-
-  @override
-  String get navRamp => 'ریمپ لیں';
-
-  @override
-  String get navExitLeft => 'بائیں جانب ایگزٹ لیں';
-
-  @override
-  String get navExitRight => 'دائیں جانب ایگزٹ لیں';
-
-  @override
-  String get navExitNext => 'اگلا ایگزٹ لیں';
-
-  @override
-  String get navKeepLeft => 'بائیں جانب رہیں';
-
-  @override
-  String get navKeepRight => 'دائیں جانب رہیں';
-
-  @override
-  String get navEndOfRoadLeft => 'سڑک کے آخر پر بائیں مڑیں';
-
-  @override
-  String get navEndOfRoadRight => 'سڑک کے آخر پر دائیں مڑیں';
-
-  @override
-  String navRoundaboutExit(int exit) {
-    return 'گول چکر پر $exit نمبر راستہ لیں';
-  }
-
-  @override
-  String navNamedRoundaboutExit(String name, int exit) {
-    return '$name پر $exit نمبر راستہ لیں';
-  }
-
-  @override
-  String get navEnterRoundabout => 'گول چکر میں داخل ہوں';
-
-  @override
-  String navEnterNamedRoundabout(String name) {
-    return '$name میں داخل ہوں';
-  }
-
-  @override
-  String get navLeaveRoundabout => 'گول چکر سے نکلیں';
-
-  @override
-  String navHead(String direction) {
-    return '$direction کی طرف چلیں';
-  }
-
-  @override
-  String get navStartOff => 'چلنا شروع کریں';
-
-  @override
-  String get navArrive => 'اپنی منزل پر پہنچیں';
-
-  @override
-  String get navArriveLeft => 'آپ کی منزل بائیں جانب ہے';
-
-  @override
-  String get navArriveRight => 'آپ کی منزل دائیں جانب ہے';
-
-  @override
-  String get navNorth => 'شمال';
-
-  @override
-  String get navNorthEast => 'شمال مشرق';
-
-  @override
-  String get navEast => 'مشرق';
-
-  @override
-  String get navSouthEast => 'جنوب مشرق';
-
-  @override
-  String get navSouth => 'جنوب';
-
-  @override
-  String get navSouthWest => 'جنوب مغرب';
-
-  @override
-  String get navWest => 'مغرب';
-
-  @override
-  String get navNorthWest => 'شمال مغرب';
-
-  @override
-  String get navMute => 'آواز بند کریں';
-
-  @override
-  String get navUnmute => 'آواز چالو کریں';
-
-  @override
-  String get navRerouting => 'راستے سے ہٹ گئے۔ نیا راستہ تلاش ہو رہا ہے…';
-
-  @override
-  String get navRerouted => 'نیا راستہ مل گیا۔';
-
-  @override
-  String get navRerouteFailed =>
-      'نیا راستہ نہیں مل سکا۔ چلتے رہیں، یا دوبارہ کوشش کریں۔';
-
-  @override
-  String get navRerouteOffline =>
-      'آپ آف لائن ہیں، اس لیے راستہ اپ ڈیٹ نہیں ہو سکتا۔';
-
-  @override
-  String get navRerouteNoRoute =>
-      'یہاں سے سڑک کا کوئی راستہ نہیں ملا۔ واپس راستے کی طرف جائیں۔';
-
-  @override
-  String navSayIn(String distance, String instruction) {
-    return '$distance بعد، $instruction';
-  }
-
-  @override
-  String navSayThen(String first, String next) {
-    return '$first، پھر $next';
-  }
-
-  @override
-  String get navSayApproaching => 'آپ اپنی منزل کے قریب پہنچ رہے ہیں';
-
-  @override
-  String navSpeakMeters(int meters) {
-    return '$meters میٹر';
-  }
-
-  @override
-  String navSpeakKilometres(String km) {
-    return '$km کلومیٹر';
-  }
-
-  @override
-  String get navVoiceEnglishFallback =>
-      'اس فون میں اردو آواز موجود نہیں، اس لیے ہدایات انگریزی میں سنائی جائیں گی۔';
-
-  @override
-  String get navVoiceUnavailable =>
-      'اس ڈیوائس پر بولی جانے والی ہدایات دستیاب نہیں۔ اسکرین پر دی گئی ہدایات پر عمل کریں۔';
 
   @override
   String get contractPinTitle => 'نقشے پر جگہ';
@@ -3706,4 +3569,315 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get navArrivedSendFailed =>
       'نہیں بھیجا جا سکا۔ کنکشن چیک کر کے دوبارہ کوشش کریں۔';
+
+  @override
+  String get identityTitle => 'شناخت کی تصدیق';
+
+  @override
+  String get identityIntro =>
+      'اپنے شناختی کارڈ اور فنگر پرنٹ سے، نادرا کی تصدیق کے ذریعے، بتائیں کہ آپ کون ہیں۔ کارکن اور کام دینے والے دونوں یہی طریقہ استعمال کرتے ہیں۔';
+
+  @override
+  String get identityNotAvailableTitle => 'نادرا تصدیق ابھی دستیاب نہیں';
+
+  @override
+  String get identityNotAvailableBody =>
+      'اسکل برج نادرا کی سرکاری منظوری اور منظور شدہ فنگر پرنٹ اسکینر کا منتظر ہے۔ تب تک کسی کی نادرا تصدیق نہیں ہو سکتی اور کوئی فنگر پرنٹ نہیں لیا جاتا۔ آپ اسکل برج معمول کے مطابق استعمال کر سکتے ہیں۔';
+
+  @override
+  String get identityTestBanner =>
+      'ٹیسٹ تصدیق: فرضی، نادرا کی اصل جانچ نہیں۔ صرف ٹیسٹ شناختی نمبر استعمال کریں۔';
+
+  @override
+  String get identityStart => 'تصدیق شروع کریں';
+
+  @override
+  String get identityStartAgain => 'نئی تصدیق شروع کریں';
+
+  @override
+  String get identityHistory => 'تصدیق کی تاریخ';
+
+  @override
+  String get identityHistoryEmpty => 'ابھی تک کوئی کوشش نہیں۔';
+
+  @override
+  String get identityStatusNone => 'تصدیق شدہ نہیں';
+
+  @override
+  String get identityStatusInProgress => 'جاری ہے';
+
+  @override
+  String get identityStatusVerified => 'تصدیق شدہ';
+
+  @override
+  String get identityStatusRejected => 'تصدیق نہیں ہوئی';
+
+  @override
+  String get identityStatusFailed => 'مکمل نہیں ہوئی';
+
+  @override
+  String get identityStatusReview => 'جائزے میں';
+
+  @override
+  String get identityStatusExpired => 'میعاد ختم';
+
+  @override
+  String get identityStatusCancelled => 'منسوخ';
+
+  @override
+  String get identityBadgeNadra => 'نادرا سے تصدیق شدہ';
+
+  @override
+  String get identityBadgeTest => 'ٹیسٹ تصدیق';
+
+  @override
+  String identityVerifiedOn(String date) {
+    return 'تصدیق $date';
+  }
+
+  @override
+  String get identityMethodFingerprint =>
+      'طریقہ: نادرا نے فنگر پرنٹ کو شناختی کارڈ سے ملایا';
+
+  @override
+  String get identityOtherChecks =>
+      'ای میل، فون اور شناختی دستاویزات کا جائزہ اس جانچ سے الگ ہیں۔';
+
+  @override
+  String get cnicTitle => 'آپ کا شناختی کارڈ';
+
+  @override
+  String get cnicLabel => 'شناختی کارڈ نمبر';
+
+  @override
+  String get cnicHint => 'XXXXX-XXXXXXX-X';
+
+  @override
+  String get cnicHelp =>
+      '13 ہندسے، جیسے کارڈ پر لکھے ہیں۔ درست فارمیٹ سے تصدیق نہیں ہوتی؛ صرف نادرا کی جانچ سے ہوتی ہے۔';
+
+  @override
+  String get cnicInvalid => 'درست شناختی کارڈ کے تمام 13 ہندسے لکھیں۔';
+
+  @override
+  String get cnicTestOnly => 'ٹیسٹ موڈ میں صرف یہ فرضی شناختی نمبر قبول ہیں:';
+
+  @override
+  String get identityContinue => 'جاری رکھیں';
+
+  @override
+  String get consentTitle => 'فنگر پرنٹ اسکین سے پہلے';
+
+  @override
+  String get consentWhy =>
+      'کیوں: یہ تصدیق کرنے کے لیے کہ آپ وہی شخص ہیں جس کا شناختی کارڈ نمبر آپ نے لکھا، تاکہ دوسرے آپ کی پروفائل پر بھروسہ کر سکیں۔';
+
+  @override
+  String get consentWho =>
+      'کون جانچتا ہے: نادرا (نیشنل ڈیٹا بیس اینڈ رجسٹریشن اتھارٹی)، حکومتِ پاکستان کی شناختی سروس۔';
+
+  @override
+  String get consentWhat =>
+      'کیا بھیجا جاتا ہے: آپ کا شناختی کارڈ نمبر اور ایک فنگر پرنٹ، صرف نادرا کے منظور شدہ ذریعے سے۔';
+
+  @override
+  String get consentResult =>
+      'اسکل برج کو کیا ملتا ہے: صرف یہ کہ فنگر پرنٹ کارڈ سے ملتا ہے یا نہیں۔';
+
+  @override
+  String get consentKeep =>
+      'ہم کیا رکھتے ہیں: نتیجہ، تاریخ اور چھپا ہوا شناختی نمبر (جیسے 35202-•••••••-1)۔ ہم آپ کا فنگر پرنٹ، اس کا ٹیمپلیٹ یا پورا شناختی نمبر کبھی محفوظ نہیں کرتے۔ کارڈ کی تصاویر کی ضرورت نہیں۔';
+
+  @override
+  String get consentRetention =>
+      'مدت: تصدیق کا ریکارڈ آپ کے اکاؤنٹ کے رہنے تک رہتا ہے اور اکاؤنٹ کے ساتھ حذف ہو جاتا ہے۔';
+
+  @override
+  String get consentWithdraw =>
+      'فنگر پرنٹ بھیجنے سے پہلے آپ کسی بھی وقت رک سکتے ہیں۔ سوالات: ترتیبات، کسٹمر سپورٹ۔';
+
+  @override
+  String get consentCheckbox =>
+      'میں رضامند ہوں کہ نادرا میرا شناختی کارڈ اور فنگر پرنٹ صرف شناخت کی تصدیق کے لیے جانچے (مارکیٹنگ یا کسی اور مقصد کے لیے نہیں)۔';
+
+  @override
+  String get consentAgree => 'رضامند ہوں، آگے بڑھیں';
+
+  @override
+  String consentVersion(String version) {
+    return 'رضامندی کا ورژن $version';
+  }
+
+  @override
+  String get captureTitle => 'اپنا فنگر پرنٹ اسکین کریں';
+
+  @override
+  String get captureInstructions =>
+      'اپنا دایاں انگوٹھا اسکینر پر سیدھا رکھیں اور اسکین ختم ہونے تک ہلائیں نہیں۔';
+
+  @override
+  String get captureStart => 'اسکین شروع کریں';
+
+  @override
+  String get captureRetry => 'دوبارہ اسکین کریں';
+
+  @override
+  String get captureSubmit => 'تصدیق کے لیے بھیجیں';
+
+  @override
+  String get captureWaiting => 'فنگر پرنٹ اسکینر کا انتظار…';
+
+  @override
+  String get captureConnected => 'اسکینر منسلک ہے';
+
+  @override
+  String get captureReady => 'تیار: انگلی اسکینر پر رکھیں';
+
+  @override
+  String get captureFingerDetected => 'انگلی مل گئی، ہلائیں نہیں';
+
+  @override
+  String get captureCapturing => 'اسکین ہو رہا ہے…';
+
+  @override
+  String get captureSuccess =>
+      'فنگر پرنٹ لے لیا گیا۔ ابھی اس کی جانچ نہیں ہوئی۔';
+
+  @override
+  String get capturePoorQuality =>
+      'اسکین کا معیار کم تھا۔ اسکینر صاف کریں، انگلی سیدھی دبائیں اور دوبارہ اسکین کریں۔';
+
+  @override
+  String get captureNotDetected => 'انگلی نہیں ملی۔ انگلی اسکینر پر رکھیں۔';
+
+  @override
+  String get captureFailed => 'اسکین نہیں ہو سکا۔ دوبارہ کوشش کریں۔';
+
+  @override
+  String get captureDisconnected =>
+      'فنگر پرنٹ اسکینر منسلک نہیں۔ منسلک کر کے دوبارہ کوشش کریں۔';
+
+  @override
+  String get captureExpired => 'اس سیشن کی میعاد ختم ہو گئی۔ دوبارہ شروع کریں۔';
+
+  @override
+  String get captureNoApprovedScanner =>
+      'کوئی منظور شدہ فنگر پرنٹ اسکینر دستیاب نہیں۔ نادرا کے لیے منظور شدہ اسکینر ضروری ہے؛ فون کا فنگر پرنٹ لاک اس کے لیے استعمال نہیں ہو سکتا۔';
+
+  @override
+  String get captureScenario => 'ٹیسٹ منظرنامہ';
+
+  @override
+  String get scenarioGood => 'اچھا اسکین';
+
+  @override
+  String get scenarioPoor => 'کم معیار';
+
+  @override
+  String get scenarioNoFinger => 'انگلی نہیں';
+
+  @override
+  String get scenarioDisconnected => 'اسکینر منقطع';
+
+  @override
+  String get scenarioFails => 'اسکین ناکام';
+
+  @override
+  String get processingTitle => 'آپ کی شناخت کی جانچ';
+
+  @override
+  String get processingBody =>
+      'نادرا آپ کا فنگر پرنٹ آپ کے شناختی کارڈ سے ملا رہا ہے۔ اس میں تھوڑا وقت لگ سکتا ہے۔';
+
+  @override
+  String get processingBodyTest =>
+      'نادرا کی فرضی جانچ (ٹیسٹ موڈ)۔ نادرا کو کچھ نہیں بھیجا جاتا۔';
+
+  @override
+  String get resultVerifiedTitle => 'شناخت کی تصدیق ہو گئی';
+
+  @override
+  String get resultVerifiedBody =>
+      'نادرا نے تصدیق کی کہ آپ کا فنگر پرنٹ آپ کے شناختی کارڈ سے ملتا ہے۔ آپ کی پروفائل پر اب نادرا تصدیق کا نشان ہے۔';
+
+  @override
+  String get resultTestTitle => 'ٹیسٹ تصدیق کامیاب';
+
+  @override
+  String get resultTestBody =>
+      'یہ فرضی جانچ تھی۔ یہ نادرا کی اصل تصدیق نہیں اور اس سے کوئی تصدیقی نشان نہیں ملتا۔';
+
+  @override
+  String get resultRejectedTitle => 'ہم آپ کی شناخت کی تصدیق نہیں کر سکے';
+
+  @override
+  String get resultRejectedBody =>
+      'جانچ میں میل کی تصدیق نہیں ہوئی۔ اگر آپ کے خیال میں یہ غلط ہے تو سپورٹ سے رابطہ کریں۔';
+
+  @override
+  String get resultReviewTitle => 'مزید جائزہ درکار';
+
+  @override
+  String get resultReviewBody =>
+      'آپ کی تصدیق کے لیے اضافی جانچ درکار ہے۔ ہم آپ کو مطلع کریں گے۔';
+
+  @override
+  String resultRetryPoor(int count) {
+    return 'نادرا فنگر پرنٹ صحیح نہیں پڑھ سکا۔ دوبارہ اسکین کریں ($count باقی)۔';
+  }
+
+  @override
+  String resultRetryService(int count) {
+    return 'نادرا کی سروس سے رابطہ نہیں ہو سکا۔ آپ کی درخواست محفوظ ہے؛ تھوڑی دیر بعد کوشش کریں ($count باقی)۔';
+  }
+
+  @override
+  String get resultFailedTitle => 'تصدیق مکمل نہیں ہوئی';
+
+  @override
+  String get resultFailedBody =>
+      'تکنیکی مسئلے کی وجہ سے جانچ رک گئی۔ آپ کی شناخت کے بارے میں کوئی فیصلہ نہیں ہوا۔ آپ دوبارہ شروع کر سکتے ہیں۔';
+
+  @override
+  String get resultExpired =>
+      'اس سیشن کی میعاد ختم ہو گئی۔ نئی تصدیق شروع کریں۔';
+
+  @override
+  String get resultTryAgain => 'دوبارہ کوشش کریں';
+
+  @override
+  String get resultDone => 'مکمل';
+
+  @override
+  String get identityErrRecentLogin =>
+      'حفاظت کے لیے سائن آؤٹ کر کے دوبارہ سائن اِن کریں، پھر تصدیق شروع کریں۔';
+
+  @override
+  String get identityErrInUse =>
+      'یہ شناختی کارڈ کسی اور اکاؤنٹ پر پہلے سے تصدیق شدہ ہے۔ سپورٹ سے رابطہ کریں۔';
+
+  @override
+  String get identityErrDaily =>
+      'آج بہت زیادہ کوششیں ہو گئیں۔ کل دوبارہ کوشش کریں۔';
+
+  @override
+  String get identityErrAlready => 'آپ کی شناخت پہلے سے تصدیق شدہ ہے۔';
+
+  @override
+  String get identityErrAttempts =>
+      'اس سیشن میں کوئی کوشش باقی نہیں۔ نئی تصدیق شروع کریں۔';
+
+  @override
+  String get identityErrSynthetic =>
+      'ٹیسٹ موڈ میں صرف فرضی ٹیسٹ شناختی نمبر قبول ہیں۔';
+
+  @override
+  String get identityErrOffline =>
+      'انٹرنیٹ نہیں۔ کنکشن چیک کر کے دوبارہ کوشش کریں۔';
+
+  @override
+  String get identityErrGeneric => 'کچھ غلط ہو گیا۔ دوبارہ کوشش کریں۔';
+
+  @override
+  String get identityCancelled => 'تصدیق منسوخ کر دی گئی۔';
 }

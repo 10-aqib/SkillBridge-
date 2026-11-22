@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/core/media/private_media.dart';
 import 'package:skill_bridge/core/constants/firestore_paths.dart';
 import 'package:skill_bridge/core/errors/app_exception.dart';
@@ -94,7 +94,7 @@ abstract class ContractActions {
   /// Shares the exact address; [location] also pins the place on the map
   /// (the worker's navigation destination); [clearLocation] removes a pin.
   /// Neither leaves an existing pin as it is.
-  Future<void> shareAddress(String contractId, String address, {LatLng? location, bool clearLocation = false});
+  Future<void> shareAddress(String contractId, String address, {GeoCoord? location, bool clearLocation = false});
 
   /// The client sends submitted work back with what to change (Phase 4B).
   Future<void> requestRevision(String contractId, {required String note});
@@ -327,7 +327,7 @@ class ContractActionsImpl implements ContractActions {
       _run((t) => t.cancel(contractId, reason: reason, note: note));
 
   @override
-  Future<void> shareAddress(String contractId, String address, {LatLng? location, bool clearLocation = false}) =>
+  Future<void> shareAddress(String contractId, String address, {GeoCoord? location, bool clearLocation = false}) =>
       _run((t) => t.shareAddress(contractId, address,
           lat: location?.latitude, lng: location?.longitude, clearLocation: location == null && clearLocation));
 

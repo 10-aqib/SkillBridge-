@@ -34,6 +34,7 @@ class NotificationScreen extends ConsumerWidget {
         centerTitle: false,
         elevation: 0,
         backgroundColor: context.surfaceColor,
+        actions: [if (userAsync != null) _MarkAllReadButton(userId: userAsync.uid)],
         leading: context.canPop()
             ? IconButton(
                 icon: Icon(Icons.arrow_back_ios_new_rounded,
@@ -71,11 +72,18 @@ class _NotificationList extends ConsumerWidget {
         child: CircularProgressIndicator(color: AppColors.primary),
       ),
       error: (e, _) => Center(
-        child: Text(
-          context.l10n.errNetwork,
-          style:
-              AppTextStyles.bodyPrimary.copyWith(color: AppColors.errorRed),
-        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(
+            context.l10n.errNetwork,
+            style: AppTextStyles.bodyPrimary.copyWith(color: AppColors.errorRed),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppDimensions.md),
+          OutlinedButton(
+            onPressed: () => ref.invalidate(userNotificationsStreamProvider(userId)),
+            child: Text(context.l10n.tryAgain),
+          ),
+        ]),
       ),
       data: (notifications) {
         if (notifications.isEmpty) {
@@ -93,10 +101,21 @@ class _NotificationList extends ConsumerWidget {
               const SizedBox(height: AppDimensions.md),
           itemBuilder: (context, index) {
             final notif = notifications[index];
-            return _NotificationTile(
-              notification: notif,
-              onTap: () => _onNotifTap(context, ref, notif),
-            ).animate().fade(delay: (60 * index).ms, duration: 350.ms);
+            // Swipe either way to delete (only your own; the rules check).
+            return Dismissible(
+              key: ValueKey('notif_${notif.id}'),
+              background: const _DeleteBackground(alignment: AlignmentDirectional.centerStart),
+              secondaryBackground: const _DeleteBackground(alignment: AlignmentDirectional.centerEnd),
+              onDismissed: (_) {
+                ref.read(notificationRemoteDataSourceProvider).delete(notif.id).catchError((_) {
+                  if (context.mounted) context.showSnackBar(context.l10n.errNetwork, isError: true);
+                });
+              },
+              child: _NotificationTile(
+                notification: notif,
+                onTap: () => _onNotifTap(context, ref, notif),
+              ).animate().fade(delay: (60 * index.clamp(0, 10)).ms, duration: 350.ms),
+            );
           },
         );
       },
@@ -112,8 +131,53 @@ class _NotificationList extends ConsumerWidget {
       datasource.markAsRead(notif.id).catchError((_) {});
     }
     if (!context.mounted) return;
-    final route = notificationRouteFor(notif.payload, type: notif.type);
+    final route = notificationRouteFor(notif.payload, type: notif.type.isEmpty ? null : notif.type);
     if (route != null) context.push(route);
+  }
+}
+
+/// "Mark all as read", shown while something is unread.
+class _MarkAllReadButton extends ConsumerWidget {
+  const _MarkAllReadButton({required this.userId});
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(userNotificationsStreamProvider(userId)).value?.any((n) => !n.isRead) ?? false;
+    if (!unread) return const SizedBox.shrink();
+    return IconButton(
+      tooltip: AppL10n.select(context, en: 'Mark all as read', ur: 'سب کو پڑھا ہوا کریں'),
+      icon: Icon(Icons.done_all_rounded, color: context.textColor),
+      onPressed: () async {
+        try {
+          await ref.read(notificationRemoteDataSourceProvider).markAllAsRead(userId);
+        } catch (_) {
+          if (context.mounted) context.showSnackBar(context.l10n.errNetwork, isError: true);
+        }
+      },
+    );
+  }
+}
+
+class _DeleteBackground extends StatelessWidget {
+  const _DeleteBackground({required this.alignment});
+  final AlignmentGeometry alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+      decoration: BoxDecoration(
+        color: AppColors.errorRed.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      ),
+      child: Icon(
+        Icons.delete_outline_rounded,
+        color: AppColors.errorRed,
+        semanticLabel: AppL10n.select(context, en: 'Delete', ur: 'حذف کریں'),
+      ),
+    );
   }
 }
 
@@ -220,6 +284,18 @@ class _NotificationTile extends StatelessWidget {
     switch (type) {
       case 'proposal':
         return Icons.description_outlined;
+      case 'job':
+        return Icons.work_outline_rounded;
+      case 'booking':
+      case 'booking_accepted':
+      case 'booking_declined':
+      case 'request_declined':
+      case 'contract_update':
+        return Icons.event_note_outlined;
+      case 'contract_cancelled':
+        return Icons.cancel_outlined;
+      case 'review_received':
+        return Icons.star_outline_rounded;
       case 'contract':
         return Icons.handshake_outlined;
       case 'review':

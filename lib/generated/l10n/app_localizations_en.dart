@@ -768,6 +768,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileChangePhoto => 'Change profile photo';
 
   @override
+  String get profileRemovePhoto => 'Remove photo';
+
+  @override
+  String get profileRemovePhotoConfirm => 'Remove your profile photo?';
+
+  @override
+  String get profileRemovePhotoBody => 'People will see your initials instead.';
+
+  @override
+  String get profilePhotoRemoved => 'Profile photo removed.';
+
+  @override
+  String get mediaUploadCancelled => 'Upload cancelled.';
+
+  @override
+  String get mediaCancelUpload => 'Cancel upload';
+
+  @override
   String get portfolioAdd => 'Add photo';
 
   @override
@@ -1131,6 +1149,99 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccount => 'Account';
 
   @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsPushAll => 'Push notifications';
+
+  @override
+  String get settingsPushAllBody =>
+      'Alerts on this phone. Your in-app notifications always work.';
+
+  @override
+  String get settingsPushMessages => 'New messages';
+
+  @override
+  String get settingsPushWork => 'Jobs, proposals and contracts';
+
+  @override
+  String get settingsSaveFailed =>
+      'The setting couldn\'t be saved. Check your connection.';
+
+  @override
+  String get settingsChangePassword => 'Change password';
+
+  @override
+  String get settingsChangePasswordBody =>
+      'We\'ll email you a link to set a new password.';
+
+  @override
+  String get settingsPasswordEmailSent =>
+      'Check your email for a link to change your password.';
+
+  @override
+  String get settingsDeleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountBody =>
+      'This permanently deletes your profile, photos, saved jobs, notifications and sign-in. People you worked with keep their records of past jobs, shown as \"Deleted user\". This can\'t be undone.';
+
+  @override
+  String get deleteAccountConfirm => 'Delete my account';
+
+  @override
+  String get deleteAccountWorking => 'Deleting your account…';
+
+  @override
+  String get deleteAccountDone => 'Your account was deleted.';
+
+  @override
+  String get deleteAccountRecentLogin =>
+      'For your safety, sign in again, then delete your account.';
+
+  @override
+  String get deleteAccountSignInAgain => 'Sign in again';
+
+  @override
+  String get deleteAccountActive =>
+      'Finish or cancel your active contracts first.';
+
+  @override
+  String get deleteAccountUnavailable =>
+      'Account deletion isn\'t available right now. Please contact support.';
+
+  @override
+  String get deleteAccountFailed =>
+      'The account couldn\'t be deleted. Please try again.';
+
+  @override
+  String get savedJobsTitle => 'Saved jobs';
+
+  @override
+  String get savedJobsEmptyTitle => 'No saved jobs';
+
+  @override
+  String get savedJobsEmptyBody => 'Tap the bookmark on a job to keep it here.';
+
+  @override
+  String get savedJobsLoadError => 'Saved jobs couldn\'t be loaded.';
+
+  @override
+  String get jobBookmarkAdd => 'Save job';
+
+  @override
+  String get jobBookmarkRemove => 'Remove from saved';
+
+  @override
+  String get jobBookmarkSaved => 'Job saved.';
+
+  @override
+  String get jobBookmarkRemoved => 'Removed from saved jobs.';
+
+  @override
   String get signOut => 'Sign out';
 
   @override
@@ -1144,7 +1255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verificationTitle => 'Identity verification';
 
   @override
-  String get verificationBadge => 'ID verified';
+  String get verificationBadge => 'ID documents reviewed';
 
   @override
   String get verificationOpen => 'Open';
@@ -3211,16 +3322,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapRecenter => 'Show my location';
 
   @override
-  String get mapResetNorth => 'Turn the map to face north';
-
-  @override
   String get mapZoomIn => 'Zoom in';
 
   @override
   String get mapZoomOut => 'Zoom out';
-
-  @override
-  String get mapAttributionLabel => 'Map data sources';
 
   @override
   String get mapYouAreHere => 'You are here';
@@ -3246,8 +3351,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickerSearchTooShort => 'Type at least 3 characters.';
 
   @override
-  String get pickerSearchAttribution =>
-      'Search results © OpenStreetMap contributors';
+  String get pickerSearchAttributionGoogle => 'Results from Google Maps';
 
   @override
   String get pickerMoveHint => 'Move the map so the pin is on the exact place.';
@@ -3287,10 +3391,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navTitle => 'Directions';
 
   @override
-  String get navCalculating => 'Finding the best road route…';
+  String get navOpenGoogleMaps => 'Directions in Google Maps';
 
   @override
-  String get navResuming => 'Getting your location again…';
+  String get navCalculating => 'Finding the best road route…';
 
   @override
   String navRouteTo(String place) {
@@ -3298,35 +3402,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get navYourDestination => 'your destination';
-
-  @override
   String get navFastest => 'Fastest';
 
   @override
-  String navAlternative(int number) {
-    return 'Alternative $number';
-  }
-
-  @override
-  String navVia(String roads) {
-    return 'Via $roads';
-  }
-
-  @override
   String get navStart => 'Start';
-
-  @override
-  String get navEnd => 'End';
-
-  @override
-  String get navEndTitle => 'End directions?';
-
-  @override
-  String get navEndBody => 'Turn-by-turn directions will stop.';
-
-  @override
-  String get navKeepGoing => 'Keep going';
 
   @override
   String navArriveAt(String time) {
@@ -3336,30 +3415,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get navEstimateNote =>
       'Times are estimates and don\'t include live traffic.';
-
-  @override
-  String navThen(String instruction) {
-    return 'Then $instruction';
-  }
-
-  @override
-  String get navNow => 'Now';
-
-  @override
-  String get navArrivedTitle => 'You have arrived';
-
-  @override
-  String navArrivedBody(String place) {
-    return 'You\'re at $place.';
-  }
-
-  @override
-  String get navSignalLost =>
-      'GPS signal lost. The map shows your last known position.';
-
-  @override
-  String get navApproximate =>
-      'Only approximate location is allowed, so directions may be off. Allow precise location for SkillBridge.';
 
   @override
   String get navErrNoDestination =>
@@ -3383,10 +3438,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navErrNoRoute => 'No road route was found to this place.';
-
-  @override
-  String get navErrFarFromRoad =>
-      'This place is too far from a road for directions.';
 
   @override
   String get navErrOffline =>
@@ -3418,194 +3469,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navUnderAMinute => 'Under 1 min';
-
-  @override
-  String navOnto(String action, String road) {
-    return '$action onto $road';
-  }
-
-  @override
-  String get navTurnLeft => 'Turn left';
-
-  @override
-  String get navTurnRight => 'Turn right';
-
-  @override
-  String get navBearLeft => 'Bear left';
-
-  @override
-  String get navBearRight => 'Bear right';
-
-  @override
-  String get navSharpLeft => 'Turn sharp left';
-
-  @override
-  String get navSharpRight => 'Turn sharp right';
-
-  @override
-  String get navGoStraight => 'Continue straight';
-
-  @override
-  String get navUTurn => 'Make a U-turn';
-
-  @override
-  String get navContinue => 'Continue';
-
-  @override
-  String get navMergeLeft => 'Merge left';
-
-  @override
-  String get navMergeRight => 'Merge right';
-
-  @override
-  String get navMerge => 'Merge';
-
-  @override
-  String get navRampLeft => 'Take the ramp on the left';
-
-  @override
-  String get navRampRight => 'Take the ramp on the right';
-
-  @override
-  String get navRamp => 'Take the ramp';
-
-  @override
-  String get navExitLeft => 'Take the exit on the left';
-
-  @override
-  String get navExitRight => 'Take the exit on the right';
-
-  @override
-  String get navExitNext => 'Take the next exit';
-
-  @override
-  String get navKeepLeft => 'Keep left';
-
-  @override
-  String get navKeepRight => 'Keep right';
-
-  @override
-  String get navEndOfRoadLeft => 'At the end of the road, turn left';
-
-  @override
-  String get navEndOfRoadRight => 'At the end of the road, turn right';
-
-  @override
-  String navRoundaboutExit(int exit) {
-    return 'At the roundabout, take exit $exit';
-  }
-
-  @override
-  String navNamedRoundaboutExit(String name, int exit) {
-    return 'At $name, take exit $exit';
-  }
-
-  @override
-  String get navEnterRoundabout => 'Enter the roundabout';
-
-  @override
-  String navEnterNamedRoundabout(String name) {
-    return 'Enter $name';
-  }
-
-  @override
-  String get navLeaveRoundabout => 'Leave the roundabout';
-
-  @override
-  String navHead(String direction) {
-    return 'Head $direction';
-  }
-
-  @override
-  String get navStartOff => 'Start';
-
-  @override
-  String get navArrive => 'Arrive at your destination';
-
-  @override
-  String get navArriveLeft => 'Your destination is on the left';
-
-  @override
-  String get navArriveRight => 'Your destination is on the right';
-
-  @override
-  String get navNorth => 'north';
-
-  @override
-  String get navNorthEast => 'northeast';
-
-  @override
-  String get navEast => 'east';
-
-  @override
-  String get navSouthEast => 'southeast';
-
-  @override
-  String get navSouth => 'south';
-
-  @override
-  String get navSouthWest => 'southwest';
-
-  @override
-  String get navWest => 'west';
-
-  @override
-  String get navNorthWest => 'northwest';
-
-  @override
-  String get navMute => 'Mute voice';
-
-  @override
-  String get navUnmute => 'Turn voice on';
-
-  @override
-  String get navRerouting => 'Off route. Finding a new route…';
-
-  @override
-  String get navRerouted => 'New route found.';
-
-  @override
-  String get navRerouteFailed =>
-      'Couldn’t get a new route. Keep going, or try again.';
-
-  @override
-  String get navRerouteOffline =>
-      'You’re offline, so the route can’t be updated.';
-
-  @override
-  String get navRerouteNoRoute =>
-      'No road route from here. Head back towards the route.';
-
-  @override
-  String navSayIn(String distance, String instruction) {
-    return 'In $distance, $instruction';
-  }
-
-  @override
-  String navSayThen(String first, String next) {
-    return '$first, then $next';
-  }
-
-  @override
-  String get navSayApproaching => 'You are approaching your destination';
-
-  @override
-  String navSpeakMeters(int meters) {
-    return '$meters metres';
-  }
-
-  @override
-  String navSpeakKilometres(String km) {
-    return '$km kilometres';
-  }
-
-  @override
-  String get navVoiceEnglishFallback =>
-      'There’s no Urdu voice on this phone, so directions are spoken in English.';
-
-  @override
-  String get navVoiceUnavailable =>
-      'Spoken directions aren’t available on this device. Follow the directions on screen.';
 
   @override
   String get contractPinTitle => 'Place on the map';
@@ -3700,4 +3563,315 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get navArrivedSendFailed =>
       'Couldn\'t send. Check your connection and try again.';
+
+  @override
+  String get identityTitle => 'Identity verification';
+
+  @override
+  String get identityIntro =>
+      'Confirm who you are with your CNIC and a fingerprint, checked by NADRA. Workers and hirers use the same check.';
+
+  @override
+  String get identityNotAvailableTitle =>
+      'NADRA verification isn\'t available yet';
+
+  @override
+  String get identityNotAvailableBody =>
+      'SkillBridge is waiting for official NADRA approval and an approved fingerprint scanner. Until then nobody can be NADRA-verified and no fingerprints are collected. You can keep using SkillBridge as usual.';
+
+  @override
+  String get identityTestBanner =>
+      'TEST VERIFICATION: simulated, not a real NADRA check. Use the synthetic test CNICs only.';
+
+  @override
+  String get identityStart => 'Start verification';
+
+  @override
+  String get identityStartAgain => 'Start a new verification';
+
+  @override
+  String get identityHistory => 'Verification history';
+
+  @override
+  String get identityHistoryEmpty => 'No verification attempts yet.';
+
+  @override
+  String get identityStatusNone => 'Not verified';
+
+  @override
+  String get identityStatusInProgress => 'In progress';
+
+  @override
+  String get identityStatusVerified => 'Verified';
+
+  @override
+  String get identityStatusRejected => 'Not confirmed';
+
+  @override
+  String get identityStatusFailed => 'Didn\'t finish';
+
+  @override
+  String get identityStatusReview => 'Under review';
+
+  @override
+  String get identityStatusExpired => 'Expired';
+
+  @override
+  String get identityStatusCancelled => 'Cancelled';
+
+  @override
+  String get identityBadgeNadra => 'NADRA verified';
+
+  @override
+  String get identityBadgeTest => 'TEST verification';
+
+  @override
+  String identityVerifiedOn(String date) {
+    return 'Verified $date';
+  }
+
+  @override
+  String get identityMethodFingerprint =>
+      'Method: fingerprint matched to CNIC by NADRA';
+
+  @override
+  String get identityOtherChecks =>
+      'Email, phone and ID-document review are separate from this check.';
+
+  @override
+  String get cnicTitle => 'Your CNIC';
+
+  @override
+  String get cnicLabel => 'CNIC number';
+
+  @override
+  String get cnicHint => 'XXXXX-XXXXXXX-X';
+
+  @override
+  String get cnicHelp =>
+      '13 digits, as printed on your CNIC. A correct format doesn\'t verify anything; only NADRA\'s check does.';
+
+  @override
+  String get cnicInvalid => 'Enter all 13 digits of a valid CNIC.';
+
+  @override
+  String get cnicTestOnly => 'Test mode accepts only these synthetic CNICs:';
+
+  @override
+  String get identityContinue => 'Continue';
+
+  @override
+  String get consentTitle => 'Before we scan your fingerprint';
+
+  @override
+  String get consentWhy =>
+      'Why: to confirm you are the person on the CNIC you entered, so others can trust your SkillBridge profile.';
+
+  @override
+  String get consentWho =>
+      'Who checks it: NADRA (National Database and Registration Authority), the Government of Pakistan\'s identity service.';
+
+  @override
+  String get consentWhat =>
+      'What is sent: your CNIC number and one fingerprint capture, only through NADRA\'s approved channel.';
+
+  @override
+  String get consentResult =>
+      'What SkillBridge receives: whether the fingerprint matches the CNIC, nothing else.';
+
+  @override
+  String get consentKeep =>
+      'What we keep: the result, the date and a masked CNIC (like 35202-•••••••-1). We never store your fingerprint, a fingerprint template or your full CNIC. No CNIC images are needed.';
+
+  @override
+  String get consentRetention =>
+      'Retention: verification records stay while your account exists and are deleted with it.';
+
+  @override
+  String get consentWithdraw =>
+      'You can stop at any time before the fingerprint is submitted. Questions: Settings, Customer support.';
+
+  @override
+  String get consentCheckbox =>
+      'I agree to have my CNIC and fingerprint checked by NADRA for identity verification only (not for marketing or anything else).';
+
+  @override
+  String get consentAgree => 'Agree and continue';
+
+  @override
+  String consentVersion(String version) {
+    return 'Consent version $version';
+  }
+
+  @override
+  String get captureTitle => 'Scan your fingerprint';
+
+  @override
+  String get captureInstructions =>
+      'Place your right thumb flat on the scanner and keep it still until the scan finishes.';
+
+  @override
+  String get captureStart => 'Start scan';
+
+  @override
+  String get captureRetry => 'Scan again';
+
+  @override
+  String get captureSubmit => 'Submit for verification';
+
+  @override
+  String get captureWaiting => 'Waiting for the fingerprint scanner…';
+
+  @override
+  String get captureConnected => 'Scanner connected';
+
+  @override
+  String get captureReady => 'Ready: place your finger on the scanner';
+
+  @override
+  String get captureFingerDetected => 'Finger detected, hold still';
+
+  @override
+  String get captureCapturing => 'Capturing…';
+
+  @override
+  String get captureSuccess =>
+      'Fingerprint captured. It hasn\'t been checked yet.';
+
+  @override
+  String get capturePoorQuality =>
+      'The scan quality was too low. Wipe the scanner, press your finger flat and scan again.';
+
+  @override
+  String get captureNotDetected =>
+      'No finger detected. Place your finger on the scanner.';
+
+  @override
+  String get captureFailed => 'The scan didn\'t work. Try again.';
+
+  @override
+  String get captureDisconnected =>
+      'The fingerprint scanner is not connected. Connect it and try again.';
+
+  @override
+  String get captureExpired => 'This session has expired. Start again.';
+
+  @override
+  String get captureNoApprovedScanner =>
+      'No approved fingerprint scanner is available. NADRA needs an approved scanner; your phone\'s fingerprint unlock can\'t be used for this.';
+
+  @override
+  String get captureScenario => 'Test scenario';
+
+  @override
+  String get scenarioGood => 'Good capture';
+
+  @override
+  String get scenarioPoor => 'Poor quality';
+
+  @override
+  String get scenarioNoFinger => 'No finger';
+
+  @override
+  String get scenarioDisconnected => 'Scanner unplugged';
+
+  @override
+  String get scenarioFails => 'Capture fails';
+
+  @override
+  String get processingTitle => 'Checking your identity';
+
+  @override
+  String get processingBody =>
+      'NADRA is matching your fingerprint against your CNIC. This can take a moment.';
+
+  @override
+  String get processingBodyTest =>
+      'Simulating a NADRA check (test mode). Nothing is sent to NADRA.';
+
+  @override
+  String get resultVerifiedTitle => 'Identity verified';
+
+  @override
+  String get resultVerifiedBody =>
+      'NADRA confirmed your fingerprint matches your CNIC. Your profile now shows the NADRA verified badge.';
+
+  @override
+  String get resultTestTitle => 'TEST verification passed';
+
+  @override
+  String get resultTestBody =>
+      'This was a simulated check. It is not a real NADRA verification and gives no verified badge.';
+
+  @override
+  String get resultRejectedTitle => 'We couldn\'t confirm your identity';
+
+  @override
+  String get resultRejectedBody =>
+      'The check didn\'t confirm a match. If you think this is wrong, contact support.';
+
+  @override
+  String get resultReviewTitle => 'Additional review needed';
+
+  @override
+  String get resultReviewBody =>
+      'Your verification needs an extra check. We\'ll notify you.';
+
+  @override
+  String resultRetryPoor(int count) {
+    return 'NADRA couldn\'t read the fingerprint well enough. Scan again ($count left).';
+  }
+
+  @override
+  String resultRetryService(int count) {
+    return 'NADRA\'s service couldn\'t be reached. Your request is kept; try again shortly ($count left).';
+  }
+
+  @override
+  String get resultFailedTitle => 'Verification didn\'t finish';
+
+  @override
+  String get resultFailedBody =>
+      'A technical problem stopped the check. Nothing was decided about your identity. You can start again.';
+
+  @override
+  String get resultExpired => 'This session expired. Start a new verification.';
+
+  @override
+  String get resultTryAgain => 'Try again';
+
+  @override
+  String get resultDone => 'Done';
+
+  @override
+  String get identityErrRecentLogin =>
+      'For your security, sign out and sign in again, then start verification.';
+
+  @override
+  String get identityErrInUse =>
+      'This CNIC is already verified on another account. Contact support.';
+
+  @override
+  String get identityErrDaily => 'Too many attempts today. Try again tomorrow.';
+
+  @override
+  String get identityErrAlready => 'Your identity is already verified.';
+
+  @override
+  String get identityErrAttempts =>
+      'No attempts left in this session. Start a new verification.';
+
+  @override
+  String get identityErrSynthetic =>
+      'Test mode accepts only the synthetic test CNICs.';
+
+  @override
+  String get identityErrOffline =>
+      'No connection. Check your internet and try again.';
+
+  @override
+  String get identityErrGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get identityCancelled => 'Verification cancelled.';
 }

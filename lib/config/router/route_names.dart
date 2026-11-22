@@ -78,6 +78,16 @@ class RouteNames {
   static const String workerJobFeedName = 'workerJobFeed';
   static const String workerJobFeedPath = '/worker/jobs';
 
+  // NADRA track: identity verification (workers and hirers alike).
+  static const String identityName = 'identity';
+  static const String identityPath = '/identity';
+  static const String identityHistoryName = 'identityHistory';
+  static const String identityHistoryPath = '/identity/history';
+
+  // Phase G6: the worker's bookmarked jobs.
+  static const String workerSavedJobsName = 'workerSavedJobs';
+  static const String workerSavedJobsPath = '/worker/saved-jobs';
+
   static const String clientContractsName = 'clientContracts';
   static const String clientContractsPath = '/client/contracts';
 

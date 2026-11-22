@@ -10,6 +10,7 @@ import 'package:skill_bridge/features/client/presentation/screens/worker_profile
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_sections.dart';
+import 'package:skill_bridge/features/identity/presentation/verification_status_widget.dart';
 import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
 
 /// What makes a worker profile convincing to clients, in the order to fix it.
@@ -78,8 +79,8 @@ class WorkerProfileScreen extends ConsumerWidget {
                 Text(p.headline, style: t.bodyLarge!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
               const SizedBox(height: SbSpace.s3),
               Wrap(alignment: WrapAlignment.center, spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
-                if (p?.isVerified == true) SbStatusBadge.verified(label: l.verificationBadge)
-                else if (p?.verificationStatus == 'pending') SbStatusBadge.pending(label: l.verificationPendingShort),
+                IdentityBadges(user: user),
+                if (p?.isVerified != true && p?.verificationStatus == 'pending') SbStatusBadge.pending(label: l.verificationPendingShort),
               ]),
               const SizedBox(height: SbSpace.s4),
               _CompletenessCard(user: user, onFix: editStep),

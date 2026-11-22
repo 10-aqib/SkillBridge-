@@ -1,0 +1,4 @@
+# Copy to GoogleMaps.local.xcconfig (git-ignored) and add the iOS Maps key,
+# restricted to bundle id com.skillbridge.skillBridge and "Maps SDK for iOS".
+# Also build with GOOGLE_MAPS_API_KEY in .env so the app knows maps are on.
+GOOGLE_MAPS_API_KEY =

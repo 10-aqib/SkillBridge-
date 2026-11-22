@@ -53,6 +53,7 @@ String mediaErrorText(AppLocalizations l, Object e) {
       'not-configured' => l.mediaNotConfigured,
       'unsupported-type' => l.mediaUnsupportedType,
       'permission-denied' => l.mediaPermissionDenied,
+      'cancelled' => l.mediaUploadCancelled,
       _ => l.mediaUploadFailed,
     };
   }
@@ -68,8 +69,13 @@ void _snack(BuildContext context, String message, {bool error = false}) {
     ));
 }
 
-/// Avatar with a "change photo" control. Uploads to Storage and saves photoUrl
-/// on the profile; replaces (and cleans up) the previous upload.
+enum _PhotoAction { camera, gallery, remove }
+
+/// Avatar with a "change photo" control (Phase G4): take a photo or choose
+/// one, see the upload progress (and cancel it), or remove the photo. The new
+/// photo goes to Firebase Storage, the profile's photoUrl is saved (the
+/// public profile follows automatically), and only then is the previous
+/// upload deleted, so a failed save never loses the old photo.
 class ProfilePhotoPicker extends ConsumerStatefulWidget {
   const ProfilePhotoPicker({super.key, required this.user, this.size = 96, this.onUpdated});
 
@@ -83,35 +89,130 @@ class ProfilePhotoPicker extends ConsumerStatefulWidget {
 
 class _ProfilePhotoPickerState extends ConsumerState<ProfilePhotoPicker> {
   bool _busy = false;
+  double? _progress;
+  UploadCancel? _cancel;
 
-  Future<void> _change() async {
+  Future<_PhotoAction?> _chooseAction() {
     final l = context.l10n;
-    final file = await pickProfileImage(context);
-    if (file == null || !mounted) return;
-    setState(() => _busy = true);
-    final media = ref.read(profileMediaServiceProvider);
+    final hasPhoto = (widget.user.photoUrl ?? '').isNotEmpty;
+    return showModalBottomSheet<_PhotoAction>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (!kIsWeb)
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l.mediaTakePhoto),
+              onTap: () => Navigator.pop(ctx, _PhotoAction.camera),
+            ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text(l.mediaChooseFromGallery),
+            onTap: () => Navigator.pop(ctx, _PhotoAction.gallery),
+          ),
+          if (hasPhoto)
+            ListTile(
+              leading: Icon(Icons.delete_outline_rounded, color: ctx.sb.error),
+              title: Text(l.profileRemovePhoto, style: TextStyle(color: ctx.sb.error)),
+              onTap: () => Navigator.pop(ctx, _PhotoAction.remove),
+            ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _onTap() async {
+    final action = await _chooseAction();
+    if (action == null || !mounted) return;
+    if (action == _PhotoAction.remove) return _remove();
+    final l = context.l10n;
+    XFile? file;
     try {
-      final previous = widget.user.photoUrl;
-      final url = await media.uploadProfilePhoto(uid: widget.user.uid, file: file);
-      final result = await ref
-          .read(updateUserProfileUseCaseProvider)
-          .call(uid: widget.user.uid, data: {'photoUrl': url});
-      if (!mounted) return;
-      await result.fold(
-        (_) async => _snack(context, l.profileSaveFailed, error: true),
-        (_) async {
-          if (previous != null && previous != url) {
-            // Old upload only — Google photos and other external URLs are kept.
-            try {
-              await media.deleteOwnedByUrl(uid: widget.user.uid, url: previous);
-            } catch (_) {}
-          }
-          if (mounted) _snack(context, l.profilePhotoUpdated);
-          widget.onUpdated?.call();
+      file = await ImagePicker().pickImage(
+        source: action == _PhotoAction.camera ? ImageSource.camera : ImageSource.gallery,
+        // Resized and re-encoded on the device: a profile photo needs no more.
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      if (mounted) _snack(context, l.mediaPickerUnavailable, error: true);
+      return;
+    }
+    if (file == null || !mounted) return;
+    await _upload(file);
+  }
+
+  Future<void> _upload(XFile file) async {
+    final l = context.l10n;
+    final cancel = UploadCancel();
+    setState(() {
+      _busy = true;
+      _progress = 0;
+      _cancel = cancel;
+    });
+    final media = ref.read(profileMediaServiceProvider);
+    final previous = widget.user.photoUrl;
+    String? uploaded;
+    try {
+      uploaded = await media.uploadProfilePhoto(
+        uid: widget.user.uid,
+        file: file,
+        cancel: cancel,
+        onProgress: (p) {
+          if (mounted) setState(() => _progress = p);
         },
       );
+      if (cancel.isCancelled) throw const MediaUploadException('cancelled');
+      final result = await ref.read(updateUserProfileUseCaseProvider).call(uid: widget.user.uid, data: {'photoUrl': uploaded});
+      if (result.isLeft()) {
+        // The profile still points at the old photo: drop the new upload.
+        await media.deleteOwnedByUrl(uid: widget.user.uid, url: uploaded).catchError((_) {});
+        if (mounted) _snack(context, l.profileSaveFailed, error: true);
+        return;
+      }
+      if (previous != null && previous.isNotEmpty && previous != uploaded) {
+        // Old upload only: Google photos and other external links are kept.
+        await media.deleteOwnedByUrl(uid: widget.user.uid, url: previous).catchError((_) {});
+      }
+      if (mounted) _snack(context, l.profilePhotoUpdated);
+      widget.onUpdated?.call();
     } catch (e) {
-      if (mounted) _snack(context, mediaErrorText(l, e), error: true);
+      if (mounted) _snack(context, mediaErrorText(l, e), error: !(e is MediaUploadException && e.code == 'cancelled'));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _progress = null;
+          _cancel = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _remove() async {
+    final l = context.l10n;
+    final ok = await showSbConfirmSheet(
+      context,
+      title: l.profileRemovePhotoConfirm,
+      message: l.profileRemovePhotoBody,
+      confirmLabel: l.profileRemovePhoto,
+      cancelLabel: l.cancel,
+    );
+    if (!ok || !mounted) return;
+    final previous = widget.user.photoUrl;
+    setState(() => _busy = true);
+    try {
+      final result = await ref.read(updateUserProfileUseCaseProvider).call(uid: widget.user.uid, data: {'photoUrl': null});
+      if (result.isLeft()) {
+        if (mounted) _snack(context, l.profileSaveFailed, error: true);
+        return;
+      }
+      if (previous != null && previous.isNotEmpty) {
+        await ref.read(profileMediaServiceProvider).deleteOwnedByUrl(uid: widget.user.uid, url: previous).catchError((_) {});
+      }
+      if (mounted) _snack(context, l.profilePhotoRemoved);
+      widget.onUpdated?.call();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -121,8 +222,8 @@ class _ProfilePhotoPickerState extends ConsumerState<ProfilePhotoPicker> {
   Widget build(BuildContext context) {
     final c = context.sb;
     final l = context.l10n;
-    // Free plan: without the image host the photo can't be changed, so it is
-    // shown as a plain avatar (no camera badge, not a button).
+    // Without photo uploads (Storage off in this build) the photo can't be
+    // changed, so it is shown as a plain avatar (no camera badge, not a button).
     final canChange = ref.watch(publicPhotoUploadsProvider);
     if (!canChange) {
       return SbAvatar(name: widget.user.displayName, imageUrl: widget.user.photoUrl, size: widget.size);
@@ -132,7 +233,7 @@ class _ProfilePhotoPickerState extends ConsumerState<ProfilePhotoPicker> {
       label: l.profileChangePhoto,
       child: InkWell(
         customBorder: const CircleBorder(),
-        onTap: _busy ? null : _change,
+        onTap: _busy ? null : _onTap,
         child: Stack(clipBehavior: Clip.none, children: [
           SbAvatar(name: widget.user.displayName, imageUrl: widget.user.photoUrl, size: widget.size),
           if (_busy)
@@ -141,26 +242,47 @@ class _ProfilePhotoPickerState extends ConsumerState<ProfilePhotoPicker> {
                 decoration: BoxDecoration(color: c.scrim.withValues(alpha: 0.45), shape: BoxShape.circle),
                 child: Center(
                   child: SizedBox.square(
-                    dimension: 28,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onPrimary),
+                    dimension: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: c.onPrimary,
+                      value: (_progress ?? 0) > 0 ? _progress : null,
+                    ),
                   ),
                 ),
               ),
             ),
-          PositionedDirectional(
-            end: -2,
-            bottom: -2,
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: c.primary,
-                shape: BoxShape.circle,
-                border: Border.all(color: c.surface, width: 2),
+          if (_busy && _cancel != null)
+            PositionedDirectional(
+              top: -6,
+              end: -6,
+              child: Material(
+                color: c.surfaceRaised,
+                shape: CircleBorder(side: BorderSide(color: c.border)),
+                child: IconButton(
+                  tooltip: l.mediaCancelUpload,
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  onPressed: () => _cancel?.cancel(),
+                  icon: Icon(Icons.close_rounded, color: c.text),
+                ),
               ),
-              child: Icon(Icons.photo_camera_outlined, size: 18, color: c.onPrimary),
+            )
+          else
+            PositionedDirectional(
+              end: -2,
+              bottom: -2,
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: c.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.surface, width: 2),
+                ),
+                child: Icon(Icons.photo_camera_outlined, size: 18, color: c.onPrimary),
+              ),
             ),
-          ),
         ]),
       ),
     );

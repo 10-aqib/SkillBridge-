@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_dimensions.dart';
 import 'package:skill_bridge/config/theme/app_shadows.dart';
@@ -23,17 +21,14 @@ import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_shimmer_card.dart';
 import 'package:skill_bridge/shared/widgets/booking_payment_sheet.dart';
 import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
-import 'package:skill_bridge/core/map/map_markers.dart';
-import 'package:skill_bridge/core/map/sb_map.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
+import 'package:skill_bridge/core/map/maps_api.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
-import 'package:skill_bridge/features/navigation/data/routing_service.dart';
-import 'package:skill_bridge/features/navigation/domain/entities/nav_route.dart';
-import 'package:skill_bridge/features/navigation/presentation/providers/routing_providers.dart';
-import 'package:skill_bridge/features/navigation/presentation/widgets/route_layer.dart';
+import 'package:skill_bridge/core/map/sb_google_map.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:go_router/go_router.dart';
 
-/// Skill Bridge Nearby Workers — OpenStreetMap map with worker pins
+/// Skill Bridge Nearby Workers: list and map of workers near a place
 class NearbyWorkersScreen extends ConsumerStatefulWidget {
   const NearbyWorkersScreen({super.key});
 
@@ -51,15 +46,16 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   bool _availableOnly = false;
   bool _isMapView = false;
   String? _selectedWorkerId;
-  final MapController _mapController = MapController();
+  SbMapController? _map;
+
+  /// Road route to the selected worker (Routes API via the maps functions),
+  /// and who it is for.
+  RouteSummary? _route;
+  String? _routeWorkerId;
+  int _routeRequest = 0;
   late AnimationController _filterAnim;
   bool _showFilters = true;
   LocationResult? _customLocation;
-
-  /// Road route to the selected worker (OSRM), and who it is for.
-  NavRoute? _route;
-  String? _routeWorkerId;
-  int _routeRequest = 0;
 
   @override
   void initState() {
@@ -71,8 +67,8 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
   /// Selects [w], frames both points and asks for the road route. A route
   /// that fails is simply not drawn; straight-line distance stays labelled
   /// as such.
-  Future<void> _selectWorker(NearbyWorkerEntity w, LatLng centre) async {
-    final target = LatLng(w.location.latitude, w.location.longitude);
+  Future<void> _selectWorker(NearbyWorkerEntity w, GeoCoord centre) async {
+    final target = GeoCoord(w.location.latitude, w.location.longitude);
     setState(() {
       _selectedWorkerId = w.workerId;
       if (_routeWorkerId != w.workerId) {
@@ -80,18 +76,20 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
         _routeWorkerId = null;
       }
     });
-    _mapController.frame([centre, target], padding: const EdgeInsets.all(60));
+    _map?.fit([centre, target], padding: 64, maxZoom: 16);
+    final api = ref.read(mapsApiProvider);
+    if (!api.available) return;
     final id = ++_routeRequest;
     try {
-      final result = await ref.read(routingServiceProvider).getRoute(centre, target, alternatives: false);
+      final r = await api.route(centre, target);
       if (!mounted || id != _routeRequest) return;
       setState(() {
-        _route = result.primary;
+        _route = r;
         _routeWorkerId = w.workerId;
       });
-      _mapController.frame([centre, target, ...result.primary.points], padding: const EdgeInsets.all(60));
-    } on RoutingException catch (e) {
-      Logger.w('[NearbyWorkers] no road route: $e');
+      _map?.fit([centre, target, ...r.points], padding: 64, maxZoom: 16);
+    } on MapsApiException catch (e) {
+      Logger.w('[NearbyWorkers] no road route: ${e.failure}');
     }
   }
 
@@ -103,7 +101,6 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
 
   @override
   void dispose() {
-    _mapController.dispose();
     _filterAnim.dispose();
     super.dispose();
   }
@@ -604,7 +601,8 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
       (w) => w.workerId == _selectedWorkerId,
       orElse: () => workers.first,
     );
-    final centre = LatLng(centerLat, centerLng);
+
+    final centre = GeoCoord(centerLat, centerLng);
 
     return Stack(
       children: [
@@ -612,37 +610,28 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
           children: [
             Expanded(
               flex: 3,
-              child: SbMap(
-                controller: _mapController,
+              child: SbGoogleMap(
                 initialCenter: centre,
                 initialZoom: 13.5,
-                onRecenter: () => _mapController.move(centre, 13.5),
-                layers: [
-                  // Search radius
-                  CircleLayer(circles: [
-                    CircleMarker(
-                      point: centre,
-                      radius: _maxDistanceRadiusKm * 1000,
-                      useRadiusInMeter: true,
-                      color: AppColors.primary.withValues(alpha: 0.06),
-                      borderColor: AppColors.primary.withValues(alpha: 0.4),
-                      borderStrokeWidth: 2,
+                showMyLocation: centreIsDevice,
+                showZoomButtons: true,
+                onCreated: (m) => _map = m,
+                onRecenter: () => _map?.moveTo(centre, zoom: 13.5),
+                circles: [SbCircle(id: 'radius', center: centre, radiusMetres: _maxDistanceRadiusKm * 1000)],
+                polylines: [
+                  if (_route != null && _routeWorkerId == selectedWorker.workerId) SbPolyline(id: 'route', points: _route!.points),
+                ],
+                markers: [
+                  if (!centreIsDevice && centreIsChosen)
+                    SbMarker(id: 'centre', position: centre, kind: SbMarkerKind.place, title: context.l10n.mapSearchCentre),
+                  for (final w in workers)
+                    SbMarker(
+                      id: 'w_${w.workerId}',
+                      position: GeoCoord(w.location.latitude, w.location.longitude),
+                      kind: w.workerId == selectedWorker.workerId ? SbMarkerKind.selectedPerson : SbMarkerKind.person,
+                      title: w.name,
+                      onTap: () => _selectWorker(w, centre),
                     ),
-                  ]),
-                  if (_route != null && _routeWorkerId == selectedWorker.workerId) SbRouteLayer(route: _route!),
-                  MarkerLayer(markers: [
-                    if (centreIsDevice)
-                      sbCurrentLocationMarker(centre, semanticLabel: context.l10n.mapYouAreHere)
-                    else if (centreIsChosen)
-                      sbDestinationMarker(centre, semanticLabel: context.l10n.mapSearchCentre),
-                    for (final w in workers)
-                      sbPersonMarker(
-                        LatLng(w.location.latitude, w.location.longitude),
-                        name: w.name,
-                        selected: w.workerId == selectedWorker.workerId,
-                        onTap: () => _selectWorker(w, centre),
-                      ),
-                  ]),
                 ],
               ),
             ),
@@ -995,13 +984,13 @@ class _NearbyWorkersScreenState extends ConsumerState<NearbyWorkersScreen>
 
   /// Road distance and time when a road route is known; otherwise only the
   /// straight-line distance (no made-up travel time).
-  Widget _buildDistanceChip(double distanceKm, BuildContext context, {NavRoute? road}) {
-    final minutes = road == null ? 0 : (road.duration / 60).ceil().clamp(1, 9999);
+  Widget _buildDistanceChip(double distanceKm, BuildContext context, {RouteSummary? road}) {
+    final minutes = road == null ? 0 : (road.durationSeconds / 60).ceil().clamp(1, 9999);
     final label = road != null
         ? AppL10n.select(
             context,
-            en: '${GeoLocationUtil.formatDistance(road.distance / 1000)} by road · ~$minutes min',
-            ur: 'سڑک سے ${GeoLocationUtil.formatDistance(road.distance / 1000)} · ~$minutes منٹ',
+            en: '${GeoLocationUtil.formatDistance(road.distanceMeters / 1000)} by road · ~$minutes min',
+            ur: 'سڑک سے ${GeoLocationUtil.formatDistance(road.distanceMeters / 1000)} · ~$minutes منٹ',
           )
         : AppL10n.select(
             context,

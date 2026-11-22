@@ -12,6 +12,10 @@ class UserEntity {
   final bool isEmailVerified;
   final bool isPhoneVerified;
   final bool isCnicVerified;
+
+  /// Server-managed identity verification (NADRA track): status, verified,
+  /// method, provider, test, verifiedAt. Read only; the app never writes it.
+  final Map<String, dynamic>? identityVerification;
   final bool isActive;
   final String? fcmToken;
   final String? cnicNumber;
@@ -54,6 +58,7 @@ class UserEntity {
     required this.isEmailVerified,
     required this.isPhoneVerified,
     this.isCnicVerified = false,
+    this.identityVerification,
     required this.isActive,
     this.fcmToken,
     this.cnicNumber,
@@ -128,6 +133,7 @@ class UserEntity {
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       isCnicVerified: isCnicVerified ?? this.isCnicVerified,
+      identityVerification: identityVerification,
       isActive: isActive ?? this.isActive,
       fcmToken: fcmToken ?? this.fcmToken,
       cnicNumber: cnicNumber ?? this.cnicNumber,

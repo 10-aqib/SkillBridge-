@@ -1,4 +1,4 @@
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/core/enums/contract_status.dart';
 import 'package:skill_bridge/core/enums/payment_method.dart';
 import 'package:skill_bridge/core/enums/payment_status.dart';
@@ -56,7 +56,7 @@ class ContractEntity {
 
   /// The exact place pinned on the map by the client (Navigation phase 8):
   /// the destination for the worker's directions. Null until pinned.
-  final LatLng? serviceLocation;
+  final GeoCoord? serviceLocation;
   final DateTime? serviceLocationSetAt;
   final DateTime? acceptedAt;
   final DateTime? respondedAt;

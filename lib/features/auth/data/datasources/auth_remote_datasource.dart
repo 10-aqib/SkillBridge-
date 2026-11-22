@@ -7,6 +7,7 @@ import 'package:skill_bridge/core/errors/app_exception.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_roles.dart';
+import 'package:skill_bridge/features/notifications/data/services/push_notification_service.dart' show PushTokenStore;
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// Remote data source that communicates with Firebase Auth and Firestore.
@@ -332,6 +333,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> signOut() async {
     try {
+      // Stop pushes to this phone for this account (best effort, quick).
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) await PushTokenStore.removeThisDevice(uid);
       if (!kIsWeb) {
         await _googleSignIn.signOut();
       }

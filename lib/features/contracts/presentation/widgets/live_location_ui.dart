@@ -1,22 +1,19 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
-import 'package:skill_bridge/core/map/map_markers.dart';
-import 'package:skill_bridge/core/map/sb_map.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
+import 'package:skill_bridge/core/map/maps_links.dart';
+import 'package:skill_bridge/core/map/sb_google_map.dart';
 import 'package:skill_bridge/core/services/location_tracking_service.dart';
 import 'package:skill_bridge/features/contracts/data/models/live_location.dart';
 import 'package:skill_bridge/features/contracts/domain/entities/contract_entity.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Whether location sharing applies to a contract right now: hired and the
 /// work not yet submitted (the same window the rules accept positions in).
@@ -245,67 +242,31 @@ class _ClientLiveLocationPanelState extends ConsumerState<ClientLiveLocationPane
   }
 }
 
-/// The worker's position on a small OpenStreetMap preview (no gestures, so
-/// the page scrolls normally) that follows each update, plus a link to open
-/// it in the device's maps app. Out-of-date positions are drawn dimmed.
+/// The worker's latest position: a small Google map (no gestures, so the
+/// page scrolls normally) that follows each update, the coordinates and
+/// accuracy, and a link that opens the spot in Google Maps. Out-of-date
+/// positions are drawn faded.
 class LiveLocationMap extends StatefulWidget {
   const LiveLocationMap({super.key, required this.location, required this.live, required this.label});
   final LiveLocation location;
   final bool live;
   final String label;
 
-  /// Opens the position in whatever maps app the device has: a `geo:` link
-  /// on Android, Apple Maps on iOS and macOS, OpenStreetMap elsewhere.
-  static Uri mapsLink(double lat, double lng, {TargetPlatform? platform, bool web = kIsWeb}) {
-    final ll = '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}';
-    if (!web) {
-      switch (platform ?? defaultTargetPlatform) {
-        case TargetPlatform.android:
-          return Uri.parse('geo:$ll?q=$ll');
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-          return Uri.https('maps.apple.com', '/', {'q': ll, 'll': ll});
-        default:
-          break;
-      }
-    }
-    return webMapsLink(lat, lng);
-  }
-
-  static Uri webMapsLink(double lat, double lng) => Uri.parse(
-      'https://www.openstreetmap.org/?mlat=${lat.toStringAsFixed(6)}&mlon=${lng.toStringAsFixed(6)}#map=17/${lat.toStringAsFixed(6)}/${lng.toStringAsFixed(6)}');
-
   @override
   State<LiveLocationMap> createState() => _LiveLocationMapState();
 }
 
 class _LiveLocationMapState extends State<LiveLocationMap> {
-  final _map = MapController();
-  bool _ready = false;
+  SbMapController? _map;
 
-  LatLng get _point => LatLng(widget.location.lat, widget.location.lng);
+  GeoCoord get _point => GeoCoord(widget.location.lat, widget.location.lng);
 
   @override
   void didUpdateWidget(LiveLocationMap old) {
     super.didUpdateWidget(old);
-    if (_ready && (old.location.lat != widget.location.lat || old.location.lng != widget.location.lng)) {
-      _map.move(_point, _map.camera.zoom);
+    if (old.location.lat != widget.location.lat || old.location.lng != widget.location.lng) {
+      _map?.moveTo(_point);
     }
-  }
-
-  @override
-  void dispose() {
-    _map.dispose();
-    super.dispose();
-  }
-
-  Future<void> _open() async {
-    final loc = widget.location;
-    try {
-      if (await launchUrl(LiveLocationMap.mapsLink(loc.lat, loc.lng), mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
-    // No app handles geo: links: the web map always works.
-    await launchUrl(LiveLocationMap.webMapsLink(loc.lat, loc.lng), mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -320,18 +281,16 @@ class _LiveLocationMapState extends State<LiveLocationMap> {
         borderRadius: BorderRadius.circular(SbRadius.card),
         child: SizedBox(
           height: 200,
-          child: SbMap(
-            controller: _map,
+          child: SbGoogleMap(
             initialCenter: point,
             initialZoom: 15,
             interactive: false,
             semanticLabel: '${l.mapLabel}: ${widget.label}',
-            onMapReady: () => _ready = true,
-            layers: [
-              if (accuracy != null && accuracy > 0 && accuracy < 2000)
-                CircleLayer(circles: [sbAccuracyCircle(context, point, accuracy)]),
-              MarkerLayer(markers: [sbPersonMarker(point, name: widget.label, stale: !widget.live)]),
+            onCreated: (c) => _map = c,
+            circles: [
+              if (accuracy != null && accuracy > 0 && accuracy < 2000) SbCircle(id: 'accuracy', center: point, radiusMetres: accuracy),
             ],
+            markers: [SbMarker(id: 'worker', position: point, kind: SbMarkerKind.person, title: widget.label, stale: !widget.live)],
           ),
         ),
       ),
@@ -349,26 +308,19 @@ class _LiveLocationMapState extends State<LiveLocationMap> {
           icon: Icons.open_in_new_rounded,
           variant: SbButtonVariant.quiet,
           size: SbButtonSize.compact,
-          onPressed: _open,
+          onPressed: point.isValid ? () => GoogleMapsLinks.open(GoogleMapsLinks.place(point)) : null,
         ),
       ]),
     ]);
   }
 }
 
-/// The pinned job place on a small map ("View on map"); tapping opens it in
-/// the device's maps app.
+/// The pinned job place on a small Google map (Android lite mode); "View on
+/// map" opens it in Google Maps.
 class PinnedPlacePreview extends StatelessWidget {
   const PinnedPlacePreview({super.key, required this.point, required this.label});
-  final LatLng point;
+  final GeoCoord point;
   final String label;
-
-  Future<void> _open() async {
-    try {
-      if (await launchUrl(LiveLocationMap.mapsLink(point.latitude, point.longitude), mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
-    await launchUrl(LiveLocationMap.webMapsLink(point.latitude, point.longitude), mode: LaunchMode.externalApplication);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -378,12 +330,13 @@ class PinnedPlacePreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(SbRadius.card),
         child: SizedBox(
           height: 150,
-          child: SbMap(
+          child: SbGoogleMap(
             initialCenter: point,
             initialZoom: 16,
             interactive: false,
+            lite: true,
             semanticLabel: '${l.contractPinTitle}: $label',
-            layers: [MarkerLayer(markers: [sbDestinationMarker(point)])],
+            markers: [SbMarker(id: 'pin', position: point, kind: SbMarkerKind.destination, title: label)],
           ),
         ),
       ),
@@ -394,7 +347,7 @@ class PinnedPlacePreview extends StatelessWidget {
           icon: Icons.open_in_new_rounded,
           variant: SbButtonVariant.quiet,
           size: SbButtonSize.compact,
-          onPressed: _open,
+          onPressed: point.isValid ? () => GoogleMapsLinks.open(GoogleMapsLinks.place(point)) : null,
         ),
       ),
     ]);

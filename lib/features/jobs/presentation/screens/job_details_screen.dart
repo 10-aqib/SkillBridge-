@@ -21,6 +21,7 @@ import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
 import 'package:skill_bridge/features/proposals/domain/entities/proposal_entity.dart';
 import 'package:skill_bridge/features/proposals/presentation/providers/proposal_providers.dart';
 import 'package:skill_bridge/features/proposals/presentation/widgets/proposal_ui.dart';
+import 'package:skill_bridge/features/jobs/data/saved_jobs_repository.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Job details for clients and workers, kept live from Firestore.
@@ -265,6 +266,7 @@ class _JobDetailsViewState extends ConsumerState<_JobDetailsView> {
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => context.push(RouteNames.jobEditLocation(job.id), extra: job),
             ),
+          if (isWorker && !isOwner) _SaveJobButton(job: job),
           if (!isOwner && me != null && job.isPublicOpen)
             IconButton(tooltip: l.jobReport, icon: const Icon(Icons.outlined_flag_rounded), onPressed: () => _report(me)),
         ],
@@ -494,6 +496,51 @@ class _OwnerPanel extends ConsumerWidget {
             ),
         ]),
       ]),
+    );
+  }
+}
+
+/// Bookmark a job to find it again under Saved jobs (Phase G6).
+class _SaveJobButton extends ConsumerStatefulWidget {
+  const _SaveJobButton({required this.job});
+  final JobEntity job;
+
+  @override
+  ConsumerState<_SaveJobButton> createState() => _SaveJobButtonState();
+}
+
+class _SaveJobButtonState extends ConsumerState<_SaveJobButton> {
+  bool _busy = false;
+
+  Future<void> _toggle(bool saved) async {
+    final l = context.l10n;
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    setState(() => _busy = true);
+    try {
+      final store = ref.read(savedJobsStoreProvider);
+      if (saved) {
+        await store.remove(uid, widget.job.id);
+      } else {
+        await store.save(uid, widget.job);
+      }
+      if (mounted) context.showSnackBar(saved ? l.jobBookmarkRemoved : l.jobBookmarkSaved);
+    } catch (_) {
+      if (mounted) context.showSnackBar(l.errNetwork, isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final saved = ref.watch(savedJobIdsProvider).contains(widget.job.id);
+    return IconButton(
+      tooltip: saved ? l.jobBookmarkRemove : l.jobBookmarkAdd,
+      isSelected: saved,
+      icon: Icon(saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+      onPressed: _busy ? null : () => _toggle(saved),
     );
   }
 }

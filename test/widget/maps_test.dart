@@ -1,215 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:skill_bridge/core/map/geocoding.dart';
-import 'package:skill_bridge/core/map/map_config.dart';
-import 'package:skill_bridge/core/map/map_markers.dart';
-import 'package:skill_bridge/core/map/sb_map.dart';
+import 'package:skill_bridge/core/map/maps_api.dart';
+import 'package:skill_bridge/core/map/maps_config.dart';
+import 'package:skill_bridge/core/map/sb_google_map.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
+import 'package:skill_bridge/core/map/map_unavailable.dart';
+import 'package:skill_bridge/core/map/maps_links.dart';
 import 'package:skill_bridge/core/services/location_service.dart';
 import 'package:skill_bridge/core/utils/geo_location_util.dart';
-import 'package:skill_bridge/features/contracts/presentation/widgets/live_location_ui.dart';
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/widgets/location_picker_screen.dart';
 
-import '../helpers/fake_map_tiles.dart';
+import '../helpers/fake_map.dart';
+import '../helpers/fake_maps_api.dart';
 import '../helpers/test_app.dart';
 
-const _lahore = LatLng(31.5204, 74.3587);
+const _lahore = GeoCoord(31.5204, 74.3587);
 
-/// The current-location dot pulses forever, so tests pump fixed steps
-/// instead of pumpAndSettle.
 Future<void> settle(WidgetTester tester, [int steps = 12]) async {
   for (var i = 0; i < steps; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
 
-class FakeGeocoding implements GeocodingService {
-  FakeGeocoding({this.enabled = true, this.places = const [], this.address, this.fail = false});
-  final bool enabled;
-  final List<GeocodedPlace> places;
-  final GeocodedPlace? address;
-  final bool fail;
-  final searches = <String>[];
-  final reverses = <LatLng>[];
-
-  @override
-  bool get searchEnabled => enabled;
-
-  @override
-  Future<List<GeocodedPlace>> search(String query) async {
-    searches.add(query);
-    if (fail) throw const GeocodingException(GeocodingFailure.network);
-    return places;
-  }
-
-  @override
-  Future<GeocodedPlace?> reverse(LatLng point) async {
-    reverses.add(point);
-    return address;
-  }
-
-  @override
-  void dispose() {}
-}
+ButtonStyleButton _button(WidgetTester tester, String label) => tester.widget<ButtonStyleButton>(
+      find.ancestor(of: find.text(label), matching: find.bySubtype<ButtonStyleButton>()).first,
+    );
 
 void main() {
   late AppLocalizations l;
   setUpAll(() async => l = await englishStrings());
 
-  group('SbMap', () {
-    testWidgets('draws tiles from the configured server and always shows the attribution', (tester) async {
-      final asked = <String>[];
-      await tester.pumpWidget(testApp(
-        mapTiles: () => FakeTileProvider(requested: asked),
-        home: const Scaffold(body: SbMap(initialCenter: _lahore, initialZoom: 14)),
-      ));
-      await settle(tester);
-      expect(find.byType(FlutterMap), findsOneWidget);
-      expect(find.text(MapTileConfig.defaultAttribution), findsOneWidget);
-      expect(asked, isNotEmpty);
-      expect(asked.first, startsWith('https://tile.openstreetmap.org/14/'));
-    });
-
-    testWidgets('a bad tile configuration shows "map unavailable" instead of a broken map', (tester) async {
-      await tester.pumpWidget(testApp(
-        overrides: [mapTileConfigProvider.overrideWithValue(MapTileConfig.fromValues(urlTemplate: 'http://tiles.example.com/{z}/{x}/{y}.png'))],
-        home: const Scaffold(body: SbMap(initialCenter: _lahore)),
-      ));
-      await settle(tester, 2);
-      expect(find.byType(FlutterMap), findsNothing);
-      expect(find.text(l.mapUnavailableTitle), findsOneWidget);
-    });
-
-    testWidgets('offline shows a notice over the map; online does not', (tester) async {
-      for (final online in [false, true]) {
-        await tester.pumpWidget(const SizedBox());
-        await tester.pumpWidget(testApp(
-          overrides: [connectivityStatusProvider.overrideWith((ref) => Stream.value(online))],
-          home: const Scaffold(body: SbMap(initialCenter: _lahore)),
-        ));
-        await settle(tester, 3);
-        expect(find.text(l.mapOffline), online ? findsNothing : findsOneWidget);
-      }
-    });
-
-    testWidgets('the recenter button appears only when a screen handles it, and calls it', (tester) async {
-      var recentered = 0;
-      await tester.pumpWidget(testApp(home: Scaffold(body: SbMap(initialCenter: _lahore, onRecenter: () => recentered++))));
-      await settle(tester, 3);
-      await tester.tap(find.byTooltip(l.mapRecenter));
-      expect(recentered, 1);
-
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpWidget(testApp(home: const Scaffold(body: SbMap(initialCenter: _lahore, interactive: false))));
-      await settle(tester, 3);
-      expect(find.byTooltip(l.mapRecenter), findsNothing, reason: 'previews have no controls');
-    });
-
-    testWidgets('dark theme draws the map with markers without errors', (tester) async {
-      await tester.pumpWidget(testApp(
-        brightness: Brightness.dark,
-        home: Scaffold(
-          body: SbMap(initialCenter: _lahore, layers: [
-            MarkerLayer(markers: [
-              sbCurrentLocationMarker(_lahore, heading: 90),
-              sbDestinationMarker(const LatLng(31.53, 74.36)),
-              sbPersonMarker(const LatLng(31.51, 74.35), name: 'Bilal', stale: true),
-            ]),
-          ]),
-        ),
-      ));
-      await settle(tester);
-      expect(tester.takeException(), isNull);
-      expect(find.byType(SbCurrentLocationDot), findsOneWidget);
-      expect(find.text('B'), findsOneWidget);
-    });
-  });
-
-  group('LocationPickerScreen', () {
-    Future<LocationResult?> openPicker(
-      WidgetTester tester, {
-      required PickerLocator locator,
-      GeocodingService? geo,
-      LatLng? initial,
-    }) async {
+  group('LocationPickerScreen (GPS)', () {
+    Future<LocationResult?> Function() openPicker(WidgetTester tester, {required PickerLocator locator, GeoCoord? initial}) {
       LocationResult? result;
-      await tester.pumpWidget(testApp(
-        overrides: [geocodingServiceProvider.overrideWithValue(geo ?? FakeGeocoding(enabled: false))],
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: TextButton(
-                onPressed: () async {
-                  result = await Navigator.of(context).push<LocationResult>(
-                    MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: locator, initialLocation: initial)),
-                  );
-                },
-                child: const Text('open'),
+      return () async {
+        await tester.pumpWidget(testApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async => result = await Navigator.of(context).push<LocationResult>(
+                MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: locator, initialLocation: initial)),
               ),
+              child: const Text('open'),
             ),
           ),
-        ),
-      ));
-      await tester.tap(find.text('open'));
-      await settle(tester, 15);
-      return result;
+        ));
+        await tester.tap(find.text('open'));
+        await settle(tester);
+        return result;
+      };
     }
 
-    Future<({LatLng point, double accuracy})> here() async => (point: _lahore, accuracy: 8.0);
-
-    testWidgets('locates the device and confirms that spot with its GPS accuracy and address', (tester) async {
-      final geo = FakeGeocoding(address: const GeocodedPlace(point: _lahore, label: 'Mall Road, Lahore, Punjab, Pakistan', city: 'Lahore'));
+    testWidgets('locates the device and confirms that spot with its GPS accuracy', (tester) async {
       LocationResult? result;
       await tester.pumpWidget(testApp(
-        overrides: [geocodingServiceProvider.overrideWithValue(geo)],
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async => result = await Navigator.of(context).push<LocationResult>(
-              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: here)),
+              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: () async => (point: _lahore, accuracy: 8.0))),
             ),
             child: const Text('open'),
           ),
         ),
       ));
       await tester.tap(find.text('open'));
-      await settle(tester, 15);
+      await settle(tester);
 
-      expect(find.text('Mall Road, Lahore, Punjab, Pakistan'), findsOneWidget);
+      expect(find.text('31.52040, 74.35870'), findsOneWidget);
       expect(find.text(l.liveAccuracy(8)), findsOneWidget);
-      expect(geo.reverses, isNotEmpty);
+      expect(find.byType(SbMapUnavailable), findsOneWidget, reason: 'no map provider in this build');
       await tester.tap(find.text(l.pickerConfirm));
       await settle(tester, 5);
       expect(result, isNotNull);
-      expect(result!.latitude, closeTo(_lahore.latitude, 1e-6));
-      expect(result!.city, 'Lahore');
-      expect(result!.formattedAddress, 'Mall Road, Lahore, Punjab, Pakistan');
+      expect(result!.latitude, closeTo(_lahore.latitude, 1e-9));
+      expect(result!.longitude, closeTo(_lahore.longitude, 1e-9));
+      expect(result!.formattedAddress, '31.52040, 74.35870');
+      expect(result!.city, '');
       expect(result!.accuracy, LocationAccuracyLevel.high);
     });
 
-    testWidgets('without address search the pin still works: coordinates as the address, no search box', (tester) async {
-      LocationResult? result;
-      await tester.pumpWidget(testApp(
-        overrides: [geocodingServiceProvider.overrideWithValue(FakeGeocoding(enabled: false))],
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () async => result = await Navigator.of(context).push<LocationResult>(
-              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: here)),
-            ),
-            child: const Text('open'),
-          ),
-        ),
-      ));
-      await tester.tap(find.text('open'));
-      await settle(tester, 15);
-      expect(find.byType(TextField), findsNothing);
-      expect(find.text(l.pickerPinnedLocation), findsWidgets);
-      await tester.tap(find.text(l.pickerConfirm));
-      await settle(tester, 5);
-      expect(result!.formattedAddress, '31.52040, 74.35870');
-      expect(result!.city, '');
+    testWidgets('an existing place is kept without asking for GPS, with unknown accuracy', (tester) async {
+      var asked = 0;
+      final open = openPicker(tester, initial: _lahore, locator: () async {
+        asked++;
+        return (point: _lahore, accuracy: 5.0);
+      });
+      await open();
+      expect(asked, 0);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNotNull);
     });
 
     for (final (name, error, message, action) in [
@@ -218,8 +97,8 @@ void main() {
       ('GPS off', LocationServiceException('x', isServiceDisabled: true), 'pickerLocationServiceOff', 'liveOpenSettings'),
       ('timeout', LocationServiceException('x'), 'pickerLocationFailed', 'tryAgain'),
     ]) {
-      testWidgets('location $name: explained, the map stays usable, and nothing is confirmed at country zoom', (tester) async {
-        await openPicker(tester, locator: () async => throw error);
+      testWidgets('location $name: explained, and nothing can be confirmed', (tester) async {
+        await openPicker(tester, locator: () async => throw error)();
         final texts = {
           'pickerLocationDenied': l.pickerLocationDenied,
           'pickerLocationBlocked': l.pickerLocationBlocked,
@@ -230,90 +109,324 @@ void main() {
         };
         expect(find.text(texts[message]!), findsOneWidget);
         expect(find.text(texts[action]!), findsOneWidget);
-        expect(find.byType(FlutterMap), findsOneWidget);
-        final confirm = tester.widget<ButtonStyleButton>(
-          find.ancestor(of: find.text(l.pickerConfirm), matching: find.bySubtype<ButtonStyleButton>()).first,
-        );
-        expect(confirm.onPressed, isNull, reason: 'the whole-country view is not a place');
+        expect(_button(tester, l.pickerConfirm).onPressed, isNull, reason: 'no place known');
       });
     }
 
-    testWidgets('search runs on submit only, and choosing a result confirms that place', (tester) async {
-      final mosque = const GeocodedPlace(point: LatLng(31.5881, 74.3107), name: 'Badshahi Mosque', label: 'Badshahi Mosque, Fort Road, Lahore', city: 'Lahore');
-      final geo = FakeGeocoding(places: [mosque]);
+    testWidgets('an invalid fix (0,0) is refused, not confirmed', (tester) async {
+      await openPicker(tester, locator: () async => (point: const GeoCoord(0, 0), accuracy: 5.0))();
+      expect(find.text(l.pickerLocationFailed), findsOneWidget);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNull);
+    });
+
+    testWidgets('retrying after a failure finds the device', (tester) async {
+      var calls = 0;
+      await openPicker(tester, locator: () async {
+        if (calls++ == 0) throw LocationServiceException('x', isPermissionDenied: true);
+        return (point: _lahore, accuracy: 12.0);
+      })();
+      await tester.tap(find.text(l.tryAgain));
+      await settle(tester);
+      expect(find.text(l.pickerLocationDenied), findsNothing);
+      expect(find.text('31.52040, 74.35870'), findsOneWidget);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNotNull);
+    });
+  });
+
+  group('SbGoogleMap', () {
+    Future<FakeMaps> pumpMap(WidgetTester tester, Widget map,
+        {bool available = true, bool online = true, Brightness brightness = Brightness.light, bool allowed = false}) async {
+      final maps = FakeMaps();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(testApp(
+        brightness: brightness,
+        overrides: [
+          if (available) ...maps.overrides else mapsAvailableProvider.overrideWithValue(false),
+          connectivityStatusProvider.overrideWith((ref) => Stream.value(online)),
+          mapMyLocationAllowedProvider.overrideWith((ref) async => allowed),
+        ],
+        home: Scaffold(body: map),
+      ));
+      await settle(tester, 3);
+      return maps;
+    }
+
+    testWidgets('without a Maps key: "Map unavailable", never a grey map', (tester) async {
+      final maps = await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore), available: false);
+      expect(find.byType(SbMapUnavailable), findsOneWidget);
+      expect(maps.spec, isNull);
+    });
+
+    testWidgets('an invalid centre (0,0) is not drawn', (tester) async {
+      final maps = await pumpMap(tester, const SbGoogleMap(initialCenter: GeoCoord(0, 0)));
+      expect(find.byType(SbMapUnavailable), findsOneWidget);
+      expect(maps.spec, isNull);
+    });
+
+    testWidgets('draws the given markers and circles; loading cover goes once the map is ready', (tester) async {
+      var created = 0;
+      final maps = await pumpMap(
+        tester,
+        SbGoogleMap(
+          initialCenter: _lahore,
+          onCreated: (_) => created++,
+          markers: const [
+            SbMarker(id: 'pin', position: _lahore, kind: SbMarkerKind.destination),
+          ],
+          circles: const [SbCircle(id: 'r', center: _lahore, radiusMetres: 500)],
+        ),
+      );
+      expect(created, 1);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(maps.marker('pin')!.kind, SbMarkerKind.destination);
+      expect(maps.spec!.circles.single.radiusMetres, 500);
+      expect(maps.spec!.initialCenter, _lahore);
+    });
+
+    testWidgets('offline shows a notice over the map', (tester) async {
+      await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore), online: false);
+      expect(find.text(l.mapOffline), findsOneWidget);
+      await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore));
+      expect(find.text(l.mapOffline), findsNothing);
+    });
+
+    testWidgets('recenter and zoom buttons only when asked for; recenter calls back', (tester) async {
+      var recentred = 0;
+      await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore));
+      expect(find.byTooltip(l.mapRecenter), findsNothing);
+      final maps = await pumpMap(tester, SbGoogleMap(initialCenter: _lahore, onRecenter: () => recentred++, showZoomButtons: true));
+      await tester.tap(find.byTooltip(l.mapRecenter));
+      expect(recentred, 1);
+      await tester.tap(find.byTooltip(l.mapZoomIn));
+      await settle(tester, 2);
+      expect(maps.controller.lastMove!.zoom, 16);
+    });
+
+    testWidgets('a preview has no controls even when given them', (tester) async {
+      final maps = await pumpMap(tester, SbGoogleMap(initialCenter: _lahore, interactive: false, onRecenter: () {}, showZoomButtons: true));
+      expect(find.byTooltip(l.mapRecenter), findsNothing);
+      expect(maps.spec!.interactive, isFalse);
+    });
+
+    testWidgets('the blue dot only when location is already allowed; dark theme gets the dark style', (tester) async {
+      var maps = await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore, showMyLocation: true));
+      expect(maps.spec!.showMyLocation, isFalse);
+      expect(maps.spec!.dark, isFalse);
+      maps = await pumpMap(tester, const SbGoogleMap(initialCenter: _lahore, showMyLocation: true), allowed: true, brightness: Brightness.dark);
+      expect(maps.spec!.showMyLocation, isTrue);
+      expect(maps.spec!.dark, isTrue);
+    });
+  });
+
+  group('LocationPickerScreen (Google map)', () {
+    Future<(FakeMaps, LocationResult? Function())> openWithMap(WidgetTester tester,
+        {required PickerLocator locator, GeoCoord? initial, FakeMapsApi? api}) async {
+      final maps = FakeMaps();
       LocationResult? result;
       await tester.pumpWidget(testApp(
-        overrides: [geocodingServiceProvider.overrideWithValue(geo)],
+        overrides: [
+          ...maps.overrides,
+          mapMyLocationAllowedProvider.overrideWith((ref) async => false),
+          mapsApiProvider.overrideWithValue(api ?? FakeMapsApi(available: false)),
+        ],
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async => result = await Navigator.of(context).push<LocationResult>(
-              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: here)),
+              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: locator, initialLocation: initial)),
             ),
             child: const Text('open'),
           ),
         ),
       ));
       await tester.tap(find.text('open'));
-      await settle(tester, 15);
+      await settle(tester);
+      return (maps, () => result);
+    }
 
-      await tester.enterText(find.byType(TextField), 'badshahi');
-      await settle(tester, 3);
-      expect(geo.searches, isEmpty, reason: 'no autocomplete');
-      await tester.testTextInput.receiveAction(TextInputAction.search);
-      await settle(tester, 5);
-      expect(geo.searches, ['badshahi']);
-      expect(find.text(l.pickerSearchAttribution), findsOneWidget);
-
-      await tester.tap(find.text('Badshahi Mosque'));
-      await settle(tester, 15);
+    testWidgets('GPS fix moves the map there; confirm returns the map centre with GPS accuracy', (tester) async {
+      final (maps, result) = await openWithMap(tester, locator: () async => (point: _lahore, accuracy: 8.0));
+      expect(maps.controller.lastMove, (point: _lahore, zoom: 17.0));
+      maps.moveCamera(_lahore, 17);
+      await settle(tester, 2);
+      expect(find.text(l.liveAccuracy(8)), findsOneWidget);
       await tester.tap(find.text(l.pickerConfirm));
       await settle(tester, 5);
-      expect(result!.latitude, closeTo(31.5881, 1e-4));
-      expect(result!.formattedAddress, 'Badshahi Mosque, Fort Road, Lahore');
-      expect(result!.accuracy, LocationAccuracyLevel.unknown, reason: 'not the GPS position');
+      expect(result()!.latitude, closeTo(_lahore.latitude, 1e-9));
+      expect(result()!.accuracy, LocationAccuracyLevel.high);
     });
 
-    testWidgets('the location notice goes away once a place is chosen another way', (tester) async {
-      final geo = FakeGeocoding(places: [const GeocodedPlace(point: LatLng(31.5881, 74.3107), name: 'Badshahi Mosque', label: 'Badshahi Mosque, Lahore')]);
-      await openPicker(tester, locator: () async => throw LocationServiceException('x', isPermissionDenied: true), geo: geo);
-      expect(find.text(l.pickerLocationDenied), findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'badshahi');
-      await tester.testTextInput.receiveAction(TextInputAction.search);
+    testWidgets('moving the map picks a new spot (accuracy unknown); zoomed out too far cannot confirm', (tester) async {
+      final (maps, result) = await openWithMap(tester, locator: () async => (point: _lahore, accuracy: 8.0));
+      const elsewhere = GeoCoord(31.5497, 74.3436);
+      maps.moveCamera(elsewhere, 10);
+      await settle(tester, 2);
+      expect(find.text(l.pickerZoomInHint), findsOneWidget);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNull);
+      maps.moveCamera(elsewhere, 15);
+      await settle(tester, 2);
+      expect(find.text(l.pickerMoveHint), findsOneWidget);
+      await tester.tap(find.text(l.pickerConfirm));
       await settle(tester, 5);
-      await tester.tap(find.text('Badshahi Mosque'));
-      await settle(tester, 15);
-      expect(find.text(l.pickerLocationDenied), findsNothing);
-      expect(find.text('Badshahi Mosque, Lahore'), findsOneWidget);
+      expect(result()!.latitude, closeTo(elsewhere.latitude, 1e-9));
+      expect(result()!.formattedAddress, '31.54970, 74.34360');
+      expect(result()!.accuracy, LocationAccuracyLevel.unknown);
     });
 
-    testWidgets('search problems are explained: too short, nothing found, service down', (tester) async {
-      for (final (geo, query, expected) in [
-        (FakeGeocoding(), 'ab', l.pickerSearchTooShort),
-        (FakeGeocoding(), 'nowhere at all', l.pickerSearchNoResults),
-        (FakeGeocoding(fail: true), 'lahore', l.pickerSearchFailed),
-      ]) {
-        await openPicker(tester, locator: here, geo: geo);
-        await tester.enterText(find.byType(TextField), query);
-        await tester.testTextInput.receiveAction(TextInputAction.search);
-        await settle(tester, 5);
-        expect(find.text(expected), findsOneWidget, reason: query);
-        await tester.pageBack();
-        await settle(tester, 5);
-      }
+    testWidgets('location denied: explained; the country view cannot be confirmed until zoomed in', (tester) async {
+      final (maps, _) = await openWithMap(tester, locator: () async => throw LocationServiceException('x', isPermissionDenied: true));
+      expect(find.text(l.pickerLocationDenied), findsOneWidget);
+      expect(maps.spec!.initialCenter, LocationPickerScreen.pakistanOverview);
+      expect(maps.spec!.initialZoom, 5);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNull);
+      maps.moveCamera(_lahore, 16);
+      await settle(tester, 2);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNotNull);
+    });
+
+    testWidgets('an existing place opens there without GPS', (tester) async {
+      var asked = 0;
+      final (maps, _) = await openWithMap(tester, initial: _lahore, locator: () async {
+        asked++;
+        return (point: _lahore, accuracy: 5.0);
+      });
+      expect(asked, 0);
+      expect(maps.spec!.initialCenter, _lahore);
+      expect(maps.spec!.initialZoom, 16);
+      expect(_button(tester, l.pickerConfirm).onPressed, isNotNull);
     });
   });
 
-  group('maps app link', () {
-    test('Android opens any maps app, iOS Apple Maps, web OpenStreetMap; never Google-only', () {
-      expect(LiveLocationMap.mapsLink(31.52, 74.35, platform: TargetPlatform.android, web: false).toString(),
-          'geo:31.520000,74.350000?q=31.520000,74.350000');
-      final ios = LiveLocationMap.mapsLink(31.52, 74.35, platform: TargetPlatform.iOS, web: false);
-      expect(ios.host, 'maps.apple.com');
-      expect(ios.queryParameters['q'], '31.520000,74.350000');
-      final web = LiveLocationMap.mapsLink(31.52, 74.35, platform: TargetPlatform.android, web: true);
-      expect(web.host, 'www.openstreetmap.org');
-      expect(web.queryParameters['mlat'], '31.520000');
+  group('LocationPickerScreen (Google search and addresses)', () {
+    Future<(FakeMaps, LocationResult? Function())> open(WidgetTester tester, FakeMapsApi api, {PickerLocator? locator}) async {
+      final maps = FakeMaps();
+      LocationResult? result;
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(testApp(
+        overrides: [...maps.overrides, mapMyLocationAllowedProvider.overrideWith((ref) async => false), mapsApiProvider.overrideWithValue(api)],
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => result = await Navigator.of(context).push<LocationResult>(
+              MaterialPageRoute(builder: (_) => LocationPickerScreen(locator: locator ?? () async => (point: _lahore, accuracy: 8.0))),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await settle(tester);
+      return (maps, () => result);
+    }
+
+    testWidgets('the GPS spot gets its Google address; confirming returns that address and city', (tester) async {
+      final api = FakeMapsApi(address: const MapPlace(point: _lahore, label: 'Mall Road, Lahore, Pakistan', city: 'Lahore'));
+      final (maps, result) = await open(tester, api);
+      expect(api.reverses, [_lahore]);
+      expect(find.text('Mall Road, Lahore, Pakistan'), findsOneWidget);
+      maps.moveCamera(_lahore, 17);
+      await settle(tester, 10);
+      expect(api.reverses, hasLength(1), reason: 'same spot is not looked up twice');
+      await tester.tap(find.text(l.pickerConfirm));
+      await settle(tester, 5);
+      expect(result()!.formattedAddress, 'Mall Road, Lahore, Pakistan');
+      expect(result()!.city, 'Lahore');
+    });
+
+    testWidgets('after moving the map, the old address is not reused: the new spot is looked up', (tester) async {
+      final api = FakeMapsApi(address: const MapPlace(point: _lahore, label: 'Mall Road, Lahore, Pakistan', city: 'Lahore'));
+      final (maps, result) = await open(tester, api);
+      const elsewhere = GeoCoord(31.5497, 74.3436);
+      api.address = const MapPlace(point: elsewhere, label: 'Davis Road, Lahore, Pakistan', city: 'Lahore');
+      maps.moveCamera(elsewhere, 16);
+      await settle(tester, 10); // past the 700 ms settle
+      expect(api.reverses.last, elsewhere);
+      expect(find.text('Davis Road, Lahore, Pakistan'), findsOneWidget);
+      await tester.tap(find.text(l.pickerConfirm));
+      await settle(tester, 5);
+      expect(result()!.formattedAddress, 'Davis Road, Lahore, Pakistan');
+    });
+
+    testWidgets('search runs on submit only; choosing a result moves the map and confirms that place', (tester) async {
+      const liberty = GeoCoord(31.5106, 74.3448);
+      final api = FakeMapsApi(places: const [MapPlace(point: liberty, name: 'Liberty Market', label: 'Liberty Market, Gulberg III, Lahore', city: 'Lahore')]);
+      final (maps, result) = await open(tester, api);
+      await tester.enterText(find.byType(TextField), 'li');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await settle(tester, 3);
+      expect(find.text(l.pickerSearchTooShort), findsOneWidget);
+      expect(api.searches, isEmpty);
+
+      await tester.enterText(find.byType(TextField), 'liberty market');
+      await settle(tester, 3);
+      expect(api.searches, isEmpty, reason: 'no search while typing');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await settle(tester, 3);
+      expect(api.searches, ['liberty market']);
+      expect(find.text(l.pickerSearchAttributionGoogle), findsOneWidget);
+      await tester.tap(find.text('Liberty Market'));
+      await settle(tester, 3);
+      expect(maps.controller.lastMove, (point: liberty, zoom: 17.0));
+      maps.moveCamera(liberty, 17);
+      await settle(tester, 10);
+      await tester.tap(find.text(l.pickerConfirm));
+      await settle(tester, 5);
+      expect(result()!.latitude, closeTo(liberty.latitude, 1e-9));
+      expect(result()!.formattedAddress, 'Liberty Market, Gulberg III, Lahore');
+      expect(result()!.city, 'Lahore');
+    });
+
+    testWidgets('search problems are explained: nothing found, service down', (tester) async {
+      final api = FakeMapsApi();
+      await open(tester, api);
+      await tester.enterText(find.byType(TextField), 'zzzz nothing');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await settle(tester, 3);
+      expect(find.text(l.pickerSearchNoResults), findsOneWidget);
+      api.searchFailure = MapsApiFailure.offline;
+      await tester.tap(find.byTooltip(l.search));
+      await settle(tester, 3);
+      expect(find.text(l.pickerSearchFailed), findsOneWidget);
+    });
+
+    testWidgets('without the maps server there is no search box and coordinates stand in for the address', (tester) async {
+      final api = FakeMapsApi(available: false);
+      final (_, result) = await open(tester, api);
+      expect(find.byType(TextField), findsNothing);
+      expect(api.reverses, isEmpty);
+      await tester.tap(find.text(l.pickerConfirm));
+      await settle(tester, 5);
+      expect(result()!.formattedAddress, '31.52040, 74.35870');
+    });
+  });
+
+  group('GoogleMapsLinks', () {
+    test('place link is the documented Maps URL with six-decimal coordinates', () {
+      expect(GoogleMapsLinks.place(_lahore).toString(), 'https://www.google.com/maps/search/?api=1&query=31.520400%2C74.358700');
+    });
+
+    test('directions go to the destination by car, from the device unless an origin is given', () {
+      final d = GoogleMapsLinks.directions(_lahore);
+      expect(d.host, 'www.google.com');
+      expect(d.path, '/maps/dir/');
+      expect(d.queryParameters, {'api': '1', 'destination': '31.520400,74.358700', 'travelmode': 'driving'});
+      final withOrigin = GoogleMapsLinks.directions(_lahore, origin: const GeoCoord(31.5, 74.3), mode: 'walking');
+      expect(withOrigin.queryParameters['origin'], '31.500000,74.300000');
+      expect(withOrigin.queryParameters['travelmode'], 'walking');
+    });
+  });
+
+  group('GeoCoord', () {
+    test('validity rejects out-of-range, non-finite and (0,0)', () {
+      expect(_lahore.isValid, isTrue);
+      expect(const GeoCoord(0, 0).isValid, isFalse);
+      expect(const GeoCoord(91, 10).isValid, isFalse);
+      expect(const GeoCoord(10, 181).isValid, isFalse);
+      expect(const GeoCoord(double.nan, 10).isValid, isFalse);
+    });
+
+    test('distance matches a known value (Lahore to Islamabad, about 270 km)', () {
+      final d = distanceMetres(_lahore, const GeoCoord(33.6844, 73.0479));
+      expect(d, closeTo(270000, 6000));
+      expect(distanceMetres(_lahore, _lahore), 0);
     });
   });
 }
-

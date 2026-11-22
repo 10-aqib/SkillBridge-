@@ -1538,6 +1538,42 @@ abstract class AppLocalizations {
   /// **'Change profile photo'**
   String get profileChangePhoto;
 
+  /// No description provided for @profileRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get profileRemovePhoto;
+
+  /// No description provided for @profileRemovePhotoConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove your profile photo?'**
+  String get profileRemovePhotoConfirm;
+
+  /// No description provided for @profileRemovePhotoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'People will see your initials instead.'**
+  String get profileRemovePhotoBody;
+
+  /// No description provided for @profilePhotoRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo removed.'**
+  String get profilePhotoRemoved;
+
+  /// No description provided for @mediaUploadCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload cancelled.'**
+  String get mediaUploadCancelled;
+
+  /// No description provided for @mediaCancelUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel upload'**
+  String get mediaCancelUpload;
+
   /// No description provided for @portfolioAdd.
   ///
   /// In en, this message translates to:
@@ -2174,6 +2210,174 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get settingsAccount;
 
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsPushAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications'**
+  String get settingsPushAll;
+
+  /// No description provided for @settingsPushAllBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts on this phone. Your in-app notifications always work.'**
+  String get settingsPushAllBody;
+
+  /// No description provided for @settingsPushMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'New messages'**
+  String get settingsPushMessages;
+
+  /// No description provided for @settingsPushWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs, proposals and contracts'**
+  String get settingsPushWork;
+
+  /// No description provided for @settingsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The setting couldn\'t be saved. Check your connection.'**
+  String get settingsSaveFailed;
+
+  /// No description provided for @settingsChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get settingsChangePassword;
+
+  /// No description provided for @settingsChangePasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll email you a link to set a new password.'**
+  String get settingsChangePasswordBody;
+
+  /// No description provided for @settingsPasswordEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email for a link to change your password.'**
+  String get settingsPasswordEmailSent;
+
+  /// No description provided for @settingsDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get settingsDeleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your profile, photos, saved jobs, notifications and sign-in. People you worked with keep their records of past jobs, shown as \"Deleted user\". This can\'t be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account…'**
+  String get deleteAccountWorking;
+
+  /// No description provided for @deleteAccountDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account was deleted.'**
+  String get deleteAccountDone;
+
+  /// No description provided for @deleteAccountRecentLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'For your safety, sign in again, then delete your account.'**
+  String get deleteAccountRecentLogin;
+
+  /// No description provided for @deleteAccountSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get deleteAccountSignInAgain;
+
+  /// No description provided for @deleteAccountActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish or cancel your active contracts first.'**
+  String get deleteAccountActive;
+
+  /// No description provided for @deleteAccountUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion isn\'t available right now. Please contact support.'**
+  String get deleteAccountUnavailable;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The account couldn\'t be deleted. Please try again.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @savedJobsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved jobs'**
+  String get savedJobsTitle;
+
+  /// No description provided for @savedJobsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved jobs'**
+  String get savedJobsEmptyTitle;
+
+  /// No description provided for @savedJobsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the bookmark on a job to keep it here.'**
+  String get savedJobsEmptyBody;
+
+  /// No description provided for @savedJobsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved jobs couldn\'t be loaded.'**
+  String get savedJobsLoadError;
+
+  /// No description provided for @jobBookmarkAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Save job'**
+  String get jobBookmarkAdd;
+
+  /// No description provided for @jobBookmarkRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from saved'**
+  String get jobBookmarkRemove;
+
+  /// No description provided for @jobBookmarkSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Job saved.'**
+  String get jobBookmarkSaved;
+
+  /// No description provided for @jobBookmarkRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from saved jobs.'**
+  String get jobBookmarkRemoved;
+
   /// No description provided for @signOut.
   ///
   /// In en, this message translates to:
@@ -2201,7 +2405,7 @@ abstract class AppLocalizations {
   /// No description provided for @verificationBadge.
   ///
   /// In en, this message translates to:
-  /// **'ID verified'**
+  /// **'ID documents reviewed'**
   String get verificationBadge;
 
   /// No description provided for @verificationOpen.
@@ -5756,12 +5960,6 @@ abstract class AppLocalizations {
   /// **'Show my location'**
   String get mapRecenter;
 
-  /// No description provided for @mapResetNorth.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn the map to face north'**
-  String get mapResetNorth;
-
   /// No description provided for @mapZoomIn.
   ///
   /// In en, this message translates to:
@@ -5773,12 +5971,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Zoom out'**
   String get mapZoomOut;
-
-  /// No description provided for @mapAttributionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Map data sources'**
-  String get mapAttributionLabel;
 
   /// No description provided for @mapYouAreHere.
   ///
@@ -5822,11 +6014,11 @@ abstract class AppLocalizations {
   /// **'Type at least 3 characters.'**
   String get pickerSearchTooShort;
 
-  /// No description provided for @pickerSearchAttribution.
+  /// Required attribution under Google Places search results.
   ///
   /// In en, this message translates to:
-  /// **'Search results © OpenStreetMap contributors'**
-  String get pickerSearchAttribution;
+  /// **'Results from Google Maps'**
+  String get pickerSearchAttributionGoogle;
 
   /// No description provided for @pickerMoveHint.
   ///
@@ -5894,17 +6086,17 @@ abstract class AppLocalizations {
   /// **'Directions'**
   String get navTitle;
 
+  /// Opens Google Maps with driving directions to the job.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions in Google Maps'**
+  String get navOpenGoogleMaps;
+
   /// No description provided for @navCalculating.
   ///
   /// In en, this message translates to:
   /// **'Finding the best road route…'**
   String get navCalculating;
-
-  /// No description provided for @navResuming.
-  ///
-  /// In en, this message translates to:
-  /// **'Getting your location again…'**
-  String get navResuming;
 
   /// No description provided for @navRouteTo.
   ///
@@ -5912,59 +6104,17 @@ abstract class AppLocalizations {
   /// **'Route to {place}'**
   String navRouteTo(String place);
 
-  /// No description provided for @navYourDestination.
-  ///
-  /// In en, this message translates to:
-  /// **'your destination'**
-  String get navYourDestination;
-
   /// No description provided for @navFastest.
   ///
   /// In en, this message translates to:
   /// **'Fastest'**
   String get navFastest;
 
-  /// No description provided for @navAlternative.
-  ///
-  /// In en, this message translates to:
-  /// **'Alternative {number}'**
-  String navAlternative(int number);
-
-  /// No description provided for @navVia.
-  ///
-  /// In en, this message translates to:
-  /// **'Via {roads}'**
-  String navVia(String roads);
-
   /// No description provided for @navStart.
   ///
   /// In en, this message translates to:
   /// **'Start'**
   String get navStart;
-
-  /// No description provided for @navEnd.
-  ///
-  /// In en, this message translates to:
-  /// **'End'**
-  String get navEnd;
-
-  /// No description provided for @navEndTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'End directions?'**
-  String get navEndTitle;
-
-  /// No description provided for @navEndBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn-by-turn directions will stop.'**
-  String get navEndBody;
-
-  /// No description provided for @navKeepGoing.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep going'**
-  String get navKeepGoing;
 
   /// No description provided for @navArriveAt.
   ///
@@ -5977,42 +6127,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Times are estimates and don\'t include live traffic.'**
   String get navEstimateNote;
-
-  /// No description provided for @navThen.
-  ///
-  /// In en, this message translates to:
-  /// **'Then {instruction}'**
-  String navThen(String instruction);
-
-  /// No description provided for @navNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Now'**
-  String get navNow;
-
-  /// No description provided for @navArrivedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'You have arrived'**
-  String get navArrivedTitle;
-
-  /// No description provided for @navArrivedBody.
-  ///
-  /// In en, this message translates to:
-  /// **'You\'re at {place}.'**
-  String navArrivedBody(String place);
-
-  /// No description provided for @navSignalLost.
-  ///
-  /// In en, this message translates to:
-  /// **'GPS signal lost. The map shows your last known position.'**
-  String get navSignalLost;
-
-  /// No description provided for @navApproximate.
-  ///
-  /// In en, this message translates to:
-  /// **'Only approximate location is allowed, so directions may be off. Allow precise location for SkillBridge.'**
-  String get navApproximate;
 
   /// No description provided for @navErrNoDestination.
   ///
@@ -6049,12 +6163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No road route was found to this place.'**
   String get navErrNoRoute;
-
-  /// No description provided for @navErrFarFromRoad.
-  ///
-  /// In en, this message translates to:
-  /// **'This place is too far from a road for directions.'**
-  String get navErrFarFromRoad;
 
   /// No description provided for @navErrOffline.
   ///
@@ -6097,336 +6205,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Under 1 min'**
   String get navUnderAMinute;
-
-  /// No description provided for @navOnto.
-  ///
-  /// In en, this message translates to:
-  /// **'{action} onto {road}'**
-  String navOnto(String action, String road);
-
-  /// No description provided for @navTurnLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn left'**
-  String get navTurnLeft;
-
-  /// No description provided for @navTurnRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn right'**
-  String get navTurnRight;
-
-  /// No description provided for @navBearLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Bear left'**
-  String get navBearLeft;
-
-  /// No description provided for @navBearRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Bear right'**
-  String get navBearRight;
-
-  /// No description provided for @navSharpLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn sharp left'**
-  String get navSharpLeft;
-
-  /// No description provided for @navSharpRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn sharp right'**
-  String get navSharpRight;
-
-  /// No description provided for @navGoStraight.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue straight'**
-  String get navGoStraight;
-
-  /// No description provided for @navUTurn.
-  ///
-  /// In en, this message translates to:
-  /// **'Make a U-turn'**
-  String get navUTurn;
-
-  /// No description provided for @navContinue.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue'**
-  String get navContinue;
-
-  /// No description provided for @navMergeLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge left'**
-  String get navMergeLeft;
-
-  /// No description provided for @navMergeRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge right'**
-  String get navMergeRight;
-
-  /// No description provided for @navMerge.
-  ///
-  /// In en, this message translates to:
-  /// **'Merge'**
-  String get navMerge;
-
-  /// No description provided for @navRampLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the ramp on the left'**
-  String get navRampLeft;
-
-  /// No description provided for @navRampRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the ramp on the right'**
-  String get navRampRight;
-
-  /// No description provided for @navRamp.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the ramp'**
-  String get navRamp;
-
-  /// No description provided for @navExitLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the exit on the left'**
-  String get navExitLeft;
-
-  /// No description provided for @navExitRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the exit on the right'**
-  String get navExitRight;
-
-  /// No description provided for @navExitNext.
-  ///
-  /// In en, this message translates to:
-  /// **'Take the next exit'**
-  String get navExitNext;
-
-  /// No description provided for @navKeepLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep left'**
-  String get navKeepLeft;
-
-  /// No description provided for @navKeepRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep right'**
-  String get navKeepRight;
-
-  /// No description provided for @navEndOfRoadLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'At the end of the road, turn left'**
-  String get navEndOfRoadLeft;
-
-  /// No description provided for @navEndOfRoadRight.
-  ///
-  /// In en, this message translates to:
-  /// **'At the end of the road, turn right'**
-  String get navEndOfRoadRight;
-
-  /// No description provided for @navRoundaboutExit.
-  ///
-  /// In en, this message translates to:
-  /// **'At the roundabout, take exit {exit}'**
-  String navRoundaboutExit(int exit);
-
-  /// No description provided for @navNamedRoundaboutExit.
-  ///
-  /// In en, this message translates to:
-  /// **'At {name}, take exit {exit}'**
-  String navNamedRoundaboutExit(String name, int exit);
-
-  /// No description provided for @navEnterRoundabout.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter the roundabout'**
-  String get navEnterRoundabout;
-
-  /// No description provided for @navEnterNamedRoundabout.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter {name}'**
-  String navEnterNamedRoundabout(String name);
-
-  /// No description provided for @navLeaveRoundabout.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave the roundabout'**
-  String get navLeaveRoundabout;
-
-  /// No description provided for @navHead.
-  ///
-  /// In en, this message translates to:
-  /// **'Head {direction}'**
-  String navHead(String direction);
-
-  /// No description provided for @navStartOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Start'**
-  String get navStartOff;
-
-  /// No description provided for @navArrive.
-  ///
-  /// In en, this message translates to:
-  /// **'Arrive at your destination'**
-  String get navArrive;
-
-  /// No description provided for @navArriveLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Your destination is on the left'**
-  String get navArriveLeft;
-
-  /// No description provided for @navArriveRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Your destination is on the right'**
-  String get navArriveRight;
-
-  /// No description provided for @navNorth.
-  ///
-  /// In en, this message translates to:
-  /// **'north'**
-  String get navNorth;
-
-  /// No description provided for @navNorthEast.
-  ///
-  /// In en, this message translates to:
-  /// **'northeast'**
-  String get navNorthEast;
-
-  /// No description provided for @navEast.
-  ///
-  /// In en, this message translates to:
-  /// **'east'**
-  String get navEast;
-
-  /// No description provided for @navSouthEast.
-  ///
-  /// In en, this message translates to:
-  /// **'southeast'**
-  String get navSouthEast;
-
-  /// No description provided for @navSouth.
-  ///
-  /// In en, this message translates to:
-  /// **'south'**
-  String get navSouth;
-
-  /// No description provided for @navSouthWest.
-  ///
-  /// In en, this message translates to:
-  /// **'southwest'**
-  String get navSouthWest;
-
-  /// No description provided for @navWest.
-  ///
-  /// In en, this message translates to:
-  /// **'west'**
-  String get navWest;
-
-  /// No description provided for @navNorthWest.
-  ///
-  /// In en, this message translates to:
-  /// **'northwest'**
-  String get navNorthWest;
-
-  /// No description provided for @navMute.
-  ///
-  /// In en, this message translates to:
-  /// **'Mute voice'**
-  String get navMute;
-
-  /// No description provided for @navUnmute.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn voice on'**
-  String get navUnmute;
-
-  /// No description provided for @navRerouting.
-  ///
-  /// In en, this message translates to:
-  /// **'Off route. Finding a new route…'**
-  String get navRerouting;
-
-  /// No description provided for @navRerouted.
-  ///
-  /// In en, this message translates to:
-  /// **'New route found.'**
-  String get navRerouted;
-
-  /// No description provided for @navRerouteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn’t get a new route. Keep going, or try again.'**
-  String get navRerouteFailed;
-
-  /// No description provided for @navRerouteOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'You’re offline, so the route can’t be updated.'**
-  String get navRerouteOffline;
-
-  /// No description provided for @navRerouteNoRoute.
-  ///
-  /// In en, this message translates to:
-  /// **'No road route from here. Head back towards the route.'**
-  String get navRerouteNoRoute;
-
-  /// No description provided for @navSayIn.
-  ///
-  /// In en, this message translates to:
-  /// **'In {distance}, {instruction}'**
-  String navSayIn(String distance, String instruction);
-
-  /// No description provided for @navSayThen.
-  ///
-  /// In en, this message translates to:
-  /// **'{first}, then {next}'**
-  String navSayThen(String first, String next);
-
-  /// No description provided for @navSayApproaching.
-  ///
-  /// In en, this message translates to:
-  /// **'You are approaching your destination'**
-  String get navSayApproaching;
-
-  /// No description provided for @navSpeakMeters.
-  ///
-  /// In en, this message translates to:
-  /// **'{meters} metres'**
-  String navSpeakMeters(int meters);
-
-  /// No description provided for @navSpeakKilometres.
-  ///
-  /// In en, this message translates to:
-  /// **'{km} kilometres'**
-  String navSpeakKilometres(String km);
-
-  /// No description provided for @navVoiceEnglishFallback.
-  ///
-  /// In en, this message translates to:
-  /// **'There’s no Urdu voice on this phone, so directions are spoken in English.'**
-  String get navVoiceEnglishFallback;
-
-  /// No description provided for @navVoiceUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Spoken directions aren’t available on this device. Follow the directions on screen.'**
-  String get navVoiceUnavailable;
 
   /// No description provided for @contractPinTitle.
   ///
@@ -6577,6 +6355,546 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t send. Check your connection and try again.'**
   String get navArrivedSendFailed;
+
+  /// No description provided for @identityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity verification'**
+  String get identityTitle;
+
+  /// No description provided for @identityIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm who you are with your CNIC and a fingerprint, checked by NADRA. Workers and hirers use the same check.'**
+  String get identityIntro;
+
+  /// No description provided for @identityNotAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA verification isn\'t available yet'**
+  String get identityNotAvailableTitle;
+
+  /// No description provided for @identityNotAvailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SkillBridge is waiting for official NADRA approval and an approved fingerprint scanner. Until then nobody can be NADRA-verified and no fingerprints are collected. You can keep using SkillBridge as usual.'**
+  String get identityNotAvailableBody;
+
+  /// No description provided for @identityTestBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST VERIFICATION: simulated, not a real NADRA check. Use the synthetic test CNICs only.'**
+  String get identityTestBanner;
+
+  /// No description provided for @identityStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start verification'**
+  String get identityStart;
+
+  /// No description provided for @identityStartAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new verification'**
+  String get identityStartAgain;
+
+  /// No description provided for @identityHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification history'**
+  String get identityHistory;
+
+  /// No description provided for @identityHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No verification attempts yet.'**
+  String get identityHistoryEmpty;
+
+  /// No description provided for @identityStatusNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified'**
+  String get identityStatusNone;
+
+  /// No description provided for @identityStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get identityStatusInProgress;
+
+  /// No description provided for @identityStatusVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get identityStatusVerified;
+
+  /// No description provided for @identityStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed'**
+  String get identityStatusRejected;
+
+  /// No description provided for @identityStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t finish'**
+  String get identityStatusFailed;
+
+  /// No description provided for @identityStatusReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get identityStatusReview;
+
+  /// No description provided for @identityStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get identityStatusExpired;
+
+  /// No description provided for @identityStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get identityStatusCancelled;
+
+  /// No description provided for @identityBadgeNadra.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA verified'**
+  String get identityBadgeNadra;
+
+  /// No description provided for @identityBadgeTest.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST verification'**
+  String get identityBadgeTest;
+
+  /// No description provided for @identityVerifiedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified {date}'**
+  String identityVerifiedOn(String date);
+
+  /// No description provided for @identityMethodFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Method: fingerprint matched to CNIC by NADRA'**
+  String get identityMethodFingerprint;
+
+  /// No description provided for @identityOtherChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Email, phone and ID-document review are separate from this check.'**
+  String get identityOtherChecks;
+
+  /// No description provided for @cnicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your CNIC'**
+  String get cnicTitle;
+
+  /// No description provided for @cnicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CNIC number'**
+  String get cnicLabel;
+
+  /// No description provided for @cnicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'XXXXX-XXXXXXX-X'**
+  String get cnicHint;
+
+  /// No description provided for @cnicHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'13 digits, as printed on your CNIC. A correct format doesn\'t verify anything; only NADRA\'s check does.'**
+  String get cnicHelp;
+
+  /// No description provided for @cnicInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter all 13 digits of a valid CNIC.'**
+  String get cnicInvalid;
+
+  /// No description provided for @cnicTestOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Test mode accepts only these synthetic CNICs:'**
+  String get cnicTestOnly;
+
+  /// No description provided for @identityContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get identityContinue;
+
+  /// No description provided for @consentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before we scan your fingerprint'**
+  String get consentTitle;
+
+  /// No description provided for @consentWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why: to confirm you are the person on the CNIC you entered, so others can trust your SkillBridge profile.'**
+  String get consentWhy;
+
+  /// No description provided for @consentWho.
+  ///
+  /// In en, this message translates to:
+  /// **'Who checks it: NADRA (National Database and Registration Authority), the Government of Pakistan\'s identity service.'**
+  String get consentWho;
+
+  /// No description provided for @consentWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'What is sent: your CNIC number and one fingerprint capture, only through NADRA\'s approved channel.'**
+  String get consentWhat;
+
+  /// No description provided for @consentResult.
+  ///
+  /// In en, this message translates to:
+  /// **'What SkillBridge receives: whether the fingerprint matches the CNIC, nothing else.'**
+  String get consentResult;
+
+  /// No description provided for @consentKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'What we keep: the result, the date and a masked CNIC (like 35202-•••••••-1). We never store your fingerprint, a fingerprint template or your full CNIC. No CNIC images are needed.'**
+  String get consentKeep;
+
+  /// No description provided for @consentRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Retention: verification records stay while your account exists and are deleted with it.'**
+  String get consentRetention;
+
+  /// No description provided for @consentWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'You can stop at any time before the fingerprint is submitted. Questions: Settings, Customer support.'**
+  String get consentWithdraw;
+
+  /// No description provided for @consentCheckbox.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to have my CNIC and fingerprint checked by NADRA for identity verification only (not for marketing or anything else).'**
+  String get consentCheckbox;
+
+  /// No description provided for @consentAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and continue'**
+  String get consentAgree;
+
+  /// No description provided for @consentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Consent version {version}'**
+  String consentVersion(String version);
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan your fingerprint'**
+  String get captureTitle;
+
+  /// No description provided for @captureInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Place your right thumb flat on the scanner and keep it still until the scan finishes.'**
+  String get captureInstructions;
+
+  /// No description provided for @captureStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start scan'**
+  String get captureStart;
+
+  /// No description provided for @captureRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get captureRetry;
+
+  /// No description provided for @captureSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for verification'**
+  String get captureSubmit;
+
+  /// No description provided for @captureWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the fingerprint scanner…'**
+  String get captureWaiting;
+
+  /// No description provided for @captureConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanner connected'**
+  String get captureConnected;
+
+  /// No description provided for @captureReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready: place your finger on the scanner'**
+  String get captureReady;
+
+  /// No description provided for @captureFingerDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Finger detected, hold still'**
+  String get captureFingerDetected;
+
+  /// No description provided for @captureCapturing.
+  ///
+  /// In en, this message translates to:
+  /// **'Capturing…'**
+  String get captureCapturing;
+
+  /// No description provided for @captureSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint captured. It hasn\'t been checked yet.'**
+  String get captureSuccess;
+
+  /// No description provided for @capturePoorQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan quality was too low. Wipe the scanner, press your finger flat and scan again.'**
+  String get capturePoorQuality;
+
+  /// No description provided for @captureNotDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No finger detected. Place your finger on the scanner.'**
+  String get captureNotDetected;
+
+  /// No description provided for @captureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan didn\'t work. Try again.'**
+  String get captureFailed;
+
+  /// No description provided for @captureDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'The fingerprint scanner is not connected. Connect it and try again.'**
+  String get captureDisconnected;
+
+  /// No description provided for @captureExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This session has expired. Start again.'**
+  String get captureExpired;
+
+  /// No description provided for @captureNoApprovedScanner.
+  ///
+  /// In en, this message translates to:
+  /// **'No approved fingerprint scanner is available. NADRA needs an approved scanner; your phone\'s fingerprint unlock can\'t be used for this.'**
+  String get captureNoApprovedScanner;
+
+  /// No description provided for @captureScenario.
+  ///
+  /// In en, this message translates to:
+  /// **'Test scenario'**
+  String get captureScenario;
+
+  /// No description provided for @scenarioGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good capture'**
+  String get scenarioGood;
+
+  /// No description provided for @scenarioPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Poor quality'**
+  String get scenarioPoor;
+
+  /// No description provided for @scenarioNoFinger.
+  ///
+  /// In en, this message translates to:
+  /// **'No finger'**
+  String get scenarioNoFinger;
+
+  /// No description provided for @scenarioDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanner unplugged'**
+  String get scenarioDisconnected;
+
+  /// No description provided for @scenarioFails.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture fails'**
+  String get scenarioFails;
+
+  /// No description provided for @processingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your identity'**
+  String get processingTitle;
+
+  /// No description provided for @processingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA is matching your fingerprint against your CNIC. This can take a moment.'**
+  String get processingBody;
+
+  /// No description provided for @processingBodyTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulating a NADRA check (test mode). Nothing is sent to NADRA.'**
+  String get processingBodyTest;
+
+  /// No description provided for @resultVerifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity verified'**
+  String get resultVerifiedTitle;
+
+  /// No description provided for @resultVerifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA confirmed your fingerprint matches your CNIC. Your profile now shows the NADRA verified badge.'**
+  String get resultVerifiedBody;
+
+  /// No description provided for @resultTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST verification passed'**
+  String get resultTestTitle;
+
+  /// No description provided for @resultTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This was a simulated check. It is not a real NADRA verification and gives no verified badge.'**
+  String get resultTestBody;
+
+  /// No description provided for @resultRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t confirm your identity'**
+  String get resultRejectedTitle;
+
+  /// No description provided for @resultRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The check didn\'t confirm a match. If you think this is wrong, contact support.'**
+  String get resultRejectedBody;
+
+  /// No description provided for @resultReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional review needed'**
+  String get resultReviewTitle;
+
+  /// No description provided for @resultReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your verification needs an extra check. We\'ll notify you.'**
+  String get resultReviewBody;
+
+  /// No description provided for @resultRetryPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA couldn\'t read the fingerprint well enough. Scan again ({count} left).'**
+  String resultRetryPoor(int count);
+
+  /// No description provided for @resultRetryService.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA\'s service couldn\'t be reached. Your request is kept; try again shortly ({count} left).'**
+  String resultRetryService(int count);
+
+  /// No description provided for @resultFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification didn\'t finish'**
+  String get resultFailedTitle;
+
+  /// No description provided for @resultFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A technical problem stopped the check. Nothing was decided about your identity. You can start again.'**
+  String get resultFailedBody;
+
+  /// No description provided for @resultExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This session expired. Start a new verification.'**
+  String get resultExpired;
+
+  /// No description provided for @resultTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get resultTryAgain;
+
+  /// No description provided for @resultDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get resultDone;
+
+  /// No description provided for @identityErrRecentLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'For your security, sign out and sign in again, then start verification.'**
+  String get identityErrRecentLogin;
+
+  /// No description provided for @identityErrInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'This CNIC is already verified on another account. Contact support.'**
+  String get identityErrInUse;
+
+  /// No description provided for @identityErrDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts today. Try again tomorrow.'**
+  String get identityErrDaily;
+
+  /// No description provided for @identityErrAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'Your identity is already verified.'**
+  String get identityErrAlready;
+
+  /// No description provided for @identityErrAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'No attempts left in this session. Start a new verification.'**
+  String get identityErrAttempts;
+
+  /// No description provided for @identityErrSynthetic.
+  ///
+  /// In en, this message translates to:
+  /// **'Test mode accepts only the synthetic test CNICs.'**
+  String get identityErrSynthetic;
+
+  /// No description provided for @identityErrOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Check your internet and try again.'**
+  String get identityErrOffline;
+
+  /// No description provided for @identityErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get identityErrGeneric;
+
+  /// No description provided for @identityCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification cancelled.'**
+  String get identityCancelled;
 }
 
 class _AppLocalizationsDelegate

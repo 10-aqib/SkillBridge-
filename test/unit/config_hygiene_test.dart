@@ -14,15 +14,69 @@ void main() {
       expect(assetLines.any((l) => l == '- .env' || l.endsWith('/.env')), isFalse);
     });
 
-    test('no Google Maps SDK or Maps key wiring is left (maps are OpenStreetMap)', () {
-      // Navigation phase 3: maps need no API key, so no build reads one.
-      expect(File('pubspec.yaml').readAsStringSync(), isNot(contains('google_maps_flutter')));
-      expect(File('android/app/build.gradle.kts').readAsStringSync(), isNot(contains('GOOGLE_MAPS_API_KEY')));
-      expect(File('android/app/src/main/AndroidManifest.xml').readAsStringSync(), isNot(contains('com.google.android.geo.API_KEY')));
-      expect(File('ios/Runner/AppDelegate.swift').readAsStringSync(), isNot(contains('GMSServices')));
-      expect(File('ios/Runner/Info.plist').readAsStringSync(), isNot(contains('GoogleMapsApiKey')));
-      for (final x in ['ios/Flutter/Debug.xcconfig', 'ios/Flutter/Release.xcconfig']) {
-        expect(File(x).readAsStringSync(), isNot(contains('GoogleMaps')), reason: x);
+    test('no API key is written into tracked platform config', () {
+      // Keys come from the git-ignored .env at build time, never from files
+      // in the repo. Google API keys start with "AIza".
+      for (final x in [
+        'android/app/build.gradle.kts',
+        'android/app/src/main/AndroidManifest.xml',
+        'ios/Runner/Info.plist',
+        'ios/Runner/AppDelegate.swift',
+        'ios/Flutter/Debug.xcconfig',
+        'ios/Flutter/Release.xcconfig',
+        'web/index.html',
+      ]) {
+        final f = File(x);
+        if (!f.existsSync()) continue;
+        expect(f.readAsStringSync(), isNot(contains('AIza')), reason: x);
+      }
+    });
+  });
+
+  group('Google Maps key wiring (Phase G2)', () {
+    test('Android reads the key only from build dart-defines, through a manifest placeholder', () {
+      final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+      expect(manifest, contains('com.google.android.geo.API_KEY'));
+      expect(manifest, contains(r'${mapsApiKey}'));
+      final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+      expect(gradle, contains('dart-defines'));
+      expect(gradle, isNot(contains('.env')), reason: 'a build without --dart-define-from-file must not pick up the key');
+    });
+
+    test('iOS reads the key from the git-ignored xcconfig', () {
+      expect(File('ios/Runner/Info.plist').readAsStringSync(), contains(r'$(GOOGLE_MAPS_API_KEY)'));
+      expect(File('.gitignore').readAsStringSync(), contains('ios/Flutter/GoogleMaps.local.xcconfig'));
+    });
+
+    test('web index.html loads no Maps script with a key (the app loads it at start-up)', () {
+      expect(File('web/index.html').readAsStringSync(), isNot(contains('maps.googleapis.com')));
+    });
+  });
+
+  group('old OpenStreetMap stack is gone (Phase G1)', () {
+    test('no OSM, OSRM, Nominatim, TTS or wakelock packages', () {
+      final pubspec = File('pubspec.yaml').readAsStringSync();
+      for (final pkg in ['flutter_map', 'latlong2', 'flutter_tts', 'wakelock_plus']) {
+        expect(pubspec, isNot(contains('$pkg:')), reason: pkg);
+      }
+    });
+
+    test('no app code talks to the old providers', () {
+      final hits = <String>[];
+      for (final f in Directory('lib').listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'))) {
+        if (f.path.contains('generated')) continue;
+        final text = f.readAsStringSync().toLowerCase();
+        for (final word in ['openstreetmap', 'osrm', 'nominatim', 'package:flutter_map', 'package:latlong2']) {
+          if (text.contains(word)) hits.add('${f.path}: $word');
+        }
+      }
+      expect(hits, isEmpty);
+    });
+
+    test('.env.example has no old map settings', () {
+      final env = File('.env.example').readAsStringSync();
+      for (final v in ['MAP_TILE_', 'ROUTING_', 'GEOCODING_']) {
+        expect(env, isNot(contains(v)), reason: v);
       }
     });
   });

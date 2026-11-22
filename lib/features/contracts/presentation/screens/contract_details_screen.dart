@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
@@ -704,12 +704,12 @@ class _CancelSheetState extends State<_CancelSheet> {
   }
 }
 
-typedef _AddressResult = ({String address, LatLng? pin});
+typedef _AddressResult = ({String address, GeoCoord? pin});
 
 class _AddressSheet extends StatefulWidget {
   const _AddressSheet({required this.initial, this.initialPin});
   final String initial;
-  final LatLng? initialPin;
+  final GeoCoord? initialPin;
 
   @override
   State<_AddressSheet> createState() => _AddressSheetState();
@@ -718,7 +718,7 @@ class _AddressSheet extends StatefulWidget {
 class _AddressSheetState extends State<_AddressSheet> {
   late final _address = TextEditingController(text: widget.initial);
   final _formKey = GlobalKey<FormState>();
-  late LatLng? _pin = widget.initialPin;
+  late GeoCoord? _pin = widget.initialPin;
 
   @override
   void dispose() {
@@ -732,7 +732,7 @@ class _AddressSheetState extends State<_AddressSheet> {
     );
     if (result == null || !mounted) return;
     setState(() {
-      _pin = LatLng(result.latitude, result.longitude);
+      _pin = GeoCoord(result.latitude, result.longitude);
       // Fill an empty address from the map (only a real address, not the
       // coordinates used when no address is known).
       if (_address.text.trim().isEmpty && result.city.isNotEmpty) _address.text = result.formattedAddress;

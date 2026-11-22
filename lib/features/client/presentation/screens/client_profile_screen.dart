@@ -9,6 +9,7 @@ import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dar
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_sections.dart';
+import 'package:skill_bridge/features/identity/presentation/verification_status_widget.dart';
 import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
 
 /// Client's own profile: photo, contact details, verification prompts, stats
@@ -48,6 +49,8 @@ class ClientProfileScreen extends ConsumerWidget {
                   style: t.headlineSmall, textAlign: TextAlign.center),
               const SizedBox(height: SbSpace.s1),
               Text(l.client, style: t.bodyMedium!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
+              const SizedBox(height: SbSpace.s2),
+              Center(child: IdentityBadges(user: user)),
               const SizedBox(height: SbSpace.s4),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Expanded(child: ProfileStat(value: '${user.totalJobsPosted}', label: l.profileJobsPosted)),

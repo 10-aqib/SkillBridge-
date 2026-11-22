@@ -18,6 +18,9 @@ service firebase.storage {
       // Limit file uploads to 5MB maximum
       return request.resource.size < 5 * 1024 * 1024;
     }
+    function isPublicPhotoFolder(folder) {
+      return folder in ['profile', 'portfolio', 'jobPhotos'];
+    }
     function isStaff() {
       return isAuthenticated() &&
         request.auth.token.get('role', '') in ['admin', 'SUPER_ADMIN'];
@@ -32,22 +35,19 @@ service firebase.storage {
         allow delete: if isOwner(userId) || isStaff();
       }
 
-      // Public assets (profile/, portfolio/, …). Storage rules OR together, so
-      // this match must exclude the verificationDocuments folder — the old
-      // users/{userId}/{allPaths=**} wildcard made those documents public.
-      match /{folder}/{allPaths=**} {
-        allow read: if folder != 'verificationDocuments';
-        allow create, update: if isOwner(userId) && folder != 'verificationDocuments'
-                              && (isImage() || isPdf()) && isValidSize();
-        // Deletes have no request.resource, so they need their own rule.
-        allow delete: if isOwner(userId) && folder != 'verificationDocuments';
-      }
-
-      // Files stored directly under users/{userId}/ (kept public as before).
-      match /{fileName} {
-        allow read: if true;
-        allow create, update: if isOwner(userId) && (isImage() || isPdf()) && isValidSize();
-        allow delete: if isOwner(userId);
+      // Public photos (Phase G4): profile photo, portfolio and job photos.
+      // Readable by anyone (they are shown on public profiles and jobs, and
+      // the app stores their download links). Only the owner uploads: images
+      // only (JPEG, PNG, WebP), under 2 MB, a plain file name, and never over
+      // an existing file (every upload gets a new name). Only the owner deletes.
+      // No other folder and no file directly under users/{uid}/ is allowed.
+      match /{folder}/{fileName} {
+        allow read: if isPublicPhotoFolder(folder);
+        allow create: if isOwner(userId) && isPublicPhotoFolder(folder) && resource == null
+          && fileName.matches('^[A-Za-z0-9._-]{1,100}$')
+          && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp']
+          && request.resource.size > 0 && request.resource.size < 2 * 1024 * 1024;
+        allow delete: if isOwner(userId) && isPublicPhotoFolder(folder);
       }
     }
 

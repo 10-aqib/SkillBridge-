@@ -82,8 +82,22 @@ service cloud.firestore {
         && path.matches('^users/' + userId + '/(verificationDocuments|verificationDocs)/[^/]+$');
     }
 
+    // Push settings (Phase G6): optional on/off switches read by the trusted
+    // notification function. Only these three, only true/false.
+    function notificationPrefsValid(d) {
+      return !('notificationPrefs' in d)
+        || (d.notificationPrefs is map
+          && d.notificationPrefs.keys().hasOnly(['push', 'messages', 'work'])
+          && d.notificationPrefs.get('push', true) is bool
+          && d.notificationPrefs.get('messages', true) is bool
+          && d.notificationPrefs.get('work', true) is bool);
+    }
+
     function isProtectedProfileDataUnchanged() {
       return roleChangeAllowed()
+        // Identity verification (NADRA track) is written only by the trusted
+        // functions; no client may add, change or remove it.
+        && request.resource.data.get('identityVerification', null) == resource.data.get('identityVerification', null)
         && activeFlagUnchanged()
         && publicCnicNotAddedOrChanged()
         && workerVerificationStatusAllowed()
@@ -175,14 +189,32 @@ service cloud.firestore {
                     && request.resource.data.get('isActive', true) == true
                     && request.resource.data.get('isCnicVerified', false) == false
                     && !('cnicNumber' in request.resource.data)
+                    && !('identityVerification' in request.resource.data)
                     && request.resource.data.get('workerProfile', {}).get('isVerified', false) == false
                     && request.resource.data.get('workerProfile', {}).get('verificationStatus', '') in ['', 'pending']
                     && startingStats(request.resource.data)
                     && isValidLocationUpdate(request.resource.data);
       allow update: if (isOwner(userId) && isValidLocationUpdate(request.resource.data)
-                        && isProtectedProfileDataUnchanged()) || isAdmin()
+                        && isProtectedProfileDataUnchanged()
+                        && notificationPrefsValid(request.resource.data))
+                    // Staff can moderate accounts but never set or change an
+                    // identity verification result (only the trusted functions can).
+                    || (isAdmin() && request.resource.data.get('identityVerification', null) == resource.data.get('identityVerification', null))
                     || jobCompletionCreditAllowed(userId);
       allow delete: if isAdmin();
+
+      // Saved jobs (Phase G6): a worker's bookmarks. Owner only; a small
+      // snapshot of the job for the list; the job must exist when saved.
+      match /savedJobs/{jobId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(['jobId', 'title', 'city', 'budgetMin', 'budgetMax', 'budgetType', 'savedAt'])
+          && request.resource.data.jobId == jobId
+          && request.resource.data.savedAt == request.time
+          && request.resource.data.title is string && request.resource.data.title.size() <= 200
+          && request.resource.data.get('city', '') is string && request.resource.data.get('city', '').size() <= 80
+          && exists(/databases/$(database)/documents/jobs/$(jobId));
+      }
 
       // Private verification documents (free plan, Phase S6): the owner
       // adds them; only the owner and staff read them. Kept once added
@@ -236,7 +268,7 @@ service cloud.firestore {
     // Self-description (name, bio, skills, rates…) is the owner's own text.
     function publicUserKeys() {
       return ['uid', 'displayName', 'photoUrl', 'role', 'isActive', 'city',
-        'isEmailVerified', 'isPhoneVerified', 'isCnicVerified', 'createdAt',
+        'isEmailVerified', 'isPhoneVerified', 'isCnicVerified', 'identityVerification', 'createdAt',
         'rating', 'totalReviews', 'location', 'geohash', 'locationAccuracy',
         'workerProfile', 'updatedAt'];
     }
@@ -278,6 +310,7 @@ service cloud.firestore {
         && sameAs(pub, priv, 'role')
         && sameAs(pub, priv, 'isActive')
         && sameAs(pub, priv, 'isCnicVerified')
+        && sameAs(pub, priv, 'identityVerification')
         && sameAs(pub, priv, 'rating')
         && sameAs(pub, priv, 'totalReviews')
         && sameAs(pub, priv, 'createdAt')
@@ -1241,10 +1274,32 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Identity verification (NADRA fingerprint track) ───────────────────
+    // Sessions are created and finished only by the trusted functions. The
+    // owner (and staff) may read their own; nobody writes from an app. The
+    // records hold a masked CNIC and a keyed digest, never the full number or
+    // any biometric data. Audit events: staff only.
+    // identityCnicIndex, identityTransactions and serverSecrets have no rules
+    // here, so the default deny keeps every client out.
+    match /identityVerifications/{sessionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false;
+      match /events/{eventId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
     // ── Notifications ─────────────────────────────────────────────────────
     match /notifications/{notifId} {
-      allow read, update, delete: if isAuthenticated() &&
-                                     (resource.data.userId == request.auth.uid || isAdmin());
+      allow read, delete: if isAuthenticated() &&
+                             (resource.data.userId == request.auth.uid || isAdmin());
+      // Phase G5: the recipient may only mark it read. Title, body, type and
+      // links are written by the sender's app and then re-checked and
+      // rewritten by the trusted function (onNotificationCreatedV2).
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt'])
+        && request.resource.data.isRead is bool);
       // Free plan (Phase S5): in-app only (no push without a server). Sent by
       // the other person's app, so the rules require a real link: a contract
       // both are party to, a chat both are in, or a job between its client and
@@ -1283,8 +1338,15 @@ service cloud.firestore {
     }
 
     // ── FCM Tokens ────────────────────────────────────────────────────────
+    // Phase G5: one document per person, one entry per device:
+    // { tokens: { <FCM token>: { platform, updatedAt } }, updatedAt }.
+    // Only the owner (and staff) read or change it; at most 10 devices.
     match /fcmTokens/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read, delete: if isOwner(userId) || isAdmin();
+      allow create, update: if (isOwner(userId) || isAdmin())
+        && request.resource.data.keys().hasOnly(['tokens', 'updatedAt'])
+        && request.resource.data.tokens is map
+        && request.resource.data.tokens.size() <= 10;
     }
 
     // ── User reports ─────────────────────────────────────────────────────

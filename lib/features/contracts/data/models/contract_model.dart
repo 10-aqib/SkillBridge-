@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/core/enums/contract_status.dart';
 import 'package:skill_bridge/core/enums/payment_method.dart';
 import 'package:skill_bridge/core/enums/payment_status.dart';
@@ -119,7 +119,7 @@ class ContractModel extends ContractEntity {
       serviceArea: data['serviceArea'] as String?,
       addressSharedAt: ts('addressSharedAt'),
       serviceLocation: data['serviceLocation'] is GeoPoint
-          ? LatLng((data['serviceLocation'] as GeoPoint).latitude, (data['serviceLocation'] as GeoPoint).longitude)
+          ? GeoCoord((data['serviceLocation'] as GeoPoint).latitude, (data['serviceLocation'] as GeoPoint).longitude)
           : null,
       serviceLocationSetAt: ts('serviceLocationSetAt'),
       acceptedAt: ts('acceptedAt'),

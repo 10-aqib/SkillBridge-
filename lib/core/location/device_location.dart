@@ -1,14 +1,15 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:skill_bridge/core/location/geo_coord.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
 
+export 'package:skill_bridge/core/location/geo_coord.dart' show GeoCoord, bearingBetween, distanceMetres;
+
 /// The device's location (Navigation phase 4): one source for every feature
-/// that needs GPS (map screens, live sharing, turn-by-turn navigation), so
+/// that needs GPS (map screens, live sharing, directions), so
 /// permission, accuracy, timeouts and battery use are handled in one place.
 ///
 /// Foreground only: no background location permission is requested, and on
@@ -58,7 +59,7 @@ class GeoFix {
   /// Reported by a mock-location app (Android developer option).
   final bool isMocked;
 
-  LatLng get point => LatLng(lat, lng);
+  GeoCoord get point => GeoCoord(lat, lng);
 
   /// Valid coordinates and a usable accuracy value.
   bool get isValid =>
@@ -100,7 +101,7 @@ class GeoFix {
 
   /// Straight-line distance in metres (for filtering, never shown as a
   /// road distance).
-  double metresTo(GeoFix other) => const Distance().as(LengthUnit.Meter, point, other.point);
+  double metresTo(GeoFix other) => distanceMetres(point, other.point);
 
   // Safe for any value, including NaN and infinity (dropped fixes are logged).
   @override
@@ -298,12 +299,3 @@ class GeolocatorLocationSource implements LocationSource {
 
 /// Overridden in tests.
 final locationSourceProvider = Provider<LocationSource>((ref) => const GeolocatorLocationSource());
-
-/// Bearing in degrees (0–360) from [a] to [b], for fixes without a heading.
-double bearingBetween(LatLng a, LatLng b) {
-  final lat1 = a.latitudeInRad, lat2 = b.latitudeInRad;
-  final dLng = b.longitudeInRad - a.longitudeInRad;
-  final y = math.sin(dLng) * math.cos(lat2);
-  final x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dLng);
-  return (math.atan2(y, x) * 180 / math.pi + 360) % 360;
-}

@@ -101,10 +101,27 @@ function fakeDb(seed = {}) {
     get: async () => query(c, []).run(),
   });
 
+  // db.doc('a/b/c/d') and write batches (added for the G5 tests).
+  const docAt = (path) => {
+    const parts = path.split("/");
+    return ref(parts.slice(0, -1).join("/"), parts[parts.length - 1]);
+  };
+  const batch = () => {
+    const pending = [];
+    return {
+      set: (r, v, opts) => { pending.push(() => write.set(r._c, r.id, v, opts)); },
+      update: (r, v) => { pending.push(() => write.update(r._c, r.id, v)); },
+      delete: (r) => { pending.push(() => write.delete(r._c, r.id)); },
+      commit: async () => { for (const p of pending) p(); },
+    };
+  };
+
   return {
     data,
     get writes() { return writes; },
     collection,
+    doc: docAt,
+    batch,
     runTransaction: async (fn) => {
       const pending = [];
       const tx = {

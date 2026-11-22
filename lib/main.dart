@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/app.dart';
+import 'package:skill_bridge/core/map/maps_config.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/services/app_check_setup.dart';
 import 'package:skill_bridge/core/services/crashlytics_service.dart';
@@ -23,9 +24,6 @@ void main() async {
       final license = await rootBundle.loadString('assets/fonts/OFL.txt');
       yield LicenseEntryWithLineBreaks(['Noto Sans', 'Noto Nastaliq Urdu'], license);
     });
-
-    // Maps, routing and address search are OpenStreetMap services configured
-    // at build time (lib/core/map/map_config.dart); none needs an API key.
 
     // ── Setup Firebase ──
     await Firebase.initializeApp(
@@ -66,6 +64,11 @@ void main() async {
     await OfflineOutboxService.init();
     await OfflineCacheService.init();
     Logger.i('Local cache database initialized successfully');
+
+    // Web: loads the Maps JavaScript API when a web key is configured.
+    // Mobile: nothing to load. Without a key, maps show "Map unavailable".
+    final mapsReady = await prepareGoogleMaps();
+    Logger.i('Google Maps ${mapsReady ? 'ready' : 'not configured'}');
 
     runApp(
       UncontrolledProviderScope(

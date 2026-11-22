@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:skill_bridge/core/location/device_location.dart';
 import 'package:skill_bridge/core/location/device_location_tracker.dart';
 
@@ -51,7 +50,7 @@ void main() {
       expect(driving.speed, 9.7);
       expect(driving.hasReliableHeading, isTrue);
       expect(driving.timestamp, DateTime(2026, 11, 14, 10));
-      expect(driving.point, const LatLng(31.52, 74.35));
+      expect(driving.point, const GeoCoord(31.52, 74.35));
     });
 
     test('heading counts only while moving, and only when it is precise enough', () {
@@ -68,9 +67,9 @@ void main() {
     });
 
     test('bearing between points', () {
-      expect(bearingBetween(const LatLng(31.5, 74.3), const LatLng(31.6, 74.3)), closeTo(0, 0.01));
-      expect(bearingBetween(const LatLng(31.5, 74.3), const LatLng(31.5, 74.4)), closeTo(90, 0.1));
-      expect(bearingBetween(const LatLng(31.5, 74.3), const LatLng(31.4, 74.3)), closeTo(180, 0.01));
+      expect(bearingBetween(const GeoCoord(31.5, 74.3), const GeoCoord(31.6, 74.3)), closeTo(0, 0.01));
+      expect(bearingBetween(const GeoCoord(31.5, 74.3), const GeoCoord(31.5, 74.4)), closeTo(90, 0.1));
+      expect(bearingBetween(const GeoCoord(31.5, 74.3), const GeoCoord(31.4, 74.3)), closeTo(180, 0.01));
     });
   });
 

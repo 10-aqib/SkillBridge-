@@ -37,6 +37,9 @@ import 'package:skill_bridge/features/proposals/presentation/screens/my_proposal
 import 'package:skill_bridge/features/contracts/presentation/screens/contract_details_screen.dart';
 import 'package:skill_bridge/features/contracts/presentation/screens/my_contracts_screen.dart';
 import 'package:skill_bridge/features/contracts/presentation/screens/submit_work_screen.dart';
+import 'package:skill_bridge/features/identity/presentation/identity_verification_screen.dart';
+import 'package:skill_bridge/features/identity/presentation/verification_history_screen.dart';
+import 'package:skill_bridge/features/jobs/presentation/screens/saved_jobs_screen.dart';
 import 'package:skill_bridge/features/navigation/presentation/screens/contract_navigation_screen.dart';
 import 'package:skill_bridge/features/navigation/presentation/screens/contract_tracking_screen.dart';
 import 'package:skill_bridge/features/proposals/presentation/screens/proposal_details_screen.dart';
@@ -247,6 +250,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.workerJobFeedName,
         path: RouteNames.workerJobFeedPath,
         builder: (context, state) => const JobFeedScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.identityName,
+        path: RouteNames.identityPath,
+        builder: (context, state) => const IdentityVerificationScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.identityHistoryName,
+        path: RouteNames.identityHistoryPath,
+        builder: (context, state) => const VerificationHistoryScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.workerSavedJobsName,
+        path: RouteNames.workerSavedJobsPath,
+        builder: (context, state) => const SavedJobsScreen(),
       ),
       // Worker Shell (Stateful)
       StatefulShellRoute.indexedStack(

@@ -23,6 +23,8 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 const publicUserFields = <String>[
   'displayName', 'photoUrl', 'role', 'isActive', 'city',
   'isEmailVerified', 'isPhoneVerified', 'isCnicVerified',
+  // Server-managed identity verification (status, method, provider, test).
+  'identityVerification',
   'createdAt', 'rating', 'totalReviews',
 ];
 

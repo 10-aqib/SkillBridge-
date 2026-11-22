@@ -23,7 +23,7 @@ export function WorkerClientActions({ workerId, isVerified }: { workerId: string
       const response = await res.json();
       if (!res.ok) throw new Error(response.error || 'Action failed');
       
-      toast({ title: 'Success', description: 'Worker verification updated.' });
+      toast({ title: 'Success', description: 'ID document review updated (not a NADRA verification).' });
       router.refresh();
     } catch (error) {
       toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to update worker.', variant: 'destructive' });
@@ -34,14 +34,14 @@ export function WorkerClientActions({ workerId, isVerified }: { workerId: string
 
   if (isVerified) {
     return (
-      <Button aria-label="Revoke worker verification" title="Revoke worker verification" disabled={isLoading} onClick={() => handleVerify(false)} variant="ghost" size="icon" className="text-sb-error hover:text-sb-error hover:bg-sb-error-subtle">
+      <Button aria-label="Revoke ID document review" title="Revoke ID document review" disabled={isLoading} onClick={() => handleVerify(false)} variant="ghost" size="icon" className="text-sb-error hover:text-sb-error hover:bg-sb-error-subtle">
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
       </Button>
     );
   }
 
   return (
-    <Button aria-label="Verify worker" title="Verify worker" disabled={isLoading} onClick={() => handleVerify(true)} variant="ghost" size="icon" className="text-sb-success hover:text-sb-on-success-subtle hover:bg-sb-success-subtle">
+    <Button aria-label="Mark ID documents reviewed" title="Mark ID documents reviewed (staff review, not NADRA)" disabled={isLoading} onClick={() => handleVerify(true)} variant="ghost" size="icon" className="text-sb-success hover:text-sb-on-success-subtle hover:bg-sb-success-subtle">
       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
     </Button>
   );

@@ -2,3 +2,5 @@
 
 # Test password for scripts/seed-test-workers.js (local emulator only)
 scripts/.seed-workers.local.json
+# Local secret values for the Functions emulator (never commit).
+.secret.local

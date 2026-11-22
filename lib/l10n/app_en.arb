@@ -319,6 +319,12 @@
   "profileSaveFailed": "Couldn't save your profile. Please try again.",
   "profilePhotoUpdated": "Profile photo updated.",
   "profileChangePhoto": "Change profile photo",
+  "profileRemovePhoto": "Remove photo",
+  "profileRemovePhotoConfirm": "Remove your profile photo?",
+  "profileRemovePhotoBody": "People will see your initials instead.",
+  "profilePhotoRemoved": "Profile photo removed.",
+  "mediaUploadCancelled": "Upload cancelled.",
+  "mediaCancelUpload": "Cancel upload",
   "portfolioAdd": "Add photo",
   "portfolioAdded": "Photo added to your work.",
   "portfolioRemove": "Remove photo",
@@ -504,11 +510,39 @@
   "settingsHelp": "Help & legal",
   "settingsSupportBody": "Chat with us on WhatsApp or email.",
   "settingsAccount": "Account",
+  "settingsNotifications": "Notifications",
+  "settingsPushAll": "Push notifications",
+  "settingsPushAllBody": "Alerts on this phone. Your in-app notifications always work.",
+  "settingsPushMessages": "New messages",
+  "settingsPushWork": "Jobs, proposals and contracts",
+  "settingsSaveFailed": "The setting couldn't be saved. Check your connection.",
+  "settingsChangePassword": "Change password",
+  "settingsChangePasswordBody": "We'll email you a link to set a new password.",
+  "settingsPasswordEmailSent": "Check your email for a link to change your password.",
+  "settingsDeleteAccount": "Delete account",
+  "deleteAccountTitle": "Delete your account?",
+  "deleteAccountBody": "This permanently deletes your profile, photos, saved jobs, notifications and sign-in. People you worked with keep their records of past jobs, shown as \"Deleted user\". This can't be undone.",
+  "deleteAccountConfirm": "Delete my account",
+  "deleteAccountWorking": "Deleting your account…",
+  "deleteAccountDone": "Your account was deleted.",
+  "deleteAccountRecentLogin": "For your safety, sign in again, then delete your account.",
+  "deleteAccountSignInAgain": "Sign in again",
+  "deleteAccountActive": "Finish or cancel your active contracts first.",
+  "deleteAccountUnavailable": "Account deletion isn't available right now. Please contact support.",
+  "deleteAccountFailed": "The account couldn't be deleted. Please try again.",
+  "savedJobsTitle": "Saved jobs",
+  "savedJobsEmptyTitle": "No saved jobs",
+  "savedJobsEmptyBody": "Tap the bookmark on a job to keep it here.",
+  "savedJobsLoadError": "Saved jobs couldn't be loaded.",
+  "jobBookmarkAdd": "Save job",
+  "jobBookmarkRemove": "Remove from saved",
+  "jobBookmarkSaved": "Job saved.",
+  "jobBookmarkRemoved": "Removed from saved jobs.",
   "signOut": "Sign out",
   "signOutConfirmTitle": "Sign out of SkillBridge?",
   "signOutConfirmBody": "You'll need to sign in again to see your jobs and messages.",
   "verificationTitle": "Identity verification",
-  "verificationBadge": "ID verified",
+  "verificationBadge": "ID documents reviewed",
   "verificationOpen": "Open",
   "verificationLoadError": "Verification status couldn't load",
   "verificationIntroTitle": "Get the Verified badge",
@@ -1649,10 +1683,8 @@
   "mapOffline": "You're offline. The map may be incomplete.",
   "mapTilesFailed": "The map couldn't load. Check your connection.",
   "mapRecenter": "Show my location",
-  "mapResetNorth": "Turn the map to face north",
   "mapZoomIn": "Zoom in",
   "mapZoomOut": "Zoom out",
-  "mapAttributionLabel": "Map data sources",
   "mapYouAreHere": "You are here",
   "mapSearchCentre": "Search centre",
   "pickerTitle": "Choose a location",
@@ -1660,7 +1692,10 @@
   "pickerSearchNoResults": "No places found. Try other words, or move the map to place the pin.",
   "pickerSearchFailed": "Search isn't available right now. Move the map to place the pin.",
   "pickerSearchTooShort": "Type at least 3 characters.",
-  "pickerSearchAttribution": "Search results © OpenStreetMap contributors",
+  "pickerSearchAttributionGoogle": "Results from Google Maps",
+  "@pickerSearchAttributionGoogle": {
+    "description": "Required attribution under Google Places search results."
+  },
   "pickerMoveHint": "Move the map so the pin is on the exact place.",
   "pickerZoomInHint": "Zoom in to place the pin precisely.",
   "pickerFindingAddress": "Finding the address…",
@@ -1672,8 +1707,11 @@
   "pickerLocationServiceOff": "Location (GPS) is off. Turn it on, or choose a place on the map.",
   "pickerLocationFailed": "Couldn't get your location. Choose a place on the map.",
   "navTitle": "Directions",
+  "navOpenGoogleMaps": "Directions in Google Maps",
+  "@navOpenGoogleMaps": {
+    "description": "Opens Google Maps with driving directions to the job."
+  },
   "navCalculating": "Finding the best road route…",
-  "navResuming": "Getting your location again…",
   "navRouteTo": "Route to {place}",
   "@navRouteTo": {
     "placeholders": {
@@ -1682,29 +1720,8 @@
       }
     }
   },
-  "navYourDestination": "your destination",
   "navFastest": "Fastest",
-  "navAlternative": "Alternative {number}",
-  "@navAlternative": {
-    "placeholders": {
-      "number": {
-        "type": "int"
-      }
-    }
-  },
-  "navVia": "Via {roads}",
-  "@navVia": {
-    "placeholders": {
-      "roads": {
-        "type": "String"
-      }
-    }
-  },
   "navStart": "Start",
-  "navEnd": "End",
-  "navEndTitle": "End directions?",
-  "navEndBody": "Turn-by-turn directions will stop.",
-  "navKeepGoing": "Keep going",
   "navArriveAt": "Arrive {time}",
   "@navArriveAt": {
     "placeholders": {
@@ -1714,33 +1731,12 @@
     }
   },
   "navEstimateNote": "Times are estimates and don't include live traffic.",
-  "navThen": "Then {instruction}",
-  "@navThen": {
-    "placeholders": {
-      "instruction": {
-        "type": "String"
-      }
-    }
-  },
-  "navNow": "Now",
-  "navArrivedTitle": "You have arrived",
-  "navArrivedBody": "You're at {place}.",
-  "@navArrivedBody": {
-    "placeholders": {
-      "place": {
-        "type": "String"
-      }
-    }
-  },
-  "navSignalLost": "GPS signal lost. The map shows your last known position.",
-  "navApproximate": "Only approximate location is allowed, so directions may be off. Allow precise location for SkillBridge.",
   "navErrNoDestination": "This job has no map location yet, so directions can't start.",
   "navErrPermission": "Directions need your location. Allow location to continue.",
   "navErrBlocked": "Location is blocked for SkillBridge. Turn it on in Settings to get directions.",
   "navErrServiceOff": "Location (GPS) is off. Turn it on to get directions.",
   "navErrNoFix": "Couldn't get your location. Move to an open area and try again.",
   "navErrNoRoute": "No road route was found to this place.",
-  "navErrFarFromRoad": "This place is too far from a road for directions.",
   "navErrOffline": "You're offline. Connect to the internet to get a route.",
   "navErrRouting": "Directions aren't available right now. Try again in a moment.",
   "navMeters": "{meters} m",
@@ -1779,136 +1775,6 @@
     }
   },
   "navUnderAMinute": "Under 1 min",
-  "navOnto": "{action} onto {road}",
-  "@navOnto": {
-    "placeholders": {
-      "action": {
-        "type": "String"
-      },
-      "road": {
-        "type": "String"
-      }
-    }
-  },
-  "navTurnLeft": "Turn left",
-  "navTurnRight": "Turn right",
-  "navBearLeft": "Bear left",
-  "navBearRight": "Bear right",
-  "navSharpLeft": "Turn sharp left",
-  "navSharpRight": "Turn sharp right",
-  "navGoStraight": "Continue straight",
-  "navUTurn": "Make a U-turn",
-  "navContinue": "Continue",
-  "navMergeLeft": "Merge left",
-  "navMergeRight": "Merge right",
-  "navMerge": "Merge",
-  "navRampLeft": "Take the ramp on the left",
-  "navRampRight": "Take the ramp on the right",
-  "navRamp": "Take the ramp",
-  "navExitLeft": "Take the exit on the left",
-  "navExitRight": "Take the exit on the right",
-  "navExitNext": "Take the next exit",
-  "navKeepLeft": "Keep left",
-  "navKeepRight": "Keep right",
-  "navEndOfRoadLeft": "At the end of the road, turn left",
-  "navEndOfRoadRight": "At the end of the road, turn right",
-  "navRoundaboutExit": "At the roundabout, take exit {exit}",
-  "@navRoundaboutExit": {
-    "placeholders": {
-      "exit": {
-        "type": "int"
-      }
-    }
-  },
-  "navNamedRoundaboutExit": "At {name}, take exit {exit}",
-  "@navNamedRoundaboutExit": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "exit": {
-        "type": "int"
-      }
-    }
-  },
-  "navEnterRoundabout": "Enter the roundabout",
-  "navEnterNamedRoundabout": "Enter {name}",
-  "@navEnterNamedRoundabout": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "navLeaveRoundabout": "Leave the roundabout",
-  "navHead": "Head {direction}",
-  "@navHead": {
-    "placeholders": {
-      "direction": {
-        "type": "String"
-      }
-    }
-  },
-  "navStartOff": "Start",
-  "navArrive": "Arrive at your destination",
-  "navArriveLeft": "Your destination is on the left",
-  "navArriveRight": "Your destination is on the right",
-  "navNorth": "north",
-  "navNorthEast": "northeast",
-  "navEast": "east",
-  "navSouthEast": "southeast",
-  "navSouth": "south",
-  "navSouthWest": "southwest",
-  "navWest": "west",
-  "navNorthWest": "northwest",
-  "navMute": "Mute voice",
-  "navUnmute": "Turn voice on",
-  "navRerouting": "Off route. Finding a new route…",
-  "navRerouted": "New route found.",
-  "navRerouteFailed": "Couldn’t get a new route. Keep going, or try again.",
-  "navRerouteOffline": "You’re offline, so the route can’t be updated.",
-  "navRerouteNoRoute": "No road route from here. Head back towards the route.",
-  "navSayIn": "In {distance}, {instruction}",
-  "@navSayIn": {
-    "placeholders": {
-      "distance": {
-        "type": "String"
-      },
-      "instruction": {
-        "type": "String"
-      }
-    }
-  },
-  "navSayThen": "{first}, then {next}",
-  "@navSayThen": {
-    "placeholders": {
-      "first": {
-        "type": "String"
-      },
-      "next": {
-        "type": "String"
-      }
-    }
-  },
-  "navSayApproaching": "You are approaching your destination",
-  "navSpeakMeters": "{meters} metres",
-  "@navSpeakMeters": {
-    "placeholders": {
-      "meters": {
-        "type": "int"
-      }
-    }
-  },
-  "navSpeakKilometres": "{km} kilometres",
-  "@navSpeakKilometres": {
-    "placeholders": {
-      "km": {
-        "type": "String"
-      }
-    }
-  },
-  "navVoiceEnglishFallback": "There’s no Urdu voice on this phone, so directions are spoken in English.",
-  "navVoiceUnavailable": "Spoken directions aren’t available on this device. Follow the directions on screen.",
   "contractPinTitle": "Place on the map",
   "contractPinHelp": "Pin the exact door so the worker can get directions. Only the worker you hired sees it.",
   "contractPinAdd": "Pin it on the map",
@@ -1978,5 +1844,123 @@
       }
     }
   },
-  "navArrivedSendFailed": "Couldn't send. Check your connection and try again."
+  "navArrivedSendFailed": "Couldn't send. Check your connection and try again.",
+  "identityTitle": "Identity verification",
+  "identityIntro": "Confirm who you are with your CNIC and a fingerprint, checked by NADRA. Workers and hirers use the same check.",
+  "identityNotAvailableTitle": "NADRA verification isn't available yet",
+  "identityNotAvailableBody": "SkillBridge is waiting for official NADRA approval and an approved fingerprint scanner. Until then nobody can be NADRA-verified and no fingerprints are collected. You can keep using SkillBridge as usual.",
+  "identityTestBanner": "TEST VERIFICATION: simulated, not a real NADRA check. Use the synthetic test CNICs only.",
+  "identityStart": "Start verification",
+  "identityStartAgain": "Start a new verification",
+  "identityHistory": "Verification history",
+  "identityHistoryEmpty": "No verification attempts yet.",
+  "identityStatusNone": "Not verified",
+  "identityStatusInProgress": "In progress",
+  "identityStatusVerified": "Verified",
+  "identityStatusRejected": "Not confirmed",
+  "identityStatusFailed": "Didn't finish",
+  "identityStatusReview": "Under review",
+  "identityStatusExpired": "Expired",
+  "identityStatusCancelled": "Cancelled",
+  "identityBadgeNadra": "NADRA verified",
+  "identityBadgeTest": "TEST verification",
+  "identityVerifiedOn": "Verified {date}",
+  "@identityVerifiedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "identityMethodFingerprint": "Method: fingerprint matched to CNIC by NADRA",
+  "identityOtherChecks": "Email, phone and ID-document review are separate from this check.",
+  "cnicTitle": "Your CNIC",
+  "cnicLabel": "CNIC number",
+  "cnicHint": "XXXXX-XXXXXXX-X",
+  "cnicHelp": "13 digits, as printed on your CNIC. A correct format doesn't verify anything; only NADRA's check does.",
+  "cnicInvalid": "Enter all 13 digits of a valid CNIC.",
+  "cnicTestOnly": "Test mode accepts only these synthetic CNICs:",
+  "identityContinue": "Continue",
+  "consentTitle": "Before we scan your fingerprint",
+  "consentWhy": "Why: to confirm you are the person on the CNIC you entered, so others can trust your SkillBridge profile.",
+  "consentWho": "Who checks it: NADRA (National Database and Registration Authority), the Government of Pakistan's identity service.",
+  "consentWhat": "What is sent: your CNIC number and one fingerprint capture, only through NADRA's approved channel.",
+  "consentResult": "What SkillBridge receives: whether the fingerprint matches the CNIC, nothing else.",
+  "consentKeep": "What we keep: the result, the date and a masked CNIC (like 35202-•••••••-1). We never store your fingerprint, a fingerprint template or your full CNIC. No CNIC images are needed.",
+  "consentRetention": "Retention: verification records stay while your account exists and are deleted with it.",
+  "consentWithdraw": "You can stop at any time before the fingerprint is submitted. Questions: Settings, Customer support.",
+  "consentCheckbox": "I agree to have my CNIC and fingerprint checked by NADRA for identity verification only (not for marketing or anything else).",
+  "consentAgree": "Agree and continue",
+  "consentVersion": "Consent version {version}",
+  "@consentVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "captureTitle": "Scan your fingerprint",
+  "captureInstructions": "Place your right thumb flat on the scanner and keep it still until the scan finishes.",
+  "captureStart": "Start scan",
+  "captureRetry": "Scan again",
+  "captureSubmit": "Submit for verification",
+  "captureWaiting": "Waiting for the fingerprint scanner…",
+  "captureConnected": "Scanner connected",
+  "captureReady": "Ready: place your finger on the scanner",
+  "captureFingerDetected": "Finger detected, hold still",
+  "captureCapturing": "Capturing…",
+  "captureSuccess": "Fingerprint captured. It hasn't been checked yet.",
+  "capturePoorQuality": "The scan quality was too low. Wipe the scanner, press your finger flat and scan again.",
+  "captureNotDetected": "No finger detected. Place your finger on the scanner.",
+  "captureFailed": "The scan didn't work. Try again.",
+  "captureDisconnected": "The fingerprint scanner is not connected. Connect it and try again.",
+  "captureExpired": "This session has expired. Start again.",
+  "captureNoApprovedScanner": "No approved fingerprint scanner is available. NADRA needs an approved scanner; your phone's fingerprint unlock can't be used for this.",
+  "captureScenario": "Test scenario",
+  "scenarioGood": "Good capture",
+  "scenarioPoor": "Poor quality",
+  "scenarioNoFinger": "No finger",
+  "scenarioDisconnected": "Scanner unplugged",
+  "scenarioFails": "Capture fails",
+  "processingTitle": "Checking your identity",
+  "processingBody": "NADRA is matching your fingerprint against your CNIC. This can take a moment.",
+  "processingBodyTest": "Simulating a NADRA check (test mode). Nothing is sent to NADRA.",
+  "resultVerifiedTitle": "Identity verified",
+  "resultVerifiedBody": "NADRA confirmed your fingerprint matches your CNIC. Your profile now shows the NADRA verified badge.",
+  "resultTestTitle": "TEST verification passed",
+  "resultTestBody": "This was a simulated check. It is not a real NADRA verification and gives no verified badge.",
+  "resultRejectedTitle": "We couldn't confirm your identity",
+  "resultRejectedBody": "The check didn't confirm a match. If you think this is wrong, contact support.",
+  "resultReviewTitle": "Additional review needed",
+  "resultReviewBody": "Your verification needs an extra check. We'll notify you.",
+  "resultRetryPoor": "NADRA couldn't read the fingerprint well enough. Scan again ({count} left).",
+  "@resultRetryPoor": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultRetryService": "NADRA's service couldn't be reached. Your request is kept; try again shortly ({count} left).",
+  "@resultRetryService": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultFailedTitle": "Verification didn't finish",
+  "resultFailedBody": "A technical problem stopped the check. Nothing was decided about your identity. You can start again.",
+  "resultExpired": "This session expired. Start a new verification.",
+  "resultTryAgain": "Try again",
+  "resultDone": "Done",
+  "identityErrRecentLogin": "For your security, sign out and sign in again, then start verification.",
+  "identityErrInUse": "This CNIC is already verified on another account. Contact support.",
+  "identityErrDaily": "Too many attempts today. Try again tomorrow.",
+  "identityErrAlready": "Your identity is already verified.",
+  "identityErrAttempts": "No attempts left in this session. Start a new verification.",
+  "identityErrSynthetic": "Test mode accepts only the synthetic test CNICs.",
+  "identityErrOffline": "No connection. Check your internet and try again.",
+  "identityErrGeneric": "Something went wrong. Please try again.",
+  "identityCancelled": "Verification cancelled."
 }
