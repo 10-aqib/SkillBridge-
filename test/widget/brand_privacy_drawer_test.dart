@@ -23,28 +23,39 @@ void main() {
   setUpAll(() async => l = await englishStrings());
 
   group('Brand mark', () {
-    testWidgets('SbBrandMark is the app icon logo, labelled SkillBridge', (tester) async {
+    testWidgets('the mark is the SkillBridge logo image (the app icon), labelled SkillBridge', (tester) async {
       await tester.pumpWidget(testApp(home: const Scaffold(body: Center(child: SbBrandMark(size: 64)))));
       expect(find.byType(SbLogoMark), findsOneWidget);
-      expect(find.byType(FlutterLogo), findsOneWidget);
-      expect(find.byIcon(Icons.handshake_rounded), findsNothing);
+      expect(find.byType(FlutterLogo), findsNothing, reason: 'the Flutter logo is gone');
+      final img = tester.widget<Image>(find.descendant(of: find.byType(SbLogoMark), matching: find.byType(Image)));
+      expect((img.image as AssetImage).assetName, SbBrandAssets.mark);
       expect(find.bySemanticsLabel('SkillBridge'), findsOneWidget);
     });
 
-    test('only the official app icon: original launcher files, no other icon sets', () {
+    testWidgets('the full logo sits on white in dark mode (navy lettering stays readable)', (tester) async {
+      await tester.pumpWidget(testApp(brightness: Brightness.dark, home: const Scaffold(body: Center(child: SbFullLogo()))));
+      final box = tester.widget<Container>(find.descendant(of: find.byType(SbFullLogo), matching: find.byType(Container)));
+      expect((box.decoration as BoxDecoration).color, Colors.white);
+    });
+
+    test('one icon everywhere: generated from the official logo, nothing else left', () {
       final res = Directory('android/app/src/main/res');
-      expect(Directory('${res.path}/mipmap-anydpi-v26').existsSync(), isFalse, reason: 'no adaptive (bridge) icon');
-      expect(File('${res.path}/drawable/ic_launcher_foreground.xml').existsSync(), isFalse);
-      expect(File('android/app/src/main/AndroidManifest.xml').readAsStringSync(), isNot(contains('roundIcon')));
-      for (final d in ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
-        expect(File('${res.path}/mipmap-$d/ic_launcher.png').existsSync(), isTrue, reason: d);
-        expect(File('${res.path}/mipmap-$d/ic_launcher_round.png').existsSync(), isFalse, reason: d);
-        // Launch screens show the same logo.
-        expect(File('${res.path}/drawable-$d/launch_logo.png').existsSync(), isTrue, reason: d);
-        expect(File('${res.path}/drawable-$d/splash_icon.png').existsSync(), isTrue, reason: d);
+      expect(File('tool/brand/skillbridge_logo_source.png').existsSync(), isTrue);
+      for (final a in [SbBrandAssets.mark, SbBrandAssets.logo]) {
+        expect(File(a).existsSync(), isTrue, reason: a);
       }
+      final adaptive = File('${res.path}/mipmap-anydpi-v26/ic_launcher.xml').readAsStringSync();
+      expect(adaptive, contains('@mipmap/ic_launcher_foreground'));
+      expect(adaptive, contains('<monochrome'));
+      expect(File('android/app/src/main/AndroidManifest.xml').readAsStringSync(), contains('@mipmap/ic_launcher'));
+      for (final d in ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
+        for (final f in ['mipmap-$d/ic_launcher.png', 'mipmap-$d/ic_launcher_foreground.png', 'drawable-$d/launch_logo.png', 'drawable-$d/splash_icon.png']) {
+          expect(File('${res.path}/$f').existsSync(), isTrue, reason: f);
+        }
+        expect(File('${res.path}/mipmap-$d/ic_launcher_round.png').existsSync(), isFalse, reason: d);
+      }
+      expect(File('${res.path}/drawable/ic_launcher_foreground.xml').existsSync(), isFalse, reason: 'old bridge icon');
       expect(File('${res.path}/values-v31/styles.xml').readAsStringSync(), contains('@drawable/splash_icon'));
-      expect(File('${res.path}/drawable/launch_background.xml').readAsStringSync(), contains('@drawable/launch_logo'));
     });
   });
 
@@ -169,7 +180,7 @@ void main() {
       expect(find.textContaining('Join as a Professional'), findsNothing);
       expect(find.textContaining('Earn'), findsNothing);
       expect(find.text('Ayesha Khan'), findsOneWidget);
-      expect(find.textContaining('1.1.1'), findsOneWidget);
+      expect(find.textContaining('1.2.0'), findsOneWidget);
     });
 
     testWidgets('Privacy policy and Contracts open their pages and close the menu', (tester) async {

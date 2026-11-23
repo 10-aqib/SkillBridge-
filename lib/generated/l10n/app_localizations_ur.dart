@@ -4100,4 +4100,25 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get verifiedPopupOk => 'زبردست';
+
+  @override
+  String get phoneRequiredLater => 'بعد میں شامل کریں';
+
+  @override
+  String get phoneLaterNote =>
+      'آپ اپنا نمبر کسی بھی وقت اپنی پروفائل سے شامل کر سکتے ہیں۔';
+
+  @override
+  String get phonePromptTitle => 'اپنا فون نمبر شامل کریں';
+
+  @override
+  String get phonePromptBody =>
+      'SMS کوڈ سے اس کی تصدیق کریں تاکہ کلائنٹس اور ورکرز آپ سے رابطہ کر سکیں۔';
+
+  @override
+  String get phonePromptAction => 'شامل کریں';
+
+  @override
+  String get staffResetBlocked =>
+      'عملے کے پاس ورڈ یہاں ری سیٹ نہیں ہو سکتے۔ انہیں پروجیکٹ کا مالک تبدیل کرتا ہے۔';
 }

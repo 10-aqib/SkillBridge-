@@ -60,11 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return AuthScaffold(
       onBack: context.canPop() ? () => context.pop() : () => context.go(RouteNames.welcomePath),
-      header: const Row(children: [
-        SbBrandMark(size: 44),
-        SizedBox(width: SbSpace.s3),
-        SbWordmark(fontSize: 22),
-      ]),
+      header: const Align(alignment: AlignmentDirectional.centerStart, child: SbFullLogo(width: 180)),
       title: l.loginTitle,
       subtitle: l.loginSubtitle,
       child: AutofillGroup(
@@ -80,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.email],
               prefixIcon: Icons.mail_outline_rounded,
-              validator: v.email,
+              validator: v.loginEmail,
               autovalidateMode: AutovalidateMode.disabled,
               enabled: !state.isLoading,
             ),

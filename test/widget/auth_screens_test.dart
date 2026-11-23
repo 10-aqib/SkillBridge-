@@ -23,6 +23,8 @@ import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 import '../helpers/test_app.dart';
 import 'package:skill_bridge/features/auth/presentation/screens/phone_required_screen.dart';
+import 'package:skill_bridge/features/auth/presentation/providers/phone_later.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// In-memory AuthRepository: records calls, returns configured results.
 /// Mocked — these tests exercise the UI flows, not real Firebase.
@@ -417,6 +419,21 @@ void main() {
       await tester.tap(find.text(l.phoneRequiredSend));
       await tester.pumpAndSettle();
       expect(find.text('OTP +923217654321'), findsOneWidget);
+    });
+
+    testWidgets('"Add later" lets people into the app and remembers the choice', (tester) async {
+      final router = GoRouter(initialLocation: RouteNames.phoneRequiredPath, routes: [
+        GoRoute(path: RouteNames.phoneRequiredPath, builder: (_, _) => const PhoneRequiredScreen()),
+        GoRoute(path: RouteNames.clientOnboardingPath, builder: (_, _) => const Text('ONBOARDING')),
+        GoRoute(path: RouteNames.clientHomePath, builder: (_, _) => const Scaffold(body: Text('CLIENT HOME'))),
+      ]);
+      await pump(tester, router, extra: [currentUserProvider.overrideWith((ref) => repo.user)]);
+      await tester.tap(find.text(l.phoneRequiredLater));
+      await tester.pumpAndSettle();
+      expect(find.text('CLIENT HOME'), findsOneWidget);
+      expect(find.text(l.phoneLaterNote), findsOneWidget);
+      final container = ProviderScope.containerOf(tester.element(find.text('CLIENT HOME')));
+      expect(container.read(phoneLaterProvider), contains('u1'));
     });
 
     testWidgets('people can sign out instead (e.g. wrong Google account)', (tester) async {

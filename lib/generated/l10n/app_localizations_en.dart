@@ -4093,4 +4093,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifiedPopupOk => 'Great';
+
+  @override
+  String get phoneRequiredLater => 'Add later';
+
+  @override
+  String get phoneLaterNote =>
+      'You can add your number anytime from your profile.';
+
+  @override
+  String get phonePromptTitle => 'Add your phone number';
+
+  @override
+  String get phonePromptBody =>
+      'Confirm it with an SMS code so clients and workers can reach you.';
+
+  @override
+  String get phonePromptAction => 'Add';
+
+  @override
+  String get staffResetBlocked =>
+      'Staff passwords can\'t be reset here. The project owner changes them.';
 }

@@ -148,6 +148,7 @@ void main() {
       expect(mockRepo.emailLoginCalls, 0);
 
       await enterCredentials(tester, 'not-an-email', 'x');
+      await tester.ensureVisible(find.text(l.loginButton));
       await tester.tap(find.text(l.loginButton));
       await tester.pumpAndSettle();
       expect(find.text(l.validationEmailInvalid), findsOneWidget);

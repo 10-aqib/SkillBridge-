@@ -18,6 +18,7 @@ import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 import '../helpers/test_app.dart';
 import 'package:skill_bridge/core/constants/app_constants.dart';
+import 'package:skill_bridge/features/auth/data/models/user_model.dart';
 
 // ── Firebase mocks (mocked unit tests — not a real Firebase integration) ──
 class MockAuth extends Mock implements FirebaseAuth {}
@@ -133,11 +134,10 @@ void main() {
     });
 
     group('required phone number', () {
-      test('switched off for now (no SMS until billing is active): nobody is held on the phone step', () {
-        expect(AppConstants.requireVerifiedPhone, isFalse);
+      test('switched on: by default an unconfirmed number goes to the phone step', () {
+        expect(AppConstants.requireVerifiedPhone, isTrue);
         final c = user(phoneVerified: false);
-        expect(resolveAuthRedirect(isLoading: false, user: c, location: RouteNames.loginPath), RouteNames.clientHomePath);
-        expect(resolveAuthRedirect(isLoading: false, user: c, location: '/client/home'), isNull);
+        expect(resolveAuthRedirect(isLoading: false, user: c, location: '/client/home'), RouteNames.phoneRequiredPath);
       });
 
       test('after sign-up or Google sign-in, clients and workers add a verified phone first', () {
@@ -169,6 +169,16 @@ void main() {
           resolveAuthRedirect(isLoading: false, user: user(phoneVerified: false), location: '/client/home', requirePhone: false),
           isNull,
         );
+      });
+
+      test('"Add later": not held on the phone step, but can still open it from the profile', () {
+        final c = user(phoneVerified: false);
+        String? later(String loc) =>
+            resolveAuthRedirect(isLoading: false, user: c, location: loc, requirePhone: true, phoneDeferred: true);
+        expect(later('/client/home'), isNull);
+        expect(later(RouteNames.loginPath), RouteNames.clientHomePath);
+        expect(later(RouteNames.phoneRequiredPath), isNull, reason: 'opened from the profile');
+        expect(go(RouteNames.phoneRequiredPath, u: user()), RouteNames.clientHomePath, reason: 'already confirmed');
       });
 
       test('confirming the number re-runs the guards (it is part of the redirect key)', () {
@@ -338,6 +348,38 @@ void main() {
       expect(await ds.refreshEmailVerification(), isTrue);
       final update = verify(() => docRef.update(captureAny())).captured.single as Map;
       expect(update['isEmailVerified'], isTrue);
+    });
+  });
+
+  group('staff account', () {
+    test('signs in with the short staff address; other short addresses are still invalid', () {
+      final v = AuthValidators(l);
+      expect(v.loginEmail('skillbridge@admin'), isNull);
+      expect(v.loginEmail(' SkillBridge@Admin '), isNull);
+      expect(v.loginEmail('a@b'), l.validationEmailInvalid);
+      expect(v.email('skillbridge@admin'), l.validationEmailInvalid, reason: 'sign-up still needs a real address');
+    });
+
+    test('its password cannot be reset with Forgot password', () async {
+      final v = AuthValidators(l);
+      expect(v.resetEmail('skillbridge@admin'), l.staffResetBlocked);
+      expect(v.resetEmail('a@b.co'), isNull);
+      final auth = MockAuth();
+      final ds = AuthRemoteDataSourceImpl(auth: auth, firestore: MockFirestore());
+      await expectLater(ds.sendPasswordResetEmail(email: 'skillbridge@admin'), throwsA(isA<AuthException>()));
+      verifyNever(() => auth.sendPasswordResetEmail(email: any(named: 'email')));
+    });
+
+    test('the SUPER_ADMIN account made by the setup script is staff, even with text dates', () {
+      final m = UserModel.fromMap('a1', {
+        'email': 'skillbridge@admin',
+        'role': 'SUPER_ADMIN',
+        'createdAt': '2026-11-15T10:00:00.000Z',
+      });
+      expect(m.isAdmin, isTrue);
+      expect(m.createdAt, DateTime.parse('2026-11-15T10:00:00.000Z'));
+      expect(resolveAuthRedirect(isLoading: false, user: m, location: RouteNames.loginPath), RouteNames.adminDashboardPath);
+      expect(AppConstants.isStaffEmail('skillbridge@admin'), isTrue);
     });
   });
 }

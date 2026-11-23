@@ -55,11 +55,13 @@ String homePathFor(UserEntity user) {
 /// unit-tested. Returns the path to redirect to, or null to stay.
 ///
 /// [requirePhone] defaults to [AppConstants.requireVerifiedPhone].
+/// [phoneDeferred]: the person tapped "Add later" on the phone step.
 String? resolveAuthRedirect({
   required bool isLoading,
   required UserEntity? user,
   required String location,
   bool requirePhone = AppConstants.requireVerifiedPhone,
+  bool phoneDeferred = false,
 }) {
   final isOnSplash = location == RouteNames.splashPath;
   if (isLoading) return isOnSplash ? null : RouteNames.splashPath;
@@ -75,7 +77,7 @@ String? resolveAuthRedirect({
   // Suspended/inactive accounts can only see signed-out screens.
   if (!user.isActive) return isOnAuthRoute ? null : RouteNames.loginPath;
 
-  final needsPhone = needsVerifiedPhone(user, required: requirePhone);
+  final needsPhone = needsVerifiedPhone(user, required: requirePhone) && !phoneDeferred;
 
   if (isOnAuthRoute || isOnSplash) {
     if (needsPhone) return RouteNames.phoneRequiredPath;
@@ -89,7 +91,9 @@ String? resolveAuthRedirect({
   if (needsPhone) {
     return (location == RouteNames.phoneRequiredPath || location == RouteNames.otpPath) ? null : RouteNames.phoneRequiredPath;
   }
-  if (location == RouteNames.phoneRequiredPath) return homePathFor(user);
+  // Nothing left to add: leave the phone step. (Someone who chose "Add
+  // later" may still open it from their profile.)
+  if (location == RouteNames.phoneRequiredPath && user.isPhoneVerified) return homePathFor(user);
 
   // Cross-role protection.
   if (user.isClient && _inArea(location, '/worker')) return RouteNames.clientHomePath;

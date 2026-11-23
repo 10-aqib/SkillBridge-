@@ -7,6 +7,8 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/features/auth/presentation/providers/phone_later.dart';
+import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 
 /// Required phone number step. Shown after sign-up, after a Google sign-in,
 /// and whenever the stored number is not confirmed yet (for example after
@@ -37,10 +39,26 @@ class _PhoneRequiredScreenState extends ConsumerState<PhoneRequiredScreen> {
     final phone = PakPhone.normalize(_phone.text)!;
     final ok = await context.push<bool>(RouteNames.otpPath, extra: phone);
     if (ok != true || !mounted) return;
-    // Confirmed: carry on to onboarding/home. (The router also does this as
-    // soon as the saved profile says the number is verified.)
+    _leave();
+  }
+
+  /// Back to where the person came from (their profile), or on to
+  /// onboarding/home when this was the step after signing in.
+  void _leave() {
+    if (context.canPop()) {
+      context.pop(true);
+      return;
+    }
     final user = ref.read(currentUserProvider);
     if (user != null) context.go(homePathFor(user));
+  }
+
+  void _later() {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    ref.read(phoneLaterProvider.notifier).defer(user.uid);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.phoneLaterNote)));
+    _leave();
   }
 
   Future<void> _signOut() async {
@@ -63,11 +81,19 @@ class _PhoneRequiredScreenState extends ConsumerState<PhoneRequiredScreen> {
     }
 
     return AuthScaffold(
+      onBack: context.canPop() ? () => context.pop() : null,
       title: l.phoneRequiredTitle,
       subtitle: l.phoneRequiredSubtitle,
       footer: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         SbButton(label: l.phoneRequiredSend, icon: Icons.sms_outlined, expand: true, onPressed: _signingOut ? null : _sendCode),
         SbButton(
+          label: l.phoneRequiredLater,
+          variant: SbButtonVariant.secondary,
+          expand: true,
+          onPressed: _signingOut ? null : _later,
+        ),
+        if (!context.canPop())
+          SbButton(
           label: l.phoneRequiredSignOut,
           variant: SbButtonVariant.quiet,
           expand: true,
@@ -96,6 +122,44 @@ class _PhoneRequiredScreenState extends ConsumerState<PhoneRequiredScreen> {
             onSubmitted: (_) => _sendCode(),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+/// On a person's own profile while their phone number isn't confirmed (for
+/// example after "Add later"): opens the phone number step.
+class PhonePromptCard extends StatelessWidget {
+  const PhonePromptCard({super.key, required this.user});
+  final UserEntity user;
+
+  @override
+  Widget build(BuildContext context) {
+    if (user.isPhoneVerified) return const SizedBox.shrink();
+    final l = context.l10n;
+    final t = Theme.of(context).textTheme;
+    final sb = context.sb;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: SbSpace.s4),
+      child: Material(
+        color: sb.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SbRadius.card), side: BorderSide(color: sb.border)),
+        child: Padding(
+          padding: const EdgeInsets.all(SbSpace.s4),
+          child: Row(children: [
+            Icon(Icons.phone_iphone_rounded, color: sb.primary),
+            const SizedBox(width: SbSpace.s3),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(l.phonePromptTitle, style: t.titleMedium),
+                const SizedBox(height: 2),
+                Text(l.phonePromptBody, style: t.bodySmall!.copyWith(color: sb.textSecondary)),
+              ]),
+            ),
+            const SizedBox(width: SbSpace.s2),
+            SbButton(label: l.phonePromptAction, onPressed: () => context.push(RouteNames.phoneRequiredPath)),
+          ]),
+        ),
       ),
     );
   }

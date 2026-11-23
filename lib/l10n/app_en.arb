@@ -2048,5 +2048,11 @@
   "verifiedBadge": "Verified",
   "verifiedPopupTitle": "You're verified!",
   "verifiedPopupBody": "SkillBridge checked your identity. The Verified badge now shows on your profile.",
-  "verifiedPopupOk": "Great"
+  "verifiedPopupOk": "Great",
+  "phoneRequiredLater": "Add later",
+  "phoneLaterNote": "You can add your number anytime from your profile.",
+  "phonePromptTitle": "Add your phone number",
+  "phonePromptBody": "Confirm it with an SMS code so clients and workers can reach you.",
+  "phonePromptAction": "Add",
+  "staffResetBlocked": "Staff passwords can't be reset here. The project owner changes them."
 }

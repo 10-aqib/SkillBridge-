@@ -1,23 +1,20 @@
-"""Generates the SkillBridge launch-screen logos and the admin site favicon.
+"""Generates every SkillBridge icon and logo image from the official logo.
 
-The official SkillBridge app icon is the logo in the launcher icon files
-(Android mipmap-*/ic_launcher.png, iOS AppIcon.appiconset, web/icons,
-web/favicon.png). Those files are kept as they are; this script does not
-touch them.
+Source: tool/brand/skillbridge_logo_source.png (the full logo on white: the
+"SB" monogram with the briefcase, the SkillBridge wordmark and the tagline).
 
-Everything else shows that same logo, drawn from one geometry:
-* in the app, `SbLogoMark` (lib/shared/widgets/brand/sb_logo.dart) draws it
-  with Flutter's `FlutterLogo` on a white rounded tile;
-* this script draws the same shapes (copied from Flutter's FlutterLogo
-  painter, packages/flutter/lib/src/painting/flutter_logo.dart) on the same
-  tile, for the launch screens:
-    - Android before 12: drawable-*/launch_logo.png (launch_background.xml)
-    - Android 12+:       drawable-*/splash_icon.png (values-v31/styles.xml)
-    - iOS:               LaunchImage.imageset
-  and the admin website favicon (super_admin_web/src/app/favicon.ico).
-* the admin website draws it as SVG (super_admin_web/src/components/sb/brand-mark.tsx).
+The monogram ("the mark") is the app icon everywhere; the full logo is used
+where there is room for the name (login, welcome, admin login).
 
 Run from the repository root:  python -I tool/brand/generate_icons.py
+Writes:
+  assets/brand/skillbridge_mark.png   transparent mark (in-app SbLogoMark)
+  assets/brand/skillbridge_logo.png   transparent full logo (SbFullLogo)
+  Android  mipmap-*/ic_launcher.png (legacy), adaptive icon (foreground,
+           monochrome, white background), launch_logo / splash_icon
+  iOS      AppIcon.appiconset, LaunchImage.imageset
+  Web      web/icons/*, web/favicon.png
+  Admin    super_admin_web/public/brand/*, super_admin_web/src/app/favicon.ico
 """
 from __future__ import annotations
 
@@ -25,111 +22,139 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
-SS = 4  # supersampling factor
+SOURCE = "tool/brand/skillbridge_logo_source.png"
+# Regions of the source (pixels, inclusive), found by scanning for ink.
+MARK_BOX = (427, 209, 1120, 543)
+LOGO_BOX = (288, 209, 1248, 799)
+PAD = 6
 
-# Tile around the logo, as in SbLogoMark.
-TILE_RADIUS = 0.22
-TILE_BORDER = (0, 0, 0, 0x14)
-LOGO_FRACTION = 0.86
-
-# Launch screens show the mark at the size the in-app splash uses
-# (SbBrandMark(size: 72)), on white, so nothing jumps when the app takes over.
-SPLASH_MARK_DP = 72
-# Android 12+ splash icon canvas (icon without background: 288dp, of which a
-# 192dp circle is visible; the 72dp mark sits well inside it).
-SPLASH_CANVAS_DP = 288
+WHITE = (255, 255, 255, 255)
+RES = "android/app/src/main/res"
 DENSITIES = {"mdpi": 1.0, "hdpi": 1.5, "xhdpi": 2.0, "xxhdpi": 3.0, "xxxhdpi": 4.0}
 
-# FlutterLogo geometry: a 202 x 202 box, logo 166 wide, centred.
-LIGHT = (0x54, 0xC5, 0xF8, 255)
-MEDIUM = (0x29, 0xB6, 0xF6, 255)
-DARK = (0x01, 0x57, 0x9B, 255)
-TOP_BEAM = [(37.7, 128.9), (9.8, 101.0), (100.4, 10.4), (156.2, 10.4)]
-MIDDLE_BEAM = [(156.2, 94.0), (100.4, 94.0), (78.5, 115.9), (106.4, 143.8)]
-BOTTOM_BEAM = [(79.5, 170.7), (100.4, 191.6), (156.2, 191.6), (107.4, 142.8)]
-OVERLAP = (59.8, 123.1, 39.4, 39.4)  # rect, drawn rotated (matrix below)
-OVERLAP_M = (0.7071, -0.7071, 0.7071, 0.7071, -77.697, 98.057)  # a b c d tx ty
-TRIANGLE = [(79.5, 170.7), (120.9, 156.4), (107.4, 142.8)]
-TRI_FROM = (87.2623 + 37.9092, 28.8384 + 123.4389)  # transparent end
-TRI_TO = (42.9205 + 37.9092, 35.0952 + 123.4389)  # 40% indigo end
-TRI_COLOR = (0x1A, 0x23, 0x7E)
+# Mark width as a share of a square icon.
+ICON_MARK = 0.80          # launcher icons (legacy Android, iOS, web)
+ADAPTIVE_MARK = 62 / 108  # inside the 66dp safe circle of the 108dp canvas
+MASKABLE_MARK = 0.66      # web maskable (80% safe circle)
+# Launch screens: the mark alone on white, this wide (dp). The in-app splash
+# draws it at the same width (SplashScreen: SbLogoMark(size: 160, tile: false)).
+SPLASH_MARK_DP = 160
+SPLASH_CANVAS_DP = 288    # Android 12+ icon canvas (192dp circle visible)
 
 
-def draw_logo(img: Image.Image, ox: float, oy: float, size: float) -> None:
-    """Draws the logo into `img` in the size x size square at (ox, oy)."""
-    k = size / 202.0
-    P = lambda x, y: (ox + (x + 18.0) * k, oy + y * k)  # noqa: E731
-    d = ImageDraw.Draw(img)
-    d.polygon([P(*p) for p in TOP_BEAM], fill=LIGHT)
-    d.polygon([P(*p) for p in MIDDLE_BEAM], fill=LIGHT)
-    d.polygon([P(*p) for p in BOTTOM_BEAM], fill=DARK)
-    a, b, c, dd, tx, ty = OVERLAP_M
-    x, y, w, h = OVERLAP
-    corners = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
-    d.polygon([P(a * cx + c * cy + tx, b * cx + dd * cy + ty) for cx, cy in corners], fill=MEDIUM)
-
-    # Shadow triangle: a linear gradient from transparent to 40% indigo.
-    W, H = img.size
-    mask = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(mask).polygon([P(*p) for p in TRIANGLE], fill=255)
-    (fx, fy), (tx_, ty_) = P(*TRI_FROM), P(*TRI_TO)
-    gx, gy = tx_ - fx, ty_ - fy
-    ys, xs = np.mgrid[0:H, 0:W].astype(np.float32)
-    t = np.clip(((xs - fx) * gx + (ys - fy) * gy) / (gx * gx + gy * gy), 0, 1)
-    alpha = (t * 0x66).astype(np.float32) * (np.asarray(mask, dtype=np.float32) / 255.0)
-    overlay = np.zeros((H, W, 4), dtype=np.uint8)
-    overlay[..., 0], overlay[..., 1], overlay[..., 2] = TRI_COLOR
-    overlay[..., 3] = alpha.round().astype(np.uint8)
-    img.alpha_composite(Image.fromarray(overlay, "RGBA"))
+def color_to_alpha(img: Image.Image) -> Image.Image:
+    """Turns the white background transparent, keeping anti-aliased edges
+    (the exact inverse of compositing the logo over white)."""
+    a = np.asarray(img.convert("RGB")).astype(np.float32)
+    alpha = np.max((255.0 - a) / 255.0, axis=2)
+    alpha[alpha < 0.02] = 0.0
+    safe = np.where(alpha > 0, alpha, 1.0)[..., None]
+    rgb = np.clip(255.0 - (255.0 - a) / safe, 0, 255)
+    out = np.dstack([rgb, alpha[..., None] * 255.0]).round().astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
 
 
-def render_mark(size: int) -> Image.Image:
-    """SbLogoMark: the logo on a white rounded tile with a hairline border."""
-    S = size * SS
-    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    d.rounded_rectangle((0, 0, S - 1, S - 1), radius=S * TILE_RADIUS, fill=TILE_BORDER)
-    bw = max(1.0, S / 72.0)
-    d.rounded_rectangle((bw, bw, S - 1 - bw, S - 1 - bw), radius=S * TILE_RADIUS - bw, fill=(255, 255, 255, 255))
-    logo = S * LOGO_FRACTION
-    draw_logo(img, (S - logo) / 2, (S - logo) / 2, logo)
-    return img.resize((size, size), Image.LANCZOS)
+def crop(src: Image.Image, box) -> Image.Image:
+    x0, y0, x1, y1 = box
+    return color_to_alpha(src.crop((x0 - PAD, y0 - PAD, x1 + 1 + PAD, y1 + 1 + PAD)))
 
 
-def on_canvas(mark: Image.Image, canvas: int) -> Image.Image:
-    """The mark centred on a transparent square canvas."""
-    img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    off = (canvas - mark.size[0]) // 2
-    img.paste(mark, (off, off), mark)
-    return img
+def fit(img: Image.Image, width: int) -> Image.Image:
+    h = max(1, round(img.height * width / img.width))
+    return img.resize((width, h), Image.LANCZOS)
 
 
-def save(img: Image.Image, path: str) -> None:
+def on_square(mark: Image.Image, size: int, share: float, bg=WHITE) -> Image.Image:
+    """The mark centred on a square (white, or transparent with bg=None)."""
+    canvas = Image.new("RGBA", (size, size), bg if bg else (0, 0, 0, 0))
+    m = fit(mark, max(1, round(size * share)))
+    canvas.alpha_composite(m, ((size - m.width) // 2, (size - m.height) // 2))
+    return canvas
+
+
+def silhouette(img: Image.Image) -> Image.Image:
+    """White shape with the mark's alpha (Android 13 themed icon)."""
+    a = img.getchannel("A")
+    out = Image.new("RGBA", img.size, (255, 255, 255, 0))
+    out.putalpha(a)
+    return out
+
+
+def save(img: Image.Image, path: str, *, rgb: bool = False) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    img.save(path, optimize=True)
+    (img.convert("RGB") if rgb else img).save(path, optimize=True)
+    print("wrote", path)
+
+
+def write(path: str, text: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
     print("wrote", path)
 
 
 def main() -> int:
-    if not os.path.exists(os.path.join(os.getcwd(), "pubspec.yaml")):
+    if not os.path.exists("pubspec.yaml"):
         print("run from the repository root", file=sys.stderr)
         return 1
+    src = Image.open(SOURCE).convert("RGB")
+    mark = crop(src, MARK_BOX)
+    logo = crop(src, LOGO_BOX)
 
-    res = "android/app/src/main/res"
+    # In-app images.
+    save(mark, "assets/brand/skillbridge_mark.png")
+    save(logo, "assets/brand/skillbridge_logo.png")
+
+    # Android legacy launcher icons (before 8.0): mark on white.
     for d, k in DENSITIES.items():
-        mark = render_mark(round(SPLASH_MARK_DP * k))
-        save(mark, f"{res}/drawable-{d}/launch_logo.png")
-        save(on_canvas(mark, round(SPLASH_CANVAS_DP * k)), f"{res}/drawable-{d}/splash_icon.png")
+        save(on_square(mark, round(48 * k), ICON_MARK), f"{RES}/mipmap-{d}/ic_launcher.png", rgb=True)
+        # Android 8+ adaptive icon: 108dp layers, white background colour.
+        fg = on_square(mark, round(108 * k), ADAPTIVE_MARK, bg=None)
+        save(fg, f"{RES}/mipmap-{d}/ic_launcher_foreground.png")
+        save(silhouette(fg), f"{RES}/mipmap-{d}/ic_launcher_monochrome.png")
+        # Launch screens.
+        lm = fit(mark, round(SPLASH_MARK_DP * k))
+        save(lm, f"{RES}/drawable-{d}/launch_logo.png")
+        canvas = Image.new("RGBA", (round(SPLASH_CANVAS_DP * k),) * 2, (0, 0, 0, 0))
+        canvas.alpha_composite(lm, ((canvas.width - lm.width) // 2, (canvas.height - lm.height) // 2))
+        save(canvas, f"{RES}/drawable-{d}/splash_icon.png")
+    adaptive = ('<?xml version="1.0" encoding="utf-8"?>\n'
+                '<!-- Generated by tool/brand/generate_icons.py. Do not edit by hand. -->\n'
+                '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                '    <background android:drawable="@color/ic_launcher_background" />\n'
+                '    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n'
+                '    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />\n'
+                '</adaptive-icon>\n')
+    write(f"{RES}/mipmap-anydpi-v26/ic_launcher.xml", adaptive)
+    write(f"{RES}/values/ic_launcher_background.xml",
+          '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+          '    <color name="ic_launcher_background">#FFFFFF</color>\n</resources>\n')
 
+    # iOS: square and opaque (iOS rounds the corners itself).
+    ios = "ios/Runner/Assets.xcassets/AppIcon.appiconset"
+    for name in os.listdir(ios):
+        if name.endswith(".png"):
+            with Image.open(os.path.join(ios, name)) as cur:
+                px = cur.size[0]
+            save(on_square(mark, px, ICON_MARK), os.path.join(ios, name), rgb=True)
     launch = "ios/Runner/Assets.xcassets/LaunchImage.imageset"
     for name, k in (("LaunchImage.png", 1), ("LaunchImage@2x.png", 2), ("LaunchImage@3x.png", 3)):
-        save(render_mark(SPLASH_MARK_DP * k), os.path.join(launch, name))
+        save(fit(mark, SPLASH_MARK_DP * k), os.path.join(launch, name))
 
-    ico = "super_admin_web/src/app/favicon.ico"
-    render_mark(256).save(ico, sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
-    print("wrote", ico)
+    # Web app.
+    save(on_square(mark, 192, ICON_MARK), "web/icons/Icon-192.png", rgb=True)
+    save(on_square(mark, 512, ICON_MARK), "web/icons/Icon-512.png", rgb=True)
+    save(on_square(mark, 192, MASKABLE_MARK), "web/icons/Icon-maskable-192.png", rgb=True)
+    save(on_square(mark, 512, MASKABLE_MARK), "web/icons/Icon-maskable-512.png", rgb=True)
+    save(on_square(mark, 64, 0.94), "web/favicon.png", rgb=True)
+
+    # Admin website.
+    save(fit(mark, 512), "super_admin_web/public/brand/skillbridge-mark.png")
+    save(fit(logo, 960), "super_admin_web/public/brand/skillbridge-logo.png")
+    on_square(mark, 256, 0.94).save("super_admin_web/src/app/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
+    print("wrote super_admin_web/src/app/favicon.ico")
     return 0
 
 

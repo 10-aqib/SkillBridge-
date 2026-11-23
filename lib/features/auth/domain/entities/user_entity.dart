@@ -85,7 +85,9 @@ class UserEntity {
   String get formattedDisplayName => displayName.capitalizeWords;
   bool get isClient => role == 'client';
   bool get isWorker => role == 'worker';
-  bool get isAdmin => role == 'admin';
+  /// Staff: 'admin', or 'SUPER_ADMIN' (the account the admin setup script
+  /// creates). Firestore rules treat both as staff.
+  bool get isAdmin => role == 'admin' || role == 'SUPER_ADMIN';
 
   /// True only for new clients who haven't finished or skipped onboarding.
   bool get needsClientOnboarding => isClient && onboardingCompleted == false;

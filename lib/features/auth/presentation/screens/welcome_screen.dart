@@ -6,6 +6,7 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 
 /// First screen for signed-out people: what SkillBridge is, then create an
 /// account (client or worker), sign in, or continue with Google.
@@ -62,10 +63,8 @@ class WelcomeScreen extends ConsumerWidget {
         ),
       ]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SbBrandMark(),
+        const SbFullLogo(width: 220),
         const SizedBox(height: SbSpace.s5),
-        Text('SkillBridge', style: t.titleLarge!.copyWith(color: c.primary)),
-        const SizedBox(height: SbSpace.s2),
         Semantics(header: true, child: Text(l.welcomeTitle, style: t.headlineSmall)),
         const SizedBox(height: SbSpace.s2),
         Text(l.appTagline, style: t.bodyLarge!.copyWith(color: c.textSecondary)),

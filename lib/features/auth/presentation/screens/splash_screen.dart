@@ -4,6 +4,7 @@ import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 
 /// Brief brand screen while the auth state loads. Signed-in people are moved
 /// on by the router; signed-out people continue to Welcome.
@@ -33,7 +34,8 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SbBrandMark(size: 72),
+          // Same mark, size and place as the launch screen before it.
+          const SbLogoMark(size: 160, tile: false),
           const SizedBox(height: SbSpace.s5),
           Text('SkillBridge', style: t.headlineSmall!.copyWith(color: c.primary)),
           const SizedBox(height: SbSpace.s2),

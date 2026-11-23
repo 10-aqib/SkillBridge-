@@ -1197,5 +1197,11 @@
   "verifiedBadge": "تصدیق شدہ",
   "verifiedPopupTitle": "آپ کی تصدیق ہو گئی!",
   "verifiedPopupBody": "SkillBridge نے آپ کی شناخت چیک کر لی ہے۔ اب آپ کی پروفائل پر تصدیق شدہ بیج نظر آتا ہے۔",
-  "verifiedPopupOk": "زبردست"
+  "verifiedPopupOk": "زبردست",
+  "phoneRequiredLater": "بعد میں شامل کریں",
+  "phoneLaterNote": "آپ اپنا نمبر کسی بھی وقت اپنی پروفائل سے شامل کر سکتے ہیں۔",
+  "phonePromptTitle": "اپنا فون نمبر شامل کریں",
+  "phonePromptBody": "SMS کوڈ سے اس کی تصدیق کریں تاکہ کلائنٹس اور ورکرز آپ سے رابطہ کر سکیں۔",
+  "phonePromptAction": "شامل کریں",
+  "staffResetBlocked": "عملے کے پاس ورڈ یہاں ری سیٹ نہیں ہو سکتے۔ انہیں پروجیکٹ کا مالک تبدیل کرتا ہے۔"
 }

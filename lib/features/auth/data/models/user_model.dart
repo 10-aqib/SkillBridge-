@@ -40,6 +40,15 @@ class UserModel extends UserEntity {
     return UserModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
   }
 
+  /// A stored date: a Firestore Timestamp, or (accounts made by the admin
+  /// setup script) ISO-8601 text or milliseconds. Anything else is null.
+  static DateTime? _date(Object? v) => switch (v) {
+        Timestamp t => t.toDate(),
+        String s => DateTime.tryParse(s),
+        int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+        _ => null,
+      };
+
   factory UserModel.fromMap(String documentId, Map<String, dynamic> data) {
     return UserModel(
       uid: data['uid'] as String? ?? documentId,
@@ -55,8 +64,8 @@ class UserModel extends UserEntity {
       fcmToken: data['fcmToken'] as String?,
       identityVerification: data['identityVerification'] is Map ? Map<String, dynamic>.from(data['identityVerification'] as Map) : null,
       cnicNumber: data['cnicNumber'] as String?,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: _date(data['createdAt']) ?? DateTime.now(),
+      updatedAt: _date(data['updatedAt']) ?? DateTime.now(),
       address: data['address'] as String?,
       city: data['city'] as String?,
       location: data['location'] as GeoPoint?,

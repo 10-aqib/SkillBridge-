@@ -58,6 +58,7 @@ import 'package:skill_bridge/shared/screens/privacy_policy_screen.dart';
 import 'package:skill_bridge/shared/screens/terms_and_conditions_screen.dart';
 import 'package:skill_bridge/features/auth/presentation/screens/phone_required_screen.dart';
 import 'package:skill_bridge/features/identity/presentation/get_verified_screen.dart';
+import 'package:skill_bridge/features/auth/presentation/providers/phone_later.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -75,6 +76,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         s == null ? '' : authRedirectKey(isLoading: s.isLoading, user: s.value);
     if (key(previous) != key(next)) authChanged.value++;
   });
+  // "Add later" on the phone step releases the person from it.
+  ref.listen(phoneLaterProvider, (_, _) => authChanged.value++);
   ref.onDispose(authChanged.dispose);
 
   final router = GoRouter(
@@ -87,10 +90,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: authChanged,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
+      final user = authState.value;
       return resolveAuthRedirect(
         isLoading: authState.isLoading,
-        user: authState.value,
+        user: user,
         location: state.matchedLocation,
+        phoneDeferred: user != null && ref.read(phoneLaterProvider).contains(user.uid),
       );
     },
     routes: [

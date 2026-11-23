@@ -8,6 +8,7 @@ import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 import 'package:skill_bridge/shared/widgets/google_logo.dart';
+import 'package:skill_bridge/core/constants/app_constants.dart';
 
 /// Page frame for auth and onboarding: keyboard-safe scrolling, readable max
 /// width on tablets, consistent edges, optional back button and sticky footer.
@@ -100,8 +101,7 @@ class AuthScaffold extends StatelessWidget {
   }
 }
 
-/// Brand mark used on welcome, login and splash: the app icon logo
-/// (see [SbLogoMark]).
+/// The app icon mark on its white tile (see [SbLogoMark]).
 class SbBrandMark extends StatelessWidget {
   const SbBrandMark({super.key, this.size = 56});
 
@@ -331,6 +331,12 @@ class AuthValidators {
     if (value.length > 254 || !_email.hasMatch(value)) return l.validationEmailInvalid;
     return null;
   }
+
+  /// Sign-in: also accepts the staff address (no dot after the @).
+  String? loginEmail(String? v) => AppConstants.isStaffEmail(v) ? null : email(v);
+
+  /// Password reset: never for a staff account.
+  String? resetEmail(String? v) => AppConstants.isStaffEmail(v) ? l.staffResetBlocked : email(v);
 
   String? passwordPresent(String? v) => (v == null || v.isEmpty) ? l.validationPasswordRequired : null;
 

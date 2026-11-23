@@ -154,7 +154,7 @@ class _IntroFrame extends StatelessWidget {
                             opacity: logo.clamp(0.0, 1.0),
                             child: Transform.scale(
                               scale: 0.6 + 0.4 * logo,
-                              child: SbLogoMark(size: fontSize * 1.5, semanticLabel: null),
+                              child: SbLogoMark(size: fontSize * 3.2, semanticLabel: null, tile: false),
                             ),
                           ),
                           SizedBox(height: fontSize * 0.45),
@@ -167,14 +167,14 @@ class _IntroFrame extends StatelessWidget {
                                   offset: Offset(-travel * (1 - slide), 0),
                                   child: Opacity(
                                     opacity: (slide * 1.6).clamp(0.0, 1.0),
-                                    child: Text('Skill', style: style.copyWith(color: SbLogoColors.bottom)),
+                                    child: Text('Skill', style: style.copyWith(color: SbLogoColors.skill)),
                                   ),
                                 ),
                                 Transform.translate(
                                   offset: Offset(travel * (1 - slide), 0),
                                   child: Opacity(
                                     opacity: (slide * 1.6).clamp(0.0, 1.0),
-                                    child: Text('Bridge', style: style.copyWith(color: SbLogoColors.top)),
+                                    child: Text('Bridge', style: style.copyWith(color: SbLogoColors.bridge)),
                                   ),
                                 ),
                               ],

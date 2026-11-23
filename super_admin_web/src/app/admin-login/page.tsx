@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
-import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/client';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { BrandMark } from '@/components/sb/brand-mark';
+import { BrandLogo } from '@/components/sb/brand-mark';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -14,8 +14,6 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetMode, setIsResetMode] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
   const router = useRouter();
 
   // Create session and handle redirection
@@ -86,26 +84,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setError('Please enter your admin email first.');
-      return;
-    }
-    
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setResetSent(true);
-    } catch {
-      setError('Failed to send password reset email. Check your email address.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-sb-canvas p-4 relative overflow-hidden font-sans">
       {/* Subtle Background glow */}
@@ -114,10 +92,11 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-[500px] relative z-10 flex flex-col items-center">
         {/* Brand Header */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <BrandMark size={84} className="mb-5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[19px]" />
-          <h1 className="text-[26px] font-bold text-sb-text tracking-tight mb-1">
-            SkillBridge
-          </h1>
+          {/* Full logo on white (its navy lettering needs a light background, also in dark mode). */}
+          <div className="mb-4 rounded-[20px] bg-white px-6 py-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+            <BrandLogo width={240} />
+          </div>
+          <h1 className="sr-only">SkillBridge</h1>
           <p className="text-[15px] text-sb-text-secondary font-medium">
             Sign in to access the dashboard
           </p>
@@ -132,14 +111,7 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {resetSent && (
-            <div className="mb-6 p-4 rounded-xl bg-sb-success-subtle border border-sb-success/20 text-sm text-sb-on-success-subtle font-medium text-center">
-              Password reset email sent.
-            </div>
-          )}
-
-          {!isResetMode ? (
-            <form onSubmit={handleEmailLogin} className="space-y-5">
+          <form onSubmit={handleEmailLogin} className="space-y-5">
               {/* Email */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-[11px] font-bold text-sb-text-secondary uppercase tracking-wider">
@@ -162,13 +134,9 @@ export default function AdminLoginPage() {
                   <label htmlFor="password" className="block text-[11px] font-bold text-sb-text-secondary uppercase tracking-wider">
                     PASSWORD
                   </label>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsResetMode(true)}
-                    className="text-[13px] font-bold text-sb-primary hover:text-sb-primary-hover transition-colors"
-                  >
-                    Forgot password?
-                  </button>
+                  {/* Admin passwords can't be reset by email: only the project owner
+                      changes them (super_admin_web/create-admin.js). */}
+                  <span className="text-[12px] text-sb-text-secondary">Forgot it? Ask the project owner.</span>
                 </div>
                 <div className="relative">
                   <input 
@@ -229,46 +197,6 @@ export default function AdminLoginPage() {
                 Sign in with Google
               </button>
             </form>
-          ) : (
-            <form onSubmit={handlePasswordReset} className="space-y-5">
-              <div className="space-y-2 text-center mb-2">
-                <h3 className="text-[17px] font-bold text-sb-text">Reset Password</h3>
-                <p className="text-[14px] text-sb-text-secondary">Enter your admin email to receive a reset link.</p>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="reset-email" className="block text-[11px] font-bold text-sb-text-secondary uppercase tracking-wider">
-                  EMAIL
-                </label>
-                <input 
-                  id="reset-email" 
-                  type="email" 
-                  placeholder="admin@skillbridge.com" 
-                  required 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-[56px] px-4 rounded-[14px] bg-sb-surface border border-sb-border-input text-[15px] text-sb-text placeholder:text-sb-text-secondary focus:outline-none focus:border-sb-focus focus:ring-4 focus:ring-sb-focus/10 transition-all"
-                />
-              </div>
-
-              <div className="pt-2 flex flex-col gap-3">
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full h-[56px] rounded-[14px] bg-sb-primary hover:bg-sb-primary-hover active:scale-[0.98] text-sb-on-primary font-bold text-[15px] transition-all disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Link'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setIsResetMode(false)}
-                  className="w-full h-[56px] rounded-[14px] bg-sb-surface text-sb-text-secondary font-bold text-[15px] hover:bg-sb-canvas transition-colors"
-                >
-                  Back to login
-                </button>
-              </div>
-            </form>
-          )}
         </div>
 
         {/* Footer */}

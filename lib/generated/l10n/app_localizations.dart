@@ -7285,6 +7285,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Great'**
   String get verifiedPopupOk;
+
+  /// No description provided for @phoneRequiredLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Add later'**
+  String get phoneRequiredLater;
+
+  /// No description provided for @phoneLaterNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add your number anytime from your profile.'**
+  String get phoneLaterNote;
+
+  /// No description provided for @phonePromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your phone number'**
+  String get phonePromptTitle;
+
+  /// No description provided for @phonePromptBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm it with an SMS code so clients and workers can reach you.'**
+  String get phonePromptBody;
+
+  /// No description provided for @phonePromptAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get phonePromptAction;
+
+  /// No description provided for @staffResetBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff passwords can\'t be reset here. The project owner changes them.'**
+  String get staffResetBlocked;
 }
 
 class _AppLocalizationsDelegate

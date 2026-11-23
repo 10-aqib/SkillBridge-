@@ -10,6 +10,7 @@ import 'package:skill_bridge/features/auth/data/models/user_model.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_roles.dart';
 import 'package:skill_bridge/features/notifications/data/services/push_notification_service.dart' show PushTokenStore;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:skill_bridge/core/constants/app_constants.dart';
 
 /// Remote data source that communicates with Firebase Auth and Firestore.
 abstract class AuthRemoteDataSource {
@@ -351,6 +352,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
+    if (AppConstants.isStaffEmail(email)) {
+      throw const AuthException('Staff passwords can\'t be reset by email.', 'staff-reset-blocked');
+    }
     try {
       await _auth.sendPasswordResetEmail(email: email);
       Logger.i('Password reset email sent to $email');

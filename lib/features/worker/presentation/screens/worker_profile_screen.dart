@@ -14,6 +14,7 @@ import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
 import 'package:skill_bridge/features/identity/presentation/get_verified_screen.dart';
 import 'package:skill_bridge/features/identity/presentation/verified_badge.dart';
 import 'package:skill_bridge/features/identity/domain/identity_models.dart';
+import 'package:skill_bridge/features/auth/presentation/screens/phone_required_screen.dart';
 
 /// What makes a worker profile convincing to clients, in the order to fix it.
 class ProfileCompleteness {
@@ -89,6 +90,7 @@ class WorkerProfileScreen extends ConsumerWidget {
               const SizedBox(height: SbSpace.s4),
               GetVerifiedCard(user: user),
               const SizedBox(height: SbSpace.s4),
+              PhonePromptCard(user: user),
               if (p != null) ...[
                 _AvailabilityCard(user: user),
                 const SizedBox(height: SbSpace.s4),

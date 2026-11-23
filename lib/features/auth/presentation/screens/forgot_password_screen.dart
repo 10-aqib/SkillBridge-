@@ -113,7 +113,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.email],
             prefixIcon: Icons.mail_outline_rounded,
-            validator: AuthValidators(l).email,
+            validator: AuthValidators(l).resetEmail,
             enabled: !state.isLoading,
             autovalidateMode: AutovalidateMode.disabled,
             onSubmitted: (_) => _send(),
