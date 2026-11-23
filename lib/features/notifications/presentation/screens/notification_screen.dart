@@ -15,6 +15,7 @@ import 'package:skill_bridge/features/notifications/presentation/providers/notif
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Guild Modernist Notification Screen
 class NotificationScreen extends ConsumerWidget {
@@ -67,10 +68,10 @@ class _NotificationList extends ConsumerWidget {
       userNotificationsStreamProvider(userId),
     );
 
-    return notificationsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
+    return SbLoadSwitcher(
+        loading: notificationsAsync.isLoading && !notificationsAsync.hasValue,
+        child: notificationsAsync.when(
+      loading: () => SbSkeletonList(item: const SbNotificationSkeleton(), count: 7, label: context.l10n.loading),
       error: (e, _) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(
@@ -119,7 +120,8 @@ class _NotificationList extends ConsumerWidget {
           },
         );
       },
-    );
+    ),
+      );
   }
 
   /// Marks it read and opens what it is about: the conversation for a

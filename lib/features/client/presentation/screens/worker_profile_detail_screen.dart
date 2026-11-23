@@ -74,7 +74,7 @@ class _WorkerProfileDetailScreenState
         ],
       ),
       body: workerAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SbProfileSkeleton(),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.publicProfileLoadError,
@@ -647,10 +647,10 @@ class _ReviewsTabWidgetState extends ConsumerState<_ReviewsTabWidget> {
               ],
             );
           },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(AppDimensions.xl),
-              child: CircularProgressIndicator(),
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppDimensions.md),
+            child: SbSkeletonGroup(
+              child: Column(children: [SbListRowSkeleton(), SizedBox(height: SbSpace.s3), SbListRowSkeleton()]),
             ),
           ),
           error: (e, _) => Center(

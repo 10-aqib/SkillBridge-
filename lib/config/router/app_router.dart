@@ -54,7 +54,10 @@ import 'package:skill_bridge/features/notifications/presentation/screens/notific
 import 'package:skill_bridge/features/client/presentation/screens/nearby_workers_screen.dart';
 import 'package:skill_bridge/features/payments/presentation/screens/easypaisa_checkout_screen.dart';
 import 'package:skill_bridge/features/client/presentation/screens/worker_profile_detail_screen.dart';
+import 'package:skill_bridge/shared/screens/privacy_policy_screen.dart';
 import 'package:skill_bridge/shared/screens/terms_and_conditions_screen.dart';
+import 'package:skill_bridge/features/auth/presentation/screens/phone_required_screen.dart';
+import 'package:skill_bridge/features/identity/presentation/get_verified_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -119,6 +122,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final phoneNumber = state.extra as String? ?? '';
           return OtpVerificationScreen(phoneNumber: phoneNumber);
         },
+      ),
+      GoRoute(
+        name: RouteNames.phoneRequiredName,
+        path: RouteNames.phoneRequiredPath,
+        builder: (context, state) => const PhoneRequiredScreen(),
       ),
       GoRoute(
         name: RouteNames.forgotPasswordName,
@@ -257,6 +265,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const IdentityVerificationScreen(),
       ),
       GoRoute(
+        name: RouteNames.getVerifiedName,
+        path: RouteNames.getVerifiedPath,
+        builder: (context, state) => const GetVerifiedScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.cnicVerificationName,
+        path: RouteNames.cnicVerificationPath,
+        builder: (context, state) => const VerificationScreen(),
+      ),
+      GoRoute(
         name: RouteNames.identityHistoryName,
         path: RouteNames.identityHistoryPath,
         builder: (context, state) => const VerificationHistoryScreen(),
@@ -376,6 +394,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.termsAndConditionsName,
         path: RouteNames.termsAndConditionsPath,
         builder: (context, state) => const TermsAndConditionsScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.privacyPolicyName,
+        path: RouteNames.privacyPolicyPath,
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
       GoRoute(
         name: RouteNames.chatRoomName,

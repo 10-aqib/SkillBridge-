@@ -129,6 +129,9 @@ void main() {
     testWidgets('Continue with Google starts Firebase Google sign-in', (tester) async {
       await tester.pumpWidget(buildLoginScreen());
       await tester.pumpAndSettle();
+      // The brand header sits above the form; the page scrolls on short screens.
+      await tester.ensureVisible(find.text(l.authContinueWithGoogle));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(l.authContinueWithGoogle));
       await tester.pump();
       expect(mockRepo.googleLoginCalled, isTrue);

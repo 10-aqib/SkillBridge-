@@ -56,11 +56,10 @@ class _MyProposalsScreenState extends ConsumerState<MyProposalsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.myProposalsTitle)),
-      body: proposals.when(
-        loading: () => ListView(
-          padding: EdgeInsets.all(edge),
-          children: const [JobCardSkeleton(), SizedBox(height: SbSpace.s3), JobCardSkeleton()],
-        ),
+      body: SbLoadSwitcher(
+        loading: proposals.isLoading && !proposals.hasValue,
+        child: proposals.when(
+        loading: () => SbSkeletonList(item: const JobCardSkeleton(), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.myProposalsLoadError,
@@ -121,6 +120,7 @@ class _MyProposalsScreenState extends ConsumerState<MyProposalsScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }

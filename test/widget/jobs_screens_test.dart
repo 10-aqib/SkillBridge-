@@ -1,5 +1,7 @@
 // My Jobs, the worker job feed and job details. Mocked data (fake data source
 // and providers) — not real Firebase.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import 'package:skill_bridge/features/auth/domain/entities/user_entity.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/client/presentation/providers/worker_profile_provider.dart';
 import 'package:skill_bridge/features/jobs/data/job_feed_source.dart';
+import 'package:skill_bridge/features/jobs/data/saved_jobs_repository.dart';
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
 import 'package:skill_bridge/features/jobs/domain/job_search.dart';
 import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
@@ -228,6 +231,26 @@ void main() {
           workerProposalsStreamProvider.overrideWith((ref) => Stream.value(const <ProposalEntity>[])),
         ];
 
+    testWidgets('saving a job shows at once (optimistic) and flips back if the save fails', (tester) async {
+      final store = _SlowSavedJobs();
+      await pump(tester, const JobDetailsScreen(jobId: 'j1'), user: testUser('w1', role: 'worker'), extra: [
+        ...detailOverrides(job),
+        savedJobsStoreProvider.overrideWithValue(store),
+        savedJobsProvider.overrideWith((ref) => Stream.value(const <SavedJob>[])),
+      ]);
+      await tester.tap(find.byTooltip(l.jobBookmarkAdd));
+      await tester.pump();
+      // The server hasn't answered yet, but the button already shows "saved".
+      expect(store.pending, isNotNull);
+      expect(find.byTooltip(l.jobBookmarkRemove), findsOneWidget);
+      expect(find.text(l.jobBookmarkSaved), findsOneWidget);
+
+      store.pending!.completeError(Exception('offline'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip(l.jobBookmarkAdd), findsOneWidget);
+      expect(find.text(l.errNetwork), findsOneWidget);
+    });
+
     testWidgets('a worker sees full details, the client\'s public info, message and report', (tester) async {
       await pump(tester, const JobDetailsScreen(jobId: 'j1'), user: testUser('w1', role: 'worker', name: 'Bilal Ahmed'), extra: detailOverrides(job));
       expect(find.text('Fix two kitchen sockets'), findsOneWidget);
@@ -296,4 +319,14 @@ void main() {
       expect(s.field, anyOf('createdAt', 'budgetMax'));
     }
   });
+}
+
+class _SlowSavedJobs implements SavedJobsStore {
+  Completer<void>? pending;
+  @override
+  Stream<List<SavedJob>> watch(String uid) => const Stream.empty();
+  @override
+  Future<void> save(String uid, JobEntity job) => (pending = Completer<void>()).future;
+  @override
+  Future<void> remove(String uid, String jobId) => (pending = Completer<void>()).future;
 }

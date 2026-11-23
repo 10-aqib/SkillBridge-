@@ -34,15 +34,17 @@ class ChatListScreen extends ConsumerWidget {
         onAction: () => ref.invalidate(userChatsStreamProvider),
       );
     } else if (list == null) {
-      body = ListView(
+      body = SbSkeletonList(
+        item: const SbListRowSkeleton(),
+        count: 6,
         padding: EdgeInsets.symmetric(vertical: SbSpace.s3, horizontal: edge),
-        children: const [SbListRowSkeleton(), SbListRowSkeleton(), SbListRowSkeleton(), SbListRowSkeleton()],
+        label: l.loading,
       );
     } else if (list.isEmpty) {
       body = RefreshIndicator(
         onRefresh: () async => ref.invalidate(userChatsStreamProvider),
         child: ListView(children: [
-          if (!online) Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, 0), child: SbInlineBanner(message: l.chatsOffline, tone: SbTone.warning)),
+          if (!online) Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, 0), child: SbOfflineNote(message: l.chatsOffline)),
           SizedBox(
             height: 420,
             child: SbStateView(
@@ -65,7 +67,7 @@ class ChatListScreen extends ConsumerWidget {
             if (i == 0) {
               return online
                   ? const SizedBox.shrink()
-                  : Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s2), child: SbInlineBanner(message: l.chatsOffline, tone: SbTone.warning));
+                  : Padding(padding: EdgeInsets.fromLTRB(edge, SbSpace.s3, edge, SbSpace.s2), child: SbOfflineNote(message: l.chatsOffline));
             }
             return ChatListTile(chat: list[i - 1], me: me?.uid ?? '');
           },
@@ -75,7 +77,7 @@ class ChatListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.chatsTitle)),
-      body: SbReadableWidth(maxWidth: 840, child: body),
+      body: SbReadableWidth(maxWidth: 840, child: SbLoadSwitcher(loading: list == null && !chats.hasError, child: body)),
     );
   }
 }

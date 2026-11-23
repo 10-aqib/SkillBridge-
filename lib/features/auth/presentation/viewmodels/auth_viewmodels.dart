@@ -319,6 +319,13 @@ class OtpState {
   final bool otpSent;
   final bool isVerified;
 
+  /// Firebase error code behind [errorMessage] (for a localized message),
+  /// e.g. 'invalid-verification-code' or 'credential-already-in-use'.
+  final String? errorCode;
+
+  /// The failure happened while sending the code (not while checking it).
+  final bool sendFailed;
+
   const OtpState({
     this.isSending = false,
     this.isVerifying = false,
@@ -326,6 +333,8 @@ class OtpState {
     this.verificationId,
     this.otpSent = false,
     this.isVerified = false,
+    this.errorCode,
+    this.sendFailed = false,
   });
 
   OtpState copyWith({
@@ -336,6 +345,8 @@ class OtpState {
     String? verificationId,
     bool? otpSent,
     bool? isVerified,
+    String? errorCode,
+    bool? sendFailed,
   }) {
     return OtpState(
       isSending: isSending ?? this.isSending,
@@ -344,6 +355,8 @@ class OtpState {
       verificationId: verificationId ?? this.verificationId,
       otpSent: otpSent ?? this.otpSent,
       isVerified: isVerified ?? this.isVerified,
+      errorCode: clearError ? null : (errorCode ?? this.errorCode),
+      sendFailed: clearError ? false : (sendFailed ?? this.sendFailed),
     );
   }
 }
@@ -372,6 +385,8 @@ class OtpViewModel extends Notifier<OtpState> {
       (failure) => state = state.copyWith(
         isSending: false,
         errorMessage: failure.message,
+        errorCode: failure is AuthFailure ? failure.code : (failure is NetworkFailure ? 'network-request-failed' : null),
+        sendFailed: true,
       ),
       (verificationId) => state = state.copyWith(
         isSending: false,
@@ -403,12 +418,16 @@ class OtpViewModel extends Notifier<OtpState> {
       (failure) => state = state.copyWith(
         isVerifying: false,
         errorMessage: failure.message,
+        errorCode: failure is AuthFailure ? failure.code : (failure is NetworkFailure ? 'network-request-failed' : null),
       ),
       (_) => state = state.copyWith(isVerifying: false, isVerified: true),
     );
   }
 
   void clearError() => state = state.copyWith(clearError: true);
+
+  /// Back to the start (a new number or a new visit to the code screen).
+  void reset() => state = const OtpState();
 }
 
 final otpViewModelProvider = NotifierProvider<OtpViewModel, OtpState>(

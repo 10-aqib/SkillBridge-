@@ -81,6 +81,12 @@ class WelcomeScreen extends ConsumerWidget {
             onPressed: () => context.push(RouteNames.termsAndConditionsPath),
             child: Text(l.termsAndConditions),
           ),
+          Text(l.legalAnd, style: t.bodySmall),
+          TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: SbSpace.s1)),
+            onPressed: () => context.push(RouteNames.privacyPolicyPath),
+            child: Text(l.privacyPolicy),
+          ),
         ]),
       ]),
     );

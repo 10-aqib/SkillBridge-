@@ -1265,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @signupAgree.
   ///
   /// In en, this message translates to:
-  /// **'I agree to the Terms & Conditions'**
+  /// **'I agree to the Terms & Conditions and Privacy policy'**
   String get signupAgree;
 
   /// No description provided for @signupReadTerms.
@@ -1277,7 +1277,7 @@ abstract class AppLocalizations {
   /// No description provided for @signupAgreeRequired.
   ///
   /// In en, this message translates to:
-  /// **'Please accept the Terms & Conditions to continue.'**
+  /// **'Please accept the Terms & Conditions and Privacy policy to continue.'**
   String get signupAgreeRequired;
 
   /// No description provided for @signupButton.
@@ -2429,7 +2429,7 @@ abstract class AppLocalizations {
   /// No description provided for @verificationIntroBody.
   ///
   /// In en, this message translates to:
-  /// **'Verified workers show clients their identity was checked by SkillBridge.'**
+  /// **'Verified profiles show others that SkillBridge checked their identity.'**
   String get verificationIntroBody;
 
   /// No description provided for @verificationPendingTitle.
@@ -2459,7 +2459,7 @@ abstract class AppLocalizations {
   /// No description provided for @verificationVerifiedBody.
   ///
   /// In en, this message translates to:
-  /// **'Clients see the Verified badge on your profile.'**
+  /// **'People see the Verified badge on your profile.'**
   String get verificationVerifiedBody;
 
   /// No description provided for @verificationRejectedTitle.
@@ -6895,6 +6895,396 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verification cancelled.'**
   String get identityCancelled;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @legalAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'and'**
+  String get legalAnd;
+
+  /// No description provided for @drawerGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get drawerGuest;
+
+  /// No description provided for @drawerSignInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to post jobs and hire workers.'**
+  String get drawerSignInPrompt;
+
+  /// No description provided for @drawerClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close menu'**
+  String get drawerClose;
+
+  /// No description provided for @drawerSectionWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Your work'**
+  String get drawerSectionWork;
+
+  /// No description provided for @drawerSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get drawerSectionAccount;
+
+  /// No description provided for @drawerPostJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a job'**
+  String get drawerPostJob;
+
+  /// No description provided for @drawerMyJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'My jobs'**
+  String get drawerMyJobs;
+
+  /// No description provided for @drawerContracts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts'**
+  String get drawerContracts;
+
+  /// No description provided for @drawerMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get drawerMessages;
+
+  /// No description provided for @drawerNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get drawerNotifications;
+
+  /// No description provided for @drawerNearbyWorkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find workers near me'**
+  String get drawerNearbyWorkers;
+
+  /// No description provided for @drawerProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get drawerProfile;
+
+  /// No description provided for @drawerVerifyIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify identity'**
+  String get drawerVerifyIdentity;
+
+  /// No description provided for @drawerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get drawerSettings;
+
+  /// No description provided for @drawerShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share SkillBridge'**
+  String get drawerShare;
+
+  /// No description provided for @drawerShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'Find trusted local workers on SkillBridge: electricians, plumbers, cleaners and more.'**
+  String get drawerShareText;
+
+  /// No description provided for @drawerAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About SkillBridge'**
+  String get drawerAbout;
+
+  /// No description provided for @drawerAboutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SkillBridge connects people in Pakistan with skilled local workers. Post a job, compare proposals, hire, chat and track the work in one place.'**
+  String get drawerAboutBody;
+
+  /// No description provided for @drawerVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String drawerVersion(String version);
+
+  /// No description provided for @drawerSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get drawerSignIn;
+
+  /// No description provided for @drawerCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get drawerCreateAccount;
+
+  /// No description provided for @drawerSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get drawerSignOut;
+
+  /// No description provided for @offlineNow.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get offlineNow;
+
+  /// No description provided for @phoneRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your phone number'**
+  String get phoneRequiredTitle;
+
+  /// No description provided for @phoneRequiredSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll text you a 6-digit code to confirm the number is yours.'**
+  String get phoneRequiredSubtitle;
+
+  /// No description provided for @phoneRequiredHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pakistani mobile number. Shared only with people you hire or work for.'**
+  String get phoneRequiredHelp;
+
+  /// No description provided for @phoneRequiredSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get phoneRequiredSend;
+
+  /// No description provided for @phoneRequiredInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Pakistani mobile number, like 300 1234567.'**
+  String get phoneRequiredInvalid;
+
+  /// No description provided for @phoneRequiredSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get phoneRequiredSignOut;
+
+  /// No description provided for @phoneRequiredSignedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {email}'**
+  String phoneRequiredSignedInAs(String email);
+
+  /// No description provided for @phoneInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'This number is already used by another SkillBridge account.'**
+  String get phoneInUse;
+
+  /// No description provided for @otpTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries. Please wait a little and try again.'**
+  String get otpTooMany;
+
+  /// No description provided for @otpExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has expired. Request a new one.'**
+  String get otpExpired;
+
+  /// No description provided for @otpSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send the code. Check the number and try again.'**
+  String get otpSendFailed;
+
+  /// No description provided for @otpNotSetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone verification isn\'t available right now. Please try again later.'**
+  String get otpNotSetUp;
+
+  /// No description provided for @getVerifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get verified'**
+  String get getVerifiedTitle;
+
+  /// No description provided for @getVerifiedHeaderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the Verified badge'**
+  String get getVerifiedHeaderTitle;
+
+  /// No description provided for @getVerifiedIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your identity with your CNIC and fingerprint. People trust verified profiles more.'**
+  String get getVerifiedIntro;
+
+  /// No description provided for @getVerifiedCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify with your CNIC and fingerprint to get the Verified badge.'**
+  String get getVerifiedCardBody;
+
+  /// No description provided for @getVerifiedReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification under review'**
+  String get getVerifiedReviewTitle;
+
+  /// No description provided for @getVerifiedReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team is checking your CNIC. We\'ll let you know when it\'s done.'**
+  String get getVerifiedReviewBody;
+
+  /// No description provided for @getVerifiedDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified'**
+  String get getVerifiedDoneTitle;
+
+  /// No description provided for @getVerifiedDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile shows the Verified badge.'**
+  String get getVerifiedDoneBody;
+
+  /// No description provided for @getVerifiedStepN.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {number}'**
+  String getVerifiedStepN(int number);
+
+  /// No description provided for @getVerifiedStepCnic.
+  ///
+  /// In en, this message translates to:
+  /// **'CNIC'**
+  String get getVerifiedStepCnic;
+
+  /// No description provided for @getVerifiedStepCnicBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your CNIC number and add photos of the front and back of your card. Our team checks them, usually within 2 working days.'**
+  String get getVerifiedStepCnicBody;
+
+  /// No description provided for @getVerifiedStepFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint'**
+  String get getVerifiedStepFingerprint;
+
+  /// No description provided for @getVerifiedStepFingerprintBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Match your fingerprint with your CNIC record at NADRA.'**
+  String get getVerifiedStepFingerprintBody;
+
+  /// No description provided for @getVerifiedFingerprintSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint matching with NADRA will open here once SkillBridge\'s NADRA access is approved. Nothing is collected until then.'**
+  String get getVerifiedFingerprintSoon;
+
+  /// No description provided for @getVerifiedComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get getVerifiedComingSoon;
+
+  /// No description provided for @getVerifiedStatusNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get getVerifiedStatusNotStarted;
+
+  /// No description provided for @getVerifiedStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get getVerifiedStatusInProgress;
+
+  /// No description provided for @getVerifiedStatusReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get getVerifiedStatusReview;
+
+  /// No description provided for @getVerifiedStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get getVerifiedStatusDone;
+
+  /// No description provided for @getVerifiedStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not approved'**
+  String get getVerifiedStatusRejected;
+
+  /// No description provided for @getVerifiedStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get getVerifiedStart;
+
+  /// No description provided for @getVerifiedTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get getVerifiedTryAgain;
+
+  /// No description provided for @getVerifiedView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get getVerifiedView;
+
+  /// No description provided for @getVerifiedPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Your CNIC and card photos are private: only SkillBridge\'s verification team sees them. Fingerprints are never stored.'**
+  String get getVerifiedPrivacy;
+
+  /// No description provided for @verifiedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifiedBadge;
+
+  /// No description provided for @verifiedPopupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re verified!'**
+  String get verifiedPopupTitle;
+
+  /// No description provided for @verifiedPopupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SkillBridge checked your identity. The Verified badge now shows on your profile.'**
+  String get verifiedPopupBody;
+
+  /// No description provided for @verifiedPopupOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get verifiedPopupOk;
 }
 
 class _AppLocalizationsDelegate

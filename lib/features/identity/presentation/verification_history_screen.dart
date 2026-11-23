@@ -21,8 +21,10 @@ class VerificationHistoryScreen extends ConsumerWidget {
     final async = ref.watch(identityHistoryProvider);
     return Scaffold(
       appBar: AppBar(title: Text(l.identityHistory)),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      body: SbLoadSwitcher(
+        loading: async.isLoading && !async.hasValue,
+        child: async.when(
+        loading: () => SbSkeletonList(item: const SbListRowSkeleton(leadingCircle: false), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.identityErrGeneric,
@@ -59,6 +61,7 @@ class VerificationHistoryScreen extends ConsumerWidget {
             },
           );
         },
+      ),
       ),
     );
   }

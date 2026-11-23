@@ -6,8 +6,11 @@ import 'package:skill_bridge/config/router/app_router.dart';
 import 'package:skill_bridge/config/theme/sb/sb_theme.dart';
 import 'package:skill_bridge/core/providers/shared_providers.dart';
 import 'package:skill_bridge/core/providers/language_provider.dart';
+import 'package:skill_bridge/core/services/local_account_data_cleanup.dart';
 import 'package:skill_bridge/core/services/public_profile_sync.dart';
-import 'package:skill_bridge/shared/widgets/connectivity_banner.dart';
+import 'package:skill_bridge/shared/widgets/brand/startup_intro.dart';
+import 'package:skill_bridge/shared/widgets/connectivity_sync.dart';
+import 'package:skill_bridge/features/identity/presentation/verified_badge.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -18,6 +21,9 @@ class App extends ConsumerWidget {
     // Keeps the signed-in person's public profile in step (free plan: no
     // Cloud Functions to do it).
     ref.watch(publicProfileSyncProvider);
+    // Clears this device's cached listings, queued actions and searches when
+    // an account signs out or another account signs in.
+    ref.watch(localAccountDataCleanupProvider);
 
     return MaterialApp.router(
       title: 'Skill Bridge',
@@ -39,10 +45,16 @@ class App extends ConsumerWidget {
       ],
       // Fixed-height layouts (e.g. the home banner carousel) must not be
       // broken by very large OS font sizes.
-      builder: (context, child) => MediaQuery.withClampedTextScaling(
-        minScaleFactor: 1.0,
-        maxScaleFactor: 1.2,
-        child: ConnectivityBanner(child: child ?? const SizedBox.shrink()),
+      // StartupIntro plays the short "Skill" + "Bridge" brand animation once
+      // per app launch, above whichever screen the router opens.
+      builder: (context, child) => StartupIntro(
+        child: MediaQuery.withClampedTextScaling(
+          minScaleFactor: 1.0,
+          maxScaleFactor: 1.2,
+          // Plain "You're offline" line + resend queued actions; the Verified
+          // pop-up once a person's identity is checked.
+          child: ConnectivitySync(child: VerifiedCelebrationWatcher(child: child ?? const SizedBox.shrink())),
+        ),
       ),
     );
   }

@@ -63,11 +63,10 @@ class _MyJobsScreenState extends ConsumerState<MyJobsScreen> {
           ),
         ],
       ),
-      body: jobs.when(
-        loading: () => ListView(
-          padding: EdgeInsets.all(edge),
-          children: const [JobCardSkeleton(), SizedBox(height: SbSpace.s3), JobCardSkeleton()],
-        ),
+      body: SbLoadSwitcher(
+        loading: jobs.isLoading && !jobs.hasValue,
+        child: jobs.when(
+        loading: () => SbSkeletonList(item: const JobCardSkeleton(), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.myJobsLoadError,
@@ -124,6 +123,7 @@ class _MyJobsScreenState extends ConsumerState<MyJobsScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }

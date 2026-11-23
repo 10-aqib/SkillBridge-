@@ -33,7 +33,7 @@ class ProposalDetailsScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: Text(l.proposalDetailsTitle)),
         body: live.isLoading && !live.hasError
-            ? const Center(child: CircularProgressIndicator())
+            ? const SbDetailSkeleton()
             : SbStateView(kind: SbStateKind.empty, title: l.proposalUnavailableTitle, message: l.proposalUnavailableBody),
       );
     }

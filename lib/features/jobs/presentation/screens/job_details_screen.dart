@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -51,7 +52,7 @@ class JobDetailsScreen extends ConsumerWidget {
         appBar: AppBar(),
         // An error wins over loading: Riverpod may be retrying in the background.
         body: live.isLoading && !live.hasError
-            ? const Center(child: CircularProgressIndicator())
+            ? const SbDetailSkeleton()
             : live.hasError
                 ? SbStateView(
                     kind: SbStateKind.error,
@@ -510,37 +511,63 @@ class _SaveJobButton extends ConsumerStatefulWidget {
 }
 
 class _SaveJobButtonState extends ConsumerState<_SaveJobButton> {
-  bool _busy = false;
+  /// What the button shows while a change is on its way to the server
+  /// (optimistic UI): the tap shows its result at once, and it flips back
+  /// with a message if the save fails.
+  bool? _optimistic;
+  bool _inFlight = false;
 
   Future<void> _toggle(bool saved) async {
+    if (_inFlight) return;
     final l = context.l10n;
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
-    setState(() => _busy = true);
+    final target = !saved;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _optimistic = target;
+      _inFlight = true;
+    });
+    context.showSnackBar(target ? l.jobBookmarkSaved : l.jobBookmarkRemoved);
     try {
       final store = ref.read(savedJobsStoreProvider);
-      if (saved) {
-        await store.remove(uid, widget.job.id);
-      } else {
+      if (target) {
         await store.save(uid, widget.job);
+      } else {
+        await store.remove(uid, widget.job.id);
       }
-      if (mounted) context.showSnackBar(saved ? l.jobBookmarkRemoved : l.jobBookmarkSaved);
     } catch (_) {
-      if (mounted) context.showSnackBar(l.errNetwork, isError: true);
+      if (mounted) {
+        setState(() => _optimistic = null);
+        context.showSnackBar(l.errNetwork, isError: true);
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _inFlight = false;
+          // The saved-jobs stream now carries the real state.
+          if (_optimistic != null) _optimistic = null;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final saved = ref.watch(savedJobIdsProvider).contains(widget.job.id);
+    final saved = _optimistic ?? ref.watch(savedJobIdsProvider).contains(widget.job.id);
     return IconButton(
       tooltip: saved ? l.jobBookmarkRemove : l.jobBookmarkAdd,
       isSelected: saved,
-      icon: Icon(saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
-      onPressed: _busy ? null : () => _toggle(saved),
+      icon: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 180),
+        transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+        child: Icon(
+          saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+          key: ValueKey<bool>(saved),
+        ),
+      ),
+      onPressed: () => _toggle(saved),
     );
   }
 }

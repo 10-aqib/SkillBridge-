@@ -7,6 +7,7 @@ import 'package:skill_bridge/core/enums/contract_status.dart';
 import 'package:skill_bridge/features/contracts/presentation/providers/contract_providers.dart';
 import 'package:skill_bridge/core/utils/formatters.dart';
 import 'package:skill_bridge/features/worker/presentation/screens/worker_home_screen.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 // ── Dark Design Tokens ────────────────────────────────────────────────────────
 const _card = Color(0xFF131A27);
@@ -40,9 +41,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
       loading: () => _buildShell(
         child: const SizedBox(
           height: 140,
-          child: Center(
-            child: CircularProgressIndicator(color: _accent, strokeWidth: 2),
-          ),
+          child: SbSkeletonGroup(child: SbSkeleton(height: 140, radius: SbRadius.card)),
         ),
         totalEarnings: null,
         weeklyValues: null,

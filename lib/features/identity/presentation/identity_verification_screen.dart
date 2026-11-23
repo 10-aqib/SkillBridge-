@@ -117,7 +117,7 @@ class _IdentityVerificationScreenState extends ConsumerState<IdentityVerificatio
         Text(l.identityIntro, style: t.bodyMedium),
         const SizedBox(height: SbSpace.s4),
         configAsync.when(
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(SbSpace.s4), child: CircularProgressIndicator())),
+          loading: () => const SbSkeletonGroup(child: SbSkeleton(height: 120, radius: SbRadius.card)),
           error: (e, _) => SbInlineBanner(
             message: e is IdentityException ? identityProblemText(l, e.problem) : l.identityErrGeneric,
             tone: SbTone.error,

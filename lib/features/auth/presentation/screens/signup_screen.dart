@@ -227,6 +227,14 @@ class _AgreeRow extends StatelessWidget {
           ),
         ]),
       ),
+      Padding(
+        padding: const EdgeInsetsDirectional.only(start: SbSpace.s3),
+        child: TextButton.icon(
+          onPressed: () => context.push(RouteNames.privacyPolicyPath),
+          icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+          label: Text(l.privacyPolicy),
+        ),
+      ),
       if (showError)
         Padding(
           padding: const EdgeInsetsDirectional.only(start: SbSpace.s3),

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:skill_bridge/core/errors/app_exception.dart';
 import 'package:skill_bridge/core/utils/logger.dart';
+import 'package:skill_bridge/core/services/local_account_data.dart';
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
 import 'package:skill_bridge/features/auth/domain/entities/user_roles.dart';
 import 'package:skill_bridge/features/notifications/data/services/push_notification_service.dart' show PushTokenStore;
@@ -336,6 +337,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // Stop pushes to this phone for this account (best effort, quick).
       final uid = _auth.currentUser?.uid;
       if (uid != null) await PushTokenStore.removeThisDevice(uid);
+      // This account's cached listings, queued actions and searches.
+      await LocalAccountData.clear();
       if (!kIsWeb) {
         await _googleSignIn.signOut();
       }
@@ -404,16 +407,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
-        await currentUser.linkWithCredential(credential);
+        try {
+          await currentUser.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          // A number was confirmed before: this replaces it.
+          if (e.code != 'provider-already-linked') rethrow;
+          await currentUser.updatePhoneNumber(credential);
+        }
+        // Fresh sign-in token with the phone number in it: the rules only
+        // let a public profile say "phone verified" when the token does.
+        await currentUser.getIdToken(true);
       } else {
         await _auth.signInWithCredential(credential);
       }
 
-      // Mark phone as verified in Firestore
+      // Mark the phone as verified in Firestore, with the exact number that
+      // received the code.
       final uid = _auth.currentUser?.uid;
+      final phone = _auth.currentUser?.phoneNumber;
       if (uid != null) {
         await _usersCollection.doc(uid).update({
           'isPhoneVerified': true,
+          if (phone != null && phone.isNotEmpty) 'phoneNumber': phone,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
@@ -608,7 +623,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       case 'invalid-verification-code':
         return 'Invalid OTP. Please check and try again.';
       case 'session-expired':
+      case 'code-expired':
         return 'OTP session expired. Please request a new one.';
+      case 'credential-already-in-use':
+        return 'This number is already used by another SkillBridge account.';
+      case 'quota-exceeded':
+        return 'Too many codes were sent. Please try again later.';
+      case 'app-not-authorized':
+      case 'missing-client-identifier':
+      case 'invalid-app-credential':
+        return 'Phone verification is not set up for this app yet.';
       default:
         return 'Authentication failed. Please try again.';
     }

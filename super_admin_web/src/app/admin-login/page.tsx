@@ -6,6 +6,7 @@ import { FirebaseError } from 'firebase/app';
 import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/client';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { BrandMark } from '@/components/sb/brand-mark';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -113,20 +114,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-[500px] relative z-10 flex flex-col items-center">
         {/* Brand Header */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <div className="w-[84px] h-[84px] rounded-[22px] bg-sb-surface shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center mb-5 border border-sb-border">
-            {/* Custom S Logo mimicking the reference image */}
-            <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M23.0001 0.165039L33.7383 6.36511L22.9515 12.5937L12.2133 6.39365L23.0001 0.165039Z" fill="#8FB6EC"/>
-              <path d="M33.7383 6.36511V18.7653L22.9515 24.9938V12.5937L33.7383 6.36511Z" fill="#174A8B"/>
-              <path d="M12.2133 6.39365V18.7938L22.9515 24.9938V12.5937L12.2133 6.39365Z" fill="#3D6FB0"/>
-              <path d="M12.2618 39.635L22.9515 45.835L33.7868 39.5779L22.9999 33.3779L12.2618 39.635Z" fill="#8FB6EC"/>
-              <path d="M22.9515 45.835V33.4348L33.7868 27.1777V39.5779L22.9515 45.835Z" fill="#174A8B"/>
-              <path d="M12.2618 39.635V27.2348L22.9999 33.3779V45.7781L12.2618 39.635Z" fill="#3D6FB0"/>
-              <path d="M22.9515 12.5938L33.7383 18.7938L22.9515 25.0224L12.1647 18.8224L22.9515 12.5938Z" fill="#8FB6EC"/>
-              <path d="M33.7383 18.7938V31.194L22.9515 37.4225V25.0224L33.7383 18.7938Z" fill="#174A8B"/>
-              <path d="M12.1647 18.8224V31.2225L22.9515 37.4225V25.0224L12.1647 18.8224Z" fill="#3D6FB0"/>
-            </svg>
-          </div>
+          <BrandMark size={84} className="mb-5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[19px]" />
           <h1 className="text-[26px] font-bold text-sb-text tracking-tight mb-1">
             SkillBridge
           </h1>

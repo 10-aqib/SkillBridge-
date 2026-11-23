@@ -129,11 +129,10 @@ class _ReceivedProposalsScreenState extends ConsumerState<ReceivedProposalsScree
 
     return Scaffold(
       appBar: AppBar(title: Text(l.receivedProposalsTitle)),
-      body: proposals.when(
-        loading: () => ListView(
-          padding: EdgeInsets.all(edge),
-          children: const [JobCardSkeleton(), SizedBox(height: SbSpace.s3), JobCardSkeleton()],
-        ),
+      body: SbLoadSwitcher(
+        loading: proposals.isLoading && !proposals.hasValue,
+        child: proposals.when(
+        loading: () => SbSkeletonList(item: const JobCardSkeleton(), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.receivedProposalsLoadError,
@@ -249,6 +248,7 @@ class _ReceivedProposalsScreenState extends ConsumerState<ReceivedProposalsScree
             ],
           );
         },
+      ),
       ),
     );
   }

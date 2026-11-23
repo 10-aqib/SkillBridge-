@@ -247,7 +247,7 @@ class _SbGoogleMapState extends ConsumerState<SbGoogleMap> {
             top: SbSpace.s2,
             start: SbSpace.s2,
             end: SbSpace.s2,
-            child: SbInlineBanner(message: l.mapOffline, tone: SbTone.warning),
+            child: SbOfflineNote(message: l.mapOffline, onSurface: true),
           ),
         if (widget.interactive && (widget.onRecenter != null || widget.showZoomButtons))
           PositionedDirectional(

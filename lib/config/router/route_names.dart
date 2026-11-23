@@ -10,6 +10,14 @@ class RouteNames {
 
   static const String otpName = 'otp';
   static const String otpPath = '/otp';
+  // Required phone number step (after sign-up or Google sign-in).
+  static const String phoneRequiredName = 'phoneRequired';
+  static const String phoneRequiredPath = '/add-phone';
+  // "Get verified" hub (CNIC documents + NADRA fingerprint), both roles.
+  static const String getVerifiedName = 'getVerified';
+  static const String getVerifiedPath = '/get-verified';
+  static const String cnicVerificationName = 'cnicVerification';
+  static const String cnicVerificationPath = '/get-verified/cnic';
 
   static const String forgotPasswordName = 'forgotPassword';
   static const String forgotPasswordPath = '/forgot-password';
@@ -158,6 +166,8 @@ class RouteNames {
   // Shared Screens
   static const String termsAndConditionsName = 'termsAndConditions';
   static const String termsAndConditionsPath = '/terms-and-conditions';
+  static const String privacyPolicyName = 'privacyPolicy';
+  static const String privacyPolicyPath = '/privacy-policy';
 
   static const String chatRoomName = 'chatRoom';
   static const String chatRoomPath = '/chat/:chatId';

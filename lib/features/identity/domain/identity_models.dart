@@ -82,6 +82,16 @@ class IdentityState {
   factory IdentityState.of(UserEntity? user) => IdentityState.fromMap(user?.identityVerification);
 }
 
+/// Staff reviewed and approved this person's CNIC documents (clients:
+/// `isCnicVerified`; workers: `workerProfile.isVerified`, set by staff).
+bool cnicDocumentsApproved(UserEntity? user) =>
+    user != null && (user.isCnicVerified || (user.workerProfile?.isVerified ?? false));
+
+/// The person has the "Verified" badge: staff approved their CNIC documents,
+/// or an authentic NADRA fingerprint check passed. A test-environment
+/// (simulated) result never counts.
+bool isIdentityVerified(UserEntity? user) => cnicDocumentsApproved(user) || IdentityState.of(user).verified;
+
 /// Badges for a person: NADRA (or test) and, separately, document review.
 List<IdentityBadge> identityBadgesFor(UserEntity? user) {
   if (user == null) return const [];

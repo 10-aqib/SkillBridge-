@@ -5,7 +5,19 @@ import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+
+/// What went wrong with a code, in the person's language.
+String otpErrorText(AppLocalizations l, OtpState s) => switch (s.errorCode) {
+      'credential-already-in-use' => l.phoneInUse,
+      'invalid-phone-number' => l.phoneRequiredInvalid,
+      'too-many-requests' || 'quota-exceeded' => l.otpTooMany,
+      'session-expired' || 'code-expired' => l.otpExpired,
+      'network-request-failed' => l.errNetwork,
+      'app-not-authorized' || 'missing-client-identifier' || 'invalid-app-credential' || 'operation-not-allowed' => l.otpNotSetUp,
+      _ => s.sendFailed ? l.otpSendFailed : l.otpError,
+    };
 
 /// Phone number verification (Firebase phone auth, linked to the signed-in
 /// account). Opened from the profile. One 6-digit field supports SMS autofill
@@ -29,7 +41,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _send());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // A fresh start each time (an earlier visit may have left "verified").
+      ref.read(otpViewModelProvider.notifier).reset();
+      _send();
+    });
   }
 
   @override
@@ -86,7 +102,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         if (state.errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(bottom: SbSpace.s4),
-            child: SbInlineBanner(message: l.otpError, tone: SbTone.error),
+            child: SbInlineBanner(message: otpErrorText(l, state), tone: SbTone.error),
           ),
         if (state.otpSent && state.errorMessage == null)
           Padding(

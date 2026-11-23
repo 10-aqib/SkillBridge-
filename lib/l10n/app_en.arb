@@ -245,9 +245,9 @@
   "signupPhoneHelp": "Used so clients and workers can reach you.",
   "signupPasswordHelp": "At least 8 characters, including a number.",
   "signupConfirmPasswordLabel": "Confirm password",
-  "signupAgree": "I agree to the Terms & Conditions",
+  "signupAgree": "I agree to the Terms & Conditions and Privacy policy",
   "signupReadTerms": "Read",
-  "signupAgreeRequired": "Please accept the Terms & Conditions to continue.",
+  "signupAgreeRequired": "Please accept the Terms & Conditions and Privacy policy to continue.",
   "signupButton": "Create account",
   "signupCreating": "Creating your account",
   "signupHaveAccount": "Already have an account?",
@@ -546,12 +546,12 @@
   "verificationOpen": "Open",
   "verificationLoadError": "Verification status couldn't load",
   "verificationIntroTitle": "Get the Verified badge",
-  "verificationIntroBody": "Verified workers show clients their identity was checked by SkillBridge.",
+  "verificationIntroBody": "Verified profiles show others that SkillBridge checked their identity.",
   "verificationPendingTitle": "Under review",
   "verificationPendingShort": "Verification pending",
   "verificationPendingBody": "Our team is reviewing your documents. You will be notified when it’s done.",
   "verificationVerifiedTitle": "You are verified",
-  "verificationVerifiedBody": "Clients see the Verified badge on your profile.",
+  "verificationVerifiedBody": "People see the Verified badge on your profile.",
   "verificationRejectedTitle": "Not approved",
   "verificationRejectedBody": "We couldn't verify these documents. Please submit clear photos again.",
   "verificationCnicOnFile": "CNIC: {cnic}",
@@ -1962,5 +1962,91 @@
   "identityErrSynthetic": "Test mode accepts only the synthetic test CNICs.",
   "identityErrOffline": "No connection. Check your internet and try again.",
   "identityErrGeneric": "Something went wrong. Please try again.",
-  "identityCancelled": "Verification cancelled."
+  "identityCancelled": "Verification cancelled.",
+  "privacyPolicy": "Privacy policy",
+  "legalAnd": "and",
+  "drawerGuest": "Guest",
+  "drawerSignInPrompt": "Sign in to post jobs and hire workers.",
+  "drawerClose": "Close menu",
+  "drawerSectionWork": "Your work",
+  "drawerSectionAccount": "Account",
+  "drawerPostJob": "Post a job",
+  "drawerMyJobs": "My jobs",
+  "drawerContracts": "Contracts",
+  "drawerMessages": "Messages",
+  "drawerNotifications": "Notifications",
+  "drawerNearbyWorkers": "Find workers near me",
+  "drawerProfile": "My profile",
+  "drawerVerifyIdentity": "Verify identity",
+  "drawerSettings": "Settings",
+  "drawerShare": "Share SkillBridge",
+  "drawerShareText": "Find trusted local workers on SkillBridge: electricians, plumbers, cleaners and more.",
+  "drawerAbout": "About SkillBridge",
+  "drawerAboutBody": "SkillBridge connects people in Pakistan with skilled local workers. Post a job, compare proposals, hire, chat and track the work in one place.",
+  "drawerVersion": "Version {version}",
+  "@drawerVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "drawerSignIn": "Sign in",
+  "drawerCreateAccount": "Create account",
+  "drawerSignOut": "Sign out",
+  "offlineNow": "You're offline",
+  "phoneRequiredTitle": "Add your phone number",
+  "phoneRequiredSubtitle": "We'll text you a 6-digit code to confirm the number is yours.",
+  "phoneRequiredHelp": "Pakistani mobile number. Shared only with people you hire or work for.",
+  "phoneRequiredSend": "Send code",
+  "phoneRequiredInvalid": "Enter a Pakistani mobile number, like 300 1234567.",
+  "phoneRequiredSignOut": "Sign out",
+  "phoneRequiredSignedInAs": "Signed in as {email}",
+  "@phoneRequiredSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "phoneInUse": "This number is already used by another SkillBridge account.",
+  "otpTooMany": "Too many tries. Please wait a little and try again.",
+  "otpExpired": "This code has expired. Request a new one.",
+  "otpSendFailed": "We couldn't send the code. Check the number and try again.",
+  "otpNotSetUp": "Phone verification isn't available right now. Please try again later.",
+  "getVerifiedTitle": "Get verified",
+  "getVerifiedHeaderTitle": "Get the Verified badge",
+  "getVerifiedIntro": "Verify your identity with your CNIC and fingerprint. People trust verified profiles more.",
+  "getVerifiedCardBody": "Verify with your CNIC and fingerprint to get the Verified badge.",
+  "getVerifiedReviewTitle": "Verification under review",
+  "getVerifiedReviewBody": "Our team is checking your CNIC. We'll let you know when it's done.",
+  "getVerifiedDoneTitle": "You're verified",
+  "getVerifiedDoneBody": "Your profile shows the Verified badge.",
+  "getVerifiedStepN": "Step {number}",
+  "@getVerifiedStepN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "getVerifiedStepCnic": "CNIC",
+  "getVerifiedStepCnicBody": "Enter your CNIC number and add photos of the front and back of your card. Our team checks them, usually within 2 working days.",
+  "getVerifiedStepFingerprint": "Fingerprint",
+  "getVerifiedStepFingerprintBody": "Match your fingerprint with your CNIC record at NADRA.",
+  "getVerifiedFingerprintSoon": "Fingerprint matching with NADRA will open here once SkillBridge's NADRA access is approved. Nothing is collected until then.",
+  "getVerifiedComingSoon": "Coming soon",
+  "getVerifiedStatusNotStarted": "Not started",
+  "getVerifiedStatusInProgress": "In progress",
+  "getVerifiedStatusReview": "Under review",
+  "getVerifiedStatusDone": "Done",
+  "getVerifiedStatusRejected": "Not approved",
+  "getVerifiedStart": "Start",
+  "getVerifiedTryAgain": "Try again",
+  "getVerifiedView": "View",
+  "getVerifiedPrivacy": "Your CNIC and card photos are private: only SkillBridge's verification team sees them. Fingerprints are never stored.",
+  "verifiedBadge": "Verified",
+  "verifiedPopupTitle": "You're verified!",
+  "verifiedPopupBody": "SkillBridge checked your identity. The Verified badge now shows on your profile.",
+  "verifiedPopupOk": "Great"
 }

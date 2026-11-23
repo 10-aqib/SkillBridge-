@@ -11,11 +11,14 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 import 'package:skill_bridge/features/worker/data/verification_service.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
+import 'package:skill_bridge/features/identity/domain/identity_models.dart';
 
-/// Worker identity verification. Documents go to the owner/staff-only Storage
-/// folder and the CNIC + document paths to users/{uid}/private/verification —
-/// never to the public profile. "Verified" is shown only when staff have set
-/// workerProfile.isVerified; this screen never decides that itself.
+/// CNIC verification, for workers and clients (the CNIC step of "Get
+/// verified"). Documents go to the owner/staff-only folder and the CNIC +
+/// document paths to users/{uid}/private/verification — never to the public
+/// profile. "Verified" is shown only when staff have approved them
+/// (workerProfile.isVerified or isCnicVerified); this screen never decides
+/// that itself.
 class VerificationScreen extends ConsumerWidget {
   const VerificationScreen({super.key});
 
@@ -23,13 +26,13 @@ class VerificationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final user = ref.watch(currentUserProvider);
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null) return const Scaffold(body: SbDetailSkeleton());
     final submission = ref.watch(verificationSubmissionProvider(user.uid));
 
     return Scaffold(
       appBar: AppBar(title: Text(l.verificationTitle)),
       body: submission.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SbDetailSkeleton(),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.verificationLoadError,
@@ -58,7 +61,7 @@ class _VerificationBodyState extends ConsumerState<_VerificationBody> {
   bool _resubmitting = false;
 
   _Status get _status {
-    if (widget.user.workerProfile?.isVerified == true) return _Status.verified;
+    if (cnicDocumentsApproved(widget.user)) return _Status.verified;
     final s = widget.submission?.status ?? widget.user.workerProfile?.verificationStatus;
     if (s == 'rejected') return _Status.rejected;
     if (s == 'pending' || widget.submission != null) return _Status.pending;
@@ -266,7 +269,8 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     _slots = [
       _DocSlot(l.verificationDocFront, required: true),
       _DocSlot(l.verificationDocBack, required: true),
-      _DocSlot(l.verificationDocExtra, required: false),
+      // A trade certificate only makes sense for workers.
+      if (widget.user.isWorker) _DocSlot(l.verificationDocExtra, required: false),
     ];
   }
 
@@ -332,6 +336,7 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
             uid: widget.user.uid,
             cnic: _cnic.text.trim(),
             documentPaths: [for (final s in _slots) if (s.path != null) s.path!],
+            isWorker: widget.user.isWorker,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.verificationSubmitted)));

@@ -6,6 +6,7 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmodels.dart';
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 
 /// Email/password and Google sign-in. Successful sign-in is routed by the
 /// router (role-aware); a Firebase account without a profile goes to role
@@ -59,6 +60,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return AuthScaffold(
       onBack: context.canPop() ? () => context.pop() : () => context.go(RouteNames.welcomePath),
+      header: const Row(children: [
+        SbBrandMark(size: 44),
+        SizedBox(width: SbSpace.s3),
+        SbWordmark(fontSize: 22),
+      ]),
       title: l.loginTitle,
       subtitle: l.loginSubtitle,
       child: AutofillGroup(

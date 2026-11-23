@@ -15,6 +15,7 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 import 'package:skill_bridge/features/auth/data/models/user_model.dart';
 import 'package:skill_bridge/features/client/presentation/providers/nearby_workers_provider.dart';
 import 'package:skill_bridge/features/client/presentation/widgets/home_drawer.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 // ignore_for_file: unused_import
 
@@ -817,12 +818,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
   Widget _buildYouMightNeed(BuildContext context, WidgetRef ref) {
     final workersAsync = ref.watch(youMightNeedWorkersProvider);
     return workersAsync.when(
-      loading: () => const SizedBox(
-        height: 332,
-        child: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      ),
+      loading: () => const _WorkerCardSkeleton(),
       error: (_, __) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
         child: _workerSectionMessage(
@@ -1359,6 +1355,66 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Placeholder in the shape of the recommended-worker card (photo, name,
+/// title, rate line, buttons) and its page dots, so nothing moves when the
+/// real cards arrive.
+class _WorkerCardSkeleton extends StatelessWidget {
+  const _WorkerCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SbSkeletonGroup(
+      child: Column(children: [
+        SizedBox(
+          height: 340,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg / 2),
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: context.surfaceColor,
+                border: Border.all(color: context.borderColor),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              ),
+              child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                SbSkeleton(height: 144, radius: 0),
+                Padding(
+                  padding: EdgeInsets.all(AppDimensions.md),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    SbSkeleton(width: 160, height: 18),
+                    SizedBox(height: SbSpace.s2),
+                    SbSkeleton(width: 120, height: 12),
+                    SizedBox(height: SbSpace.s4),
+                    Row(children: [
+                      SbSkeleton(width: 90, height: 14),
+                      SizedBox(width: SbSpace.s4),
+                      SbSkeleton(width: 70, height: 14),
+                    ]),
+                    SizedBox(height: SbSpace.s4),
+                    Row(children: [
+                      Expanded(child: SbSkeleton(height: 40, radius: SbRadius.control)),
+                      SizedBox(width: SbSpace.s3),
+                      Expanded(child: SbSkeleton(height: 40, radius: SbRadius.control)),
+                    ]),
+                  ]),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.sm),
+        const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          SbSkeleton(width: 18, height: 6, radius: 99),
+          SizedBox(width: 6),
+          SbSkeleton(width: 6, height: 6, radius: 99),
+          SizedBox(width: 6),
+          SbSkeleton(width: 6, height: 6, radius: 99),
+        ]),
+      ]),
     );
   }
 }

@@ -612,14 +612,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signupConfirmPasswordLabel => 'Confirm password';
 
   @override
-  String get signupAgree => 'I agree to the Terms & Conditions';
+  String get signupAgree =>
+      'I agree to the Terms & Conditions and Privacy policy';
 
   @override
   String get signupReadTerms => 'Read';
 
   @override
   String get signupAgreeRequired =>
-      'Please accept the Terms & Conditions to continue.';
+      'Please accept the Terms & Conditions and Privacy policy to continue.';
 
   @override
   String get signupButton => 'Create account';
@@ -1268,7 +1269,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verificationIntroBody =>
-      'Verified workers show clients their identity was checked by SkillBridge.';
+      'Verified profiles show others that SkillBridge checked their identity.';
 
   @override
   String get verificationPendingTitle => 'Under review';
@@ -1285,7 +1286,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verificationVerifiedBody =>
-      'Clients see the Verified badge on your profile.';
+      'People see the Verified badge on your profile.';
 
   @override
   String get verificationRejectedTitle => 'Not approved';
@@ -3874,4 +3875,222 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get identityCancelled => 'Verification cancelled.';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
+
+  @override
+  String get legalAnd => 'and';
+
+  @override
+  String get drawerGuest => 'Guest';
+
+  @override
+  String get drawerSignInPrompt => 'Sign in to post jobs and hire workers.';
+
+  @override
+  String get drawerClose => 'Close menu';
+
+  @override
+  String get drawerSectionWork => 'Your work';
+
+  @override
+  String get drawerSectionAccount => 'Account';
+
+  @override
+  String get drawerPostJob => 'Post a job';
+
+  @override
+  String get drawerMyJobs => 'My jobs';
+
+  @override
+  String get drawerContracts => 'Contracts';
+
+  @override
+  String get drawerMessages => 'Messages';
+
+  @override
+  String get drawerNotifications => 'Notifications';
+
+  @override
+  String get drawerNearbyWorkers => 'Find workers near me';
+
+  @override
+  String get drawerProfile => 'My profile';
+
+  @override
+  String get drawerVerifyIdentity => 'Verify identity';
+
+  @override
+  String get drawerSettings => 'Settings';
+
+  @override
+  String get drawerShare => 'Share SkillBridge';
+
+  @override
+  String get drawerShareText =>
+      'Find trusted local workers on SkillBridge: electricians, plumbers, cleaners and more.';
+
+  @override
+  String get drawerAbout => 'About SkillBridge';
+
+  @override
+  String get drawerAboutBody =>
+      'SkillBridge connects people in Pakistan with skilled local workers. Post a job, compare proposals, hire, chat and track the work in one place.';
+
+  @override
+  String drawerVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get drawerSignIn => 'Sign in';
+
+  @override
+  String get drawerCreateAccount => 'Create account';
+
+  @override
+  String get drawerSignOut => 'Sign out';
+
+  @override
+  String get offlineNow => 'You\'re offline';
+
+  @override
+  String get phoneRequiredTitle => 'Add your phone number';
+
+  @override
+  String get phoneRequiredSubtitle =>
+      'We\'ll text you a 6-digit code to confirm the number is yours.';
+
+  @override
+  String get phoneRequiredHelp =>
+      'Pakistani mobile number. Shared only with people you hire or work for.';
+
+  @override
+  String get phoneRequiredSend => 'Send code';
+
+  @override
+  String get phoneRequiredInvalid =>
+      'Enter a Pakistani mobile number, like 300 1234567.';
+
+  @override
+  String get phoneRequiredSignOut => 'Sign out';
+
+  @override
+  String phoneRequiredSignedInAs(String email) {
+    return 'Signed in as $email';
+  }
+
+  @override
+  String get phoneInUse =>
+      'This number is already used by another SkillBridge account.';
+
+  @override
+  String get otpTooMany =>
+      'Too many tries. Please wait a little and try again.';
+
+  @override
+  String get otpExpired => 'This code has expired. Request a new one.';
+
+  @override
+  String get otpSendFailed =>
+      'We couldn\'t send the code. Check the number and try again.';
+
+  @override
+  String get otpNotSetUp =>
+      'Phone verification isn\'t available right now. Please try again later.';
+
+  @override
+  String get getVerifiedTitle => 'Get verified';
+
+  @override
+  String get getVerifiedHeaderTitle => 'Get the Verified badge';
+
+  @override
+  String get getVerifiedIntro =>
+      'Verify your identity with your CNIC and fingerprint. People trust verified profiles more.';
+
+  @override
+  String get getVerifiedCardBody =>
+      'Verify with your CNIC and fingerprint to get the Verified badge.';
+
+  @override
+  String get getVerifiedReviewTitle => 'Verification under review';
+
+  @override
+  String get getVerifiedReviewBody =>
+      'Our team is checking your CNIC. We\'ll let you know when it\'s done.';
+
+  @override
+  String get getVerifiedDoneTitle => 'You\'re verified';
+
+  @override
+  String get getVerifiedDoneBody => 'Your profile shows the Verified badge.';
+
+  @override
+  String getVerifiedStepN(int number) {
+    return 'Step $number';
+  }
+
+  @override
+  String get getVerifiedStepCnic => 'CNIC';
+
+  @override
+  String get getVerifiedStepCnicBody =>
+      'Enter your CNIC number and add photos of the front and back of your card. Our team checks them, usually within 2 working days.';
+
+  @override
+  String get getVerifiedStepFingerprint => 'Fingerprint';
+
+  @override
+  String get getVerifiedStepFingerprintBody =>
+      'Match your fingerprint with your CNIC record at NADRA.';
+
+  @override
+  String get getVerifiedFingerprintSoon =>
+      'Fingerprint matching with NADRA will open here once SkillBridge\'s NADRA access is approved. Nothing is collected until then.';
+
+  @override
+  String get getVerifiedComingSoon => 'Coming soon';
+
+  @override
+  String get getVerifiedStatusNotStarted => 'Not started';
+
+  @override
+  String get getVerifiedStatusInProgress => 'In progress';
+
+  @override
+  String get getVerifiedStatusReview => 'Under review';
+
+  @override
+  String get getVerifiedStatusDone => 'Done';
+
+  @override
+  String get getVerifiedStatusRejected => 'Not approved';
+
+  @override
+  String get getVerifiedStart => 'Start';
+
+  @override
+  String get getVerifiedTryAgain => 'Try again';
+
+  @override
+  String get getVerifiedView => 'View';
+
+  @override
+  String get getVerifiedPrivacy =>
+      'Your CNIC and card photos are private: only SkillBridge\'s verification team sees them. Fingerprints are never stored.';
+
+  @override
+  String get verifiedBadge => 'Verified';
+
+  @override
+  String get verifiedPopupTitle => 'You\'re verified!';
+
+  @override
+  String get verifiedPopupBody =>
+      'SkillBridge checked your identity. The Verified badge now shows on your profile.';
+
+  @override
+  String get verifiedPopupOk => 'Great';
 }

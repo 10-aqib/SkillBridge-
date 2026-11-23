@@ -13,6 +13,9 @@ import 'package:skill_bridge/features/worker/presentation/widgets/worker_earning
 import 'package:skill_bridge/core/utils/formatters.dart';
 import 'package:skill_bridge/core/utils/geo_location_util.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
+import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
 
 // ── Dark Premium Design Tokens ────────────────────────────────────────────────
 const _bg = Color(0xFF0B0F19);
@@ -550,12 +553,13 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
             jobsAsync.when(
               loading: () => const SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: _accent,
-                      strokeWidth: 2,
-                    ),
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: SbSkeletonGroup(
+                    child: Column(children: [
+                      JobCardSkeleton(),
+                      SizedBox(height: SbSpace.s3),
+                      JobCardSkeleton(),
+                    ]),
                   ),
                 ),
               ),
@@ -710,29 +714,7 @@ class _SkillBridgeLogo extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF5B7FFF), Color(0xFF3861FB)],
-              ),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: const Center(
-              child: Text(
-                'S',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  fontFamily: 'Sora',
-                ),
-              ),
-            ),
-          ),
+          const SbLogoMark(size: 32, semanticLabel: null),
           const SizedBox(width: 8),
           const Text(
             'Skill',
@@ -1234,11 +1216,36 @@ class _ActivityLoading extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
       ),
-      child: const Center(
-        child: CircularProgressIndicator(color: _accent, strokeWidth: 2),
+      // Three activity rows: avatar, name, detail.
+      child: const SbSkeletonGroup(
+        child: Column(children: [
+          _ActivityRowSkeleton(),
+          SizedBox(height: SbSpace.s4),
+          _ActivityRowSkeleton(),
+          SizedBox(height: SbSpace.s4),
+          _ActivityRowSkeleton(),
+        ]),
       ),
     );
   }
+}
+
+class _ActivityRowSkeleton extends StatelessWidget {
+  const _ActivityRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Row(children: [
+        SbSkeleton.circle(size: 40),
+        SizedBox(width: SbSpace.s3),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SbSkeleton(width: 140, height: 14),
+            SizedBox(height: SbSpace.s2),
+            SbSkeleton(width: 90, height: 12),
+          ]),
+        ),
+        SbSkeleton(width: 48, height: 12),
+      ]);
 }
 
 // ── Activity Empty State ──────────────────────────────────────────────────────

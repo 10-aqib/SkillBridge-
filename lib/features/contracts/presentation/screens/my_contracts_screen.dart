@@ -51,11 +51,10 @@ class _MyContractsScreenState extends ConsumerState<MyContractsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.contractsTitle)),
-      body: contracts.when(
-        loading: () => ListView(
-          padding: EdgeInsets.all(edge),
-          children: const [JobCardSkeleton(), SizedBox(height: SbSpace.s3), JobCardSkeleton()],
-        ),
+      body: SbLoadSwitcher(
+        loading: contracts.isLoading && !contracts.hasValue,
+        child: contracts.when(
+        loading: () => SbSkeletonList(item: const JobCardSkeleton(), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.contractsLoadError,
@@ -123,6 +122,7 @@ class _MyContractsScreenState extends ConsumerState<MyContractsScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }

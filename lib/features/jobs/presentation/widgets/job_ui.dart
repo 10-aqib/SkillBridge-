@@ -160,15 +160,8 @@ class JobCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.sb;
-    return Container(
-      padding: const EdgeInsets.all(SbSpace.s4),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(SbRadius.card),
-        border: Border.all(color: c.border),
-      ),
-      child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return const SbSkeletonCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           SbSkeleton(width: 40, height: 40, radius: SbRadius.control),
           SizedBox(width: SbSpace.s3),

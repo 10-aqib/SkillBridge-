@@ -6,6 +6,7 @@ import 'package:skill_bridge/core/errors/failure.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 import 'package:skill_bridge/shared/widgets/google_logo.dart';
 
 /// Page frame for auth and onboarding: keyboard-safe scrolling, readable max
@@ -99,25 +100,15 @@ class AuthScaffold extends StatelessWidget {
   }
 }
 
-/// Brand lockup used on welcome/splash.
+/// Brand mark used on welcome, login and splash: the app icon logo
+/// (see [SbLogoMark]).
 class SbBrandMark extends StatelessWidget {
   const SbBrandMark({super.key, this.size = 56});
 
   final double size;
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.sb;
-    return Semantics(
-      label: 'SkillBridge',
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(size * 0.28)),
-        child: Icon(Icons.handshake_rounded, color: c.onPrimary, size: size * 0.55),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SbLogoMark(size: size);
 }
 
 /// Password input with a show/hide toggle that announces its state.

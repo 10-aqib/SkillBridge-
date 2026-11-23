@@ -9,8 +9,9 @@ import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dar
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_sections.dart';
-import 'package:skill_bridge/features/identity/presentation/verification_status_widget.dart';
 import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
+import 'package:skill_bridge/features/identity/presentation/get_verified_screen.dart';
+import 'package:skill_bridge/features/identity/presentation/verified_badge.dart';
 
 /// Client's own profile: photo, contact details, verification prompts, stats
 /// from real data, reviews received, and links to edit and settings.
@@ -23,7 +24,7 @@ class ClientProfileScreen extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     final c = context.sb;
     final user = ref.watch(currentUserProvider);
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null) return const Scaffold(body: SbProfileSkeleton());
     final edge = SbLayout.edge(context);
 
     return Scaffold(
@@ -50,7 +51,7 @@ class ClientProfileScreen extends ConsumerWidget {
               const SizedBox(height: SbSpace.s1),
               Text(l.client, style: t.bodyMedium!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
               const SizedBox(height: SbSpace.s2),
-              Center(child: IdentityBadges(user: user)),
+              Center(child: VerifiedBadge(user: user)),
               const SizedBox(height: SbSpace.s4),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Expanded(child: ProfileStat(value: '${user.totalJobsPosted}', label: l.profileJobsPosted)),
@@ -63,6 +64,8 @@ class ClientProfileScreen extends ConsumerWidget {
                 ),
               ]),
               const SizedBox(height: SbSpace.s5),
+              GetVerifiedCard(user: user),
+              const SizedBox(height: SbSpace.s4),
               EmailVerificationCard(user: user),
               if (!user.isEmailVerified) const SizedBox(height: SbSpace.s4),
               ProfileSection(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skill_bridge/shared/design_system/sb_state_view.dart';
+import 'package:skill_bridge/shared/design_system/sb_skeleton.dart';
 
 /// Worker-row loading skeleton. Same shape as before, now one shared
 /// implementation ([SbListRowSkeleton]) that follows light/dark and reduced motion.

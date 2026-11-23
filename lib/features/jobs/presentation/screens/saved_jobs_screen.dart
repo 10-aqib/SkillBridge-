@@ -7,6 +7,7 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/auth/presentation/providers/auth_providers.dart';
 import 'package:skill_bridge/features/jobs/data/saved_jobs_repository.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
 
 /// The worker's saved jobs (Phase G6), newest first. Opening one shows the
 /// job as it is now (the job page explains when it has closed or is gone).
@@ -41,8 +42,10 @@ class SavedJobsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.savedJobsTitle)),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      body: SbLoadSwitcher(
+        loading: async.isLoading && !async.hasValue,
+        child: async.when(
+        loading: () => SbSkeletonList(item: const JobCardSkeleton(), count: 4, label: l.loading),
         error: (_, _) => SbStateView(
           kind: SbStateKind.error,
           title: l.savedJobsLoadError,
@@ -79,6 +82,7 @@ class SavedJobsScreen extends ConsumerWidget {
             },
           );
         },
+      ),
       ),
     );
   }

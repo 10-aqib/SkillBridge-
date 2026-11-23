@@ -338,7 +338,7 @@ class ContractEvidenceStrip extends ConsumerWidget {
               width: 128,
               color: sb.surfaceSunken,
               child: bytes.when(
-                loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                loading: () => const SbSkeleton(height: double.infinity, radius: 0),
                 error: (_, _) => Center(child: Icon(Icons.broken_image_outlined, color: sb.textSecondary, semanticLabel: l.contractEvidenceUnavailable)),
                 data: (b) => b == null
                     ? Center(child: Icon(Icons.broken_image_outlined, color: sb.textSecondary, semanticLabel: l.contractEvidenceUnavailable))

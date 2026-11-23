@@ -89,6 +89,21 @@ class AdminRemoteDataSource {
     });
   }
 
+  /// Approves (or withdraws) a client's CNIC documents: the Verified badge
+  /// for clients. Workers use [toggleWorkerVerification].
+  Future<void> setClientCnicVerified(String userId, bool isVerified) async {
+    final batch = _firestore.batch();
+    batch.update(_firestore.collection('users').doc(userId), {
+      'isCnicVerified': isVerified,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    final submission = _firestore.collection('users').doc(userId).collection('private').doc('verification');
+    if ((await submission.get()).exists) {
+      batch.update(submission, {'status': isVerified ? 'verified' : 'pending', 'updatedAt': FieldValue.serverTimestamp()});
+    }
+    await batch.commit();
+  }
+
   Future<void> toggleWorkerVerification(String userId, bool isVerified) async {
     await _firestore.collection('users').doc(userId).update({
       'workerProfile.isVerified': isVerified,

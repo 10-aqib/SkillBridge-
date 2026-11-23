@@ -122,7 +122,7 @@ class _WorkerLocationSharingPanelState extends ConsumerState<WorkerLocationShari
       ]),
       if (sharing && !online) ...[
         const SizedBox(height: SbSpace.s3),
-        SbInlineBanner(message: l.liveOfflineWorker, tone: SbTone.warning),
+        SbOfflineNote(message: l.liveOfflineWorker),
       ],
       if (problem != null) ...[
         const SizedBox(height: SbSpace.s3),
@@ -218,7 +218,9 @@ class _ClientLiveLocationPanelState extends ConsumerState<ClientLiveLocationPane
         ]),
         if (!live) ...[
           const SizedBox(height: SbSpace.s2),
-          SbInlineBanner(message: online ? l.liveClientStale(c.workerName) : l.liveClientOffline, tone: SbTone.warning),
+          online
+              ? SbInlineBanner(message: l.liveClientStale(c.workerName), tone: SbTone.warning)
+              : SbOfflineNote(message: l.liveClientOffline),
         ],
         const SizedBox(height: SbSpace.s3),
         LiveLocationMap(location: loc, live: live, label: c.workerName),

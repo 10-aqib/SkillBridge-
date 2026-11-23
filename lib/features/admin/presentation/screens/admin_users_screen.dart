@@ -11,6 +11,7 @@ import 'package:skill_bridge/features/admin/presentation/providers/admin_provide
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Guild Modernist Admin Users Screen
 class AdminUsersScreen extends ConsumerStatefulWidget {
@@ -132,8 +133,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           // Live User List
           Expanded(
             child: usersAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              loading: () => const SbSkeletonGroup(
+                child: Column(children: [
+                  SbListRowSkeleton(),
+                  SizedBox(height: SbSpace.s3),
+                  SbListRowSkeleton(),
+                  SizedBox(height: SbSpace.s3),
+                  SbListRowSkeleton(),
+                ]),
               ),
               error: (err, stack) => Center(
                 child: Text(
@@ -171,7 +178,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   itemBuilder: (context, index) {
                     final user = filteredUsers[index];
                     final isSuspended = !user.isActive;
-                    final isVerified = user.workerProfile?.isVerified ?? false;
+                    final isVerified = user.isWorker ? (user.workerProfile?.isVerified ?? false) : user.isCnicVerified;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppDimensions.md),
@@ -201,7 +208,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                           color: context.textColor,
                                         ),
                                       ),
-                                      if (user.isWorker && isVerified) ...[
+                                      if (isVerified) ...[
                                         const SizedBox(width: 4),
                                         const Icon(
                                           Icons.verified_rounded,
@@ -276,11 +283,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                 ],
                               ),
                             ),
-                            if (user.isWorker)
+                            if (user.isWorker || user.isClient)
                               IconButton(
                                 tooltip: isVerified
                                     ? 'Revoke Verification'
-                                    : 'Verify Worker',
+                                    : (user.isWorker ? 'Verify Worker' : 'Verify Client'),
                                 icon: Icon(
                                   isVerified
                                       ? Icons.verified_user_rounded
@@ -292,8 +299,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                 onPressed: () async {
                                   final ds = ref
                                       .read(adminRemoteDataSourceProvider);
-                                  await ds.toggleWorkerVerification(
-                                      user.uid, !isVerified);
+                                  if (user.isWorker) {
+                                    await ds.toggleWorkerVerification(user.uid, !isVerified);
+                                  } else {
+                                    await ds.setClientCnicVerified(user.uid, !isVerified);
+                                  }
                                   if (context.mounted) {
                                     context.showSnackBar(
                                       !isVerified

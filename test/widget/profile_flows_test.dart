@@ -77,7 +77,7 @@ class RecordingVerificationService extends VerificationService {
   final submissions = <List<String>>[];
 
   @override
-  Future<void> submit({required String uid, required String cnic, required List<String> documentPaths}) async {
+  Future<void> submit({required String uid, required String cnic, required List<String> documentPaths, bool isWorker = true}) async {
     submissions.add(documentPaths);
   }
 }
@@ -163,6 +163,8 @@ void main() {
         'displayName': 'Ayesha Khan',
         'phoneNumber': '+923001234567',
         'city': 'Karachi',
+        // A new number has to be confirmed by SMS code.
+        'isPhoneVerified': false,
       });
       expect(find.text('CLIENT HOME'), findsOneWidget);
     });

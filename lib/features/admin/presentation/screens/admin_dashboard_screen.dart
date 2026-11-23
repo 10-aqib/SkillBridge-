@@ -14,6 +14,7 @@ import 'package:skill_bridge/features/auth/presentation/providers/auth_providers
 import 'package:skill_bridge/shared/widgets/app_button.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Guild Modernist Admin Dashboard Screen
 class AdminDashboardScreen extends ConsumerWidget {
@@ -57,11 +58,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppDimensions.lg),
 
             statsAsync.when(
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
+              loading: () => const SbSkeletonGroup(
+                child: Row(children: [
+                  Expanded(child: SbSkeleton(height: 96, radius: SbRadius.card)),
+                  SizedBox(width: SbSpace.s3),
+                  Expanded(child: SbSkeleton(height: 96, radius: SbRadius.card)),
+                ]),
               ),
               error: (err, stack) => Center(
                 child: Text(

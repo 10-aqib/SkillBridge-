@@ -52,7 +52,7 @@ class SbStateView extends StatelessWidget {
     final (IconData defaultIcon, SbTone tone) = switch (kind) {
       SbStateKind.empty => (Icons.inbox_outlined, SbTone.neutral),
       SbStateKind.error => (Icons.error_outline_rounded, SbTone.error),
-      SbStateKind.offline => (Icons.cloud_off_rounded, SbTone.warning),
+      SbStateKind.offline => (Icons.cloud_off_rounded, SbTone.neutral),
       SbStateKind.permission => (Icons.lock_outline_rounded, SbTone.info),
       SbStateKind.success => (Icons.check_circle_outline_rounded, SbTone.success),
     };
@@ -171,102 +171,44 @@ class SbInlineBanner extends StatelessWidget {
   }
 }
 
-/// Skeleton block that matches the shape of the content it stands in for.
-/// Pulses gently; static when reduced motion is on.
-class SbSkeleton extends StatefulWidget {
-  const SbSkeleton({super.key, this.width, this.height = 14, this.radius = SbRadius.xs, this.circle = false});
+/// Offline messages are plain black text (white in dark mode, where black
+/// would be unreadable).
+Color offlineInk(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
-  const SbSkeleton.circle({super.key, required double size})
-      : width = size,
-        height = size,
-        radius = SbRadius.full,
-        circle = true;
+/// "You're offline" in plain text (the app's normal text colour: black in
+/// light mode, white in dark), with a small cloud icon. No coloured box: the
+/// owner asked for a simple message instead of the yellow warning bar.
+/// [onSurface] gives it a plain surface card, for use over a map or photo.
+class SbOfflineNote extends StatelessWidget {
+  const SbOfflineNote({super.key, required this.message, this.onSurface = false});
 
-  final double? width;
-  final double height;
-  final double radius;
-  final bool circle;
-
-  @override
-  State<SbSkeleton> createState() => _SbSkeletonState();
-}
-
-class _SbSkeletonState extends State<SbSkeleton> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (MediaQuery.maybeDisableAnimationsOf(context) == true) {
-      _ctrl.stop();
-    } else if (!_ctrl.isAnimating) {
-      _ctrl.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  final String message;
+  final bool onSurface;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.sb;
-    return ExcludeSemantics(
-      child: FadeTransition(
-        opacity: Tween<double>(begin: 1, end: 0.55).animate(_ctrl),
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: c.surfaceSunken,
-            borderRadius: widget.circle ? null : BorderRadius.circular(widget.radius),
-            shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Skeleton matching [SbWorkerCard] / [SbJobCard] rows. Wrap a list of these in
-/// a `Semantics(label: l10n.loading)` at the list level.
-class SbListRowSkeleton extends StatelessWidget {
-  const SbListRowSkeleton({super.key, this.leadingCircle = true});
-
-  final bool leadingCircle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(SbSpace.s4),
-      decoration: BoxDecoration(
-        color: context.sb.surface,
-        borderRadius: BorderRadius.circular(SbRadius.card),
-        border: Border.all(color: context.sb.border),
-      ),
-      child: Row(
-        children: [
-          leadingCircle
-              ? const SbSkeleton.circle(size: 52)
-              : const SbSkeleton(width: 44, height: 44, radius: SbRadius.control),
-          const SizedBox(width: SbSpace.s3),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SbSkeleton(width: 160, height: 16),
-                SizedBox(height: SbSpace.s2),
-                SbSkeleton(width: 110, height: 12),
-                SizedBox(height: SbSpace.s3),
-                SbSkeleton(width: 200, height: 12),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final sb = context.sb;
+    final t = Theme.of(context).textTheme;
+    final row = Row(children: [
+      Icon(Icons.cloud_off_rounded, size: 18, color: offlineInk(context)),
+      const SizedBox(width: SbSpace.s2),
+      Expanded(child: Text(message, style: t.bodyMedium!.copyWith(color: offlineInk(context)))),
+    ]);
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: onSurface
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: SbSpace.s3, vertical: SbSpace.s2),
+              decoration: BoxDecoration(
+                color: sb.surface,
+                borderRadius: BorderRadius.circular(SbRadius.control),
+                border: Border.all(color: sb.border),
+              ),
+              child: row,
+            )
+          : Padding(padding: const EdgeInsets.symmetric(vertical: SbSpace.s1), child: row),
     );
   }
 }

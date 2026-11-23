@@ -480,7 +480,7 @@ class _WorkerProfileSetupScreenState extends ConsumerState<WorkerProfileSetupScr
               variant: SbButtonVariant.secondary,
               icon: Icons.badge_outlined,
               expand: true,
-              onPressed: () => context.push(RouteNames.workerVerificationPath),
+              onPressed: () => context.push(RouteNames.getVerifiedPath),
             ),
           ],
         ]);

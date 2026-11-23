@@ -274,7 +274,9 @@ class _TrackingPanel extends StatelessWidget {
         ),
       ));
       if (!live) {
-        children.add(SbInlineBanner(message: online ? l.liveClientStale(c.workerName) : l.liveClientOffline, tone: SbTone.warning));
+        children.add(online
+            ? SbInlineBanner(message: l.liveClientStale(c.workerName), tone: SbTone.warning)
+            : SbOfflineNote(message: l.liveClientOffline));
       } else if (atPlace) {
         children.add(SbInlineBanner(message: l.trackArrived(c.workerName), tone: SbTone.success));
       } else if (c.serviceLocation == null) {

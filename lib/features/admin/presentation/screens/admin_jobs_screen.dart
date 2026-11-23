@@ -12,6 +12,7 @@ import 'package:skill_bridge/core/extensions/context_extensions.dart';
 import 'package:skill_bridge/features/admin/presentation/providers/admin_providers.dart';
 import 'package:skill_bridge/shared/widgets/app_card.dart';
 import 'package:skill_bridge/shared/widgets/app_empty_state.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Guild Modernist Admin Jobs Screen
 class AdminJobsScreen extends ConsumerStatefulWidget {
@@ -136,8 +137,14 @@ class _AdminJobsScreenState extends ConsumerState<AdminJobsScreen> {
           // Live Job List
           Expanded(
             child: jobsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              loading: () => const SbSkeletonGroup(
+                child: Column(children: [
+                  SbListRowSkeleton(),
+                  SizedBox(height: SbSpace.s3),
+                  SbListRowSkeleton(),
+                  SizedBox(height: SbSpace.s3),
+                  SbListRowSkeleton(),
+                ]),
               ),
               error: (err, stack) => Center(
                 child: Text(

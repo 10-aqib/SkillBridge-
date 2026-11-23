@@ -29,7 +29,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Last updated: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
+              'Last updated: 2026-11-22',
               style: AppTextStyles.labelCaption.copyWith(color: context.mutedColor),
             ),
             const SizedBox(height: 32),
@@ -63,8 +63,15 @@ class TermsAndConditionsScreen extends StatelessWidget {
             ),
             _buildSection(
               context,
-              enTitle: '5. Contact Us',
-              urTitle: '5. رابطہ کریں',
+              enTitle: '5. Privacy',
+              urTitle: '5. رازداری',
+              enText: 'How we collect, use, share and delete your personal data is explained in our Privacy Policy (Settings → Help & legal → Privacy policy). You must be at least 18 years old to use Skill Bridge.',
+              urText: 'ہم آپ کا ذاتی ڈیٹا کیسے جمع، استعمال، شیئر اور حذف کرتے ہیں، یہ ہماری رازداری کی پالیسی میں بیان کیا گیا ہے (سیٹنگز ← مدد اور قانونی ← رازداری کی پالیسی)۔ سکل برج استعمال کرنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے۔',
+            ),
+            _buildSection(
+              context,
+              enTitle: '6. Contact Us',
+              urTitle: '6. رابطہ کریں',
               enText: 'If you have any questions about these Terms, please contact our support team via the Customer Support option in the settings menu.',
               urText: 'اگر آپ کو ان شرائط کے بارے میں کوئی سوالات ہیں، تو براہ کرم سیٹنگز مینو میں کسٹمر سپورٹ آپشن کے ذریعے ہماری سپورٹ ٹیم سے رابطہ کریں۔',
             ),

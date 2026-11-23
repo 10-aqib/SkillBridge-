@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/sb/sb_tokens.dart';
-import 'package:skill_bridge/shared/design_system/sb_state_view.dart';
+import 'package:skill_bridge/shared/design_system/sb_skeleton.dart';
 
 /// Skeleton block. Previously hardcoded dark colours (wrong in light mode);
 /// now [SbSkeleton], which follows the theme and stops pulsing when the OS

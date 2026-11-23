@@ -34,7 +34,7 @@ class ContractDetailsScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: Text(l.contractDetailsTitle)),
         body: live.isLoading && !live.hasError
-            ? const Center(child: CircularProgressIndicator())
+            ? const SbDetailSkeleton()
             : SbStateView(kind: SbStateKind.empty, title: l.contractUnavailableTitle, message: l.contractUnavailableBody),
       );
     }

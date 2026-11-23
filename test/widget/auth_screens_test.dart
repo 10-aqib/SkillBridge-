@@ -22,6 +22,7 @@ import 'package:skill_bridge/features/auth/presentation/screens/welcome_screen.d
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 import '../helpers/test_app.dart';
+import 'package:skill_bridge/features/auth/presentation/screens/phone_required_screen.dart';
 
 /// In-memory AuthRepository: records calls, returns configured results.
 /// Mocked — these tests exercise the UI flows, not real Firebase.
@@ -85,8 +86,10 @@ class FakeAuthRepository implements AuthRepository {
   Future<Either<Failure, void>> verifyPhoneOtp({required String verificationId, required String smsCode}) async {
     calls.add('verifyOtp');
     lastOtp = smsCode;
-    return const Right(null);
+    return verifyResult ?? const Right(null);
   }
+
+  Either<Failure, void>? verifyResult;
 
   @override
   Future<Either<Failure, void>> signOut() async {
@@ -380,6 +383,48 @@ void main() {
       await tester.pump();
       expect(repo.calls.where((c) => c.startsWith('sendOtp')).length, 2);
       await tester.pump(const Duration(seconds: 61));
+    });
+
+    testWidgets('a number used by another account gets a clear message', (tester) async {
+      repo.verifyResult = const Left(AuthFailure('used', 'credential-already-in-use'));
+      await pump(tester, router(RouteNames.otpPath, (_) => const OtpVerificationScreen(phoneNumber: '+923001234567')));
+      await tester.enterText(find.byType(TextFormField), '123456');
+      await tester.pumpAndSettle();
+      expect(find.text(l.phoneInUse), findsOneWidget);
+      await tester.pump(const Duration(seconds: 61));
+    });
+  });
+
+  group('Required phone number', () {
+    GoRouter phoneRouter() => GoRouter(initialLocation: RouteNames.phoneRequiredPath, routes: [
+          GoRoute(path: RouteNames.phoneRequiredPath, builder: (_, _) => const PhoneRequiredScreen()),
+          GoRoute(path: RouteNames.otpPath, builder: (_, s) => Text('OTP ${s.extra}')),
+        ]);
+
+    testWidgets('prefills the saved number, rejects a non-mobile one, then asks for the SMS code', (tester) async {
+      final u = repo.user.copyWith(phoneNumber: '+923001234567');
+      await pump(tester, phoneRouter(), extra: [currentUserProvider.overrideWith((ref) => u)]);
+      expect(find.text(l.phoneRequiredTitle), findsOneWidget);
+      expect(tester.widget<EditableText>(find.byType(EditableText)).controller.text, '300 1234567');
+
+      await tester.enterText(find.byType(TextFormField), '12345');
+      await tester.tap(find.text(l.phoneRequiredSend));
+      await tester.pumpAndSettle();
+      expect(find.text(l.phoneRequiredInvalid), findsOneWidget);
+      expect(find.textContaining('OTP'), findsNothing);
+
+      await tester.enterText(find.byType(TextFormField), '0321 7654321');
+      await tester.tap(find.text(l.phoneRequiredSend));
+      await tester.pumpAndSettle();
+      expect(find.text('OTP +923217654321'), findsOneWidget);
+    });
+
+    testWidgets('people can sign out instead (e.g. wrong Google account)', (tester) async {
+      await pump(tester, phoneRouter(), extra: [currentUserProvider.overrideWith((ref) => repo.user)]);
+      expect(find.text(l.phoneRequiredSignedInAs('a@b.com')), findsOneWidget);
+      await tester.tap(find.text(l.phoneRequiredSignOut));
+      await tester.pumpAndSettle();
+      expect(repo.calls, contains('signOut'));
     });
   });
 }

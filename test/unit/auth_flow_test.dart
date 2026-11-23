@@ -33,6 +33,7 @@ UserEntity user({
   bool active = true,
   bool? onboarding,
   WorkerProfileEntity? worker,
+  bool phoneVerified = true,
 }) =>
     UserEntity(
       uid: 'u1',
@@ -41,7 +42,7 @@ UserEntity user({
       phoneNumber: '',
       role: role,
       isEmailVerified: false,
-      isPhoneVerified: false,
+      isPhoneVerified: phoneVerified,
       isActive: active,
       createdAt: DateTime(2026),
       updatedAt: DateTime(2026),
@@ -82,6 +83,15 @@ void main() {
       expect(go(RouteNames.otpPath), RouteNames.welcomePath);
     });
 
+    test('legal pages open for everyone, signed in or out, suspended or without a role', () {
+      for (final p in kPublicRoutes) {
+        expect(go(p), isNull, reason: p);
+        expect(go(p, u: user()), isNull, reason: p);
+        expect(go(p, u: user(role: '')), isNull, reason: p);
+      }
+      expect(kPublicRoutes, containsAll([RouteNames.termsAndConditionsPath, RouteNames.privacyPolicyPath]));
+    });
+
     test('signed-in people are sent to their role home from auth screens', () {
       expect(go(RouteNames.loginPath, u: user()), RouteNames.clientHomePath);
       expect(go(RouteNames.welcomePath, u: user(role: 'worker')), RouteNames.workerProfileSetupPath);
@@ -118,6 +128,44 @@ void main() {
 
     test('signed-in people can open phone verification (OTP)', () {
       expect(go(RouteNames.otpPath, u: user()), isNull);
+    });
+
+    group('required phone number', () {
+      test('after sign-up or Google sign-in, clients and workers add a verified phone first', () {
+        final c = user(phoneVerified: false, onboarding: false);
+        expect(go(RouteNames.loginPath, u: c), RouteNames.phoneRequiredPath);
+        expect(go(RouteNames.splashPath, u: c), RouteNames.phoneRequiredPath);
+        expect(go(RouteNames.roleSelectionPath, u: user(role: 'worker', phoneVerified: false)), RouteNames.phoneRequiredPath);
+      });
+
+      test('nothing else opens until the number is confirmed; the code screen does', () {
+        final c = user(phoneVerified: false);
+        expect(go('/client/home', u: c), RouteNames.phoneRequiredPath);
+        expect(go('/client/profile', u: c), RouteNames.phoneRequiredPath);
+        expect(go(RouteNames.phoneRequiredPath, u: c), isNull);
+        expect(go(RouteNames.otpPath, u: c), isNull);
+        expect(go(RouteNames.privacyPolicyPath, u: c), isNull, reason: 'legal pages stay public');
+      });
+
+      test('once confirmed, onboarding/home follows', () {
+        expect(go(RouteNames.phoneRequiredPath, u: user(onboarding: false)), RouteNames.clientOnboardingPath);
+        expect(go(RouteNames.phoneRequiredPath, u: user()), RouteNames.clientHomePath);
+        expect(go(RouteNames.phoneRequiredPath, u: user(role: 'worker')), RouteNames.workerProfileSetupPath);
+      });
+
+      test('staff and people without a role are not asked; the switch can turn it off', () {
+        expect(go('/admin/dashboard', u: user(role: 'admin', phoneVerified: false)), isNull);
+        expect(go(RouteNames.roleSelectionPath, u: user(role: '', phoneVerified: false)), isNull);
+        expect(
+          resolveAuthRedirect(isLoading: false, user: user(phoneVerified: false), location: '/client/home', requirePhone: false),
+          isNull,
+        );
+      });
+
+      test('confirming the number re-runs the guards (it is part of the redirect key)', () {
+        expect(authRedirectKey(isLoading: false, user: user(phoneVerified: false)),
+            isNot(authRedirectKey(isLoading: false, user: user())));
+      });
     });
   });
 

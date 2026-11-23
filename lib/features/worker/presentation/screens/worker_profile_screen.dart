@@ -10,8 +10,10 @@ import 'package:skill_bridge/features/client/presentation/screens/worker_profile
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_media_widgets.dart';
 import 'package:skill_bridge/shared/widgets/profile/profile_sections.dart';
-import 'package:skill_bridge/features/identity/presentation/verification_status_widget.dart';
 import 'package:skill_bridge/shared/widgets/profile/reviews_section.dart';
+import 'package:skill_bridge/features/identity/presentation/get_verified_screen.dart';
+import 'package:skill_bridge/features/identity/presentation/verified_badge.dart';
+import 'package:skill_bridge/features/identity/domain/identity_models.dart';
 
 /// What makes a worker profile convincing to clients, in the order to fix it.
 class ProfileCompleteness {
@@ -44,7 +46,7 @@ class WorkerProfileScreen extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     final c = context.sb;
     final user = ref.watch(currentUserProvider);
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null) return const Scaffold(body: SbProfileSkeleton());
     final p = user.workerProfile;
     final edge = SbLayout.edge(context);
     void editStep(int step) => context.push('${RouteNames.workerProfileSetupPath}?step=$step');
@@ -79,11 +81,13 @@ class WorkerProfileScreen extends ConsumerWidget {
                 Text(p.headline, style: t.bodyLarge!.copyWith(color: c.textSecondary), textAlign: TextAlign.center),
               const SizedBox(height: SbSpace.s3),
               Wrap(alignment: WrapAlignment.center, spacing: SbSpace.s2, runSpacing: SbSpace.s2, children: [
-                IdentityBadges(user: user),
-                if (p?.isVerified != true && p?.verificationStatus == 'pending') SbStatusBadge.pending(label: l.verificationPendingShort),
+                VerifiedBadge(user: user),
+                if (!isIdentityVerified(user) && p?.verificationStatus == 'pending') SbStatusBadge.pending(label: l.verificationPendingShort),
               ]),
               const SizedBox(height: SbSpace.s4),
               _CompletenessCard(user: user, onFix: editStep),
+              const SizedBox(height: SbSpace.s4),
+              GetVerifiedCard(user: user),
               const SizedBox(height: SbSpace.s4),
               if (p != null) ...[
                 _AvailabilityCard(user: user),
@@ -131,18 +135,6 @@ class WorkerProfileScreen extends ConsumerWidget {
               const SizedBox(height: SbSpace.s4),
               ProfileSection(title: l.workerSetupStepPhotos, child: PortfolioManager(user: user)),
               const SizedBox(height: SbSpace.s4),
-              ProfileSection(
-                title: l.verificationTitle,
-                actionLabel: p?.isVerified == true ? null : l.verificationOpen,
-                onAction: () => context.push(RouteNames.workerVerificationPath),
-                child: Text(
-                  p?.isVerified == true
-                      ? l.verificationVerifiedBody
-                      : (p?.verificationStatus == 'pending' ? l.verificationPendingBody : l.verificationIntroBody),
-                  style: t.bodyMedium,
-                ),
-              ),
-              const SizedBox(height: SbSpace.s4),
               ReviewsSection(userId: user.uid),
             ]),
           ),
@@ -173,7 +165,7 @@ class _CompletenessCard extends StatelessWidget {
       'rate' => (l.completeAddRate, () => onFix(3)),
       'area' => (l.completeAddArea, () => onFix(3)),
       'photos' => (l.completeAddPhotos, () => onFix(4)),
-      _ => (l.completeVerify, () => context.push(RouteNames.workerVerificationPath)),
+      _ => (l.completeVerify, () => context.push(RouteNames.getVerifiedPath)),
     };
     return Container(
       padding: const EdgeInsets.all(SbSpace.s4),

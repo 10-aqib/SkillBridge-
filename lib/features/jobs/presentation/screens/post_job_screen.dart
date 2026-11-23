@@ -622,7 +622,7 @@ class EditJobScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final async = initial != null ? AsyncValue<JobEntity?>.data(initial) : ref.watch(jobByIdProvider(jobId));
     return async.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => Scaffold(appBar: AppBar(), body: const SbDetailSkeleton()),
       error: (_, _) => Scaffold(
         appBar: AppBar(),
         body: SbStateView(kind: SbStateKind.error, title: l.jobLoadError, message: l.errNetwork),

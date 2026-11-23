@@ -10,6 +10,7 @@ export 'sb_button.dart';
 export 'sb_confirm_sheet.dart';
 export 'sb_job_card.dart';
 export 'sb_section_header.dart';
+export 'sb_skeleton.dart';
 export 'sb_state_view.dart';
 export 'sb_status_badge.dart';
 export 'sb_text_field.dart';

@@ -11,7 +11,6 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
-  Handshake,
   Fingerprint,
   type LucideIcon,
 } from 'lucide-react';
@@ -20,6 +19,7 @@ import { auth } from '@/lib/firebase/client';
 import { signOut } from 'firebase/auth';
 import type { AdminIdentity } from '@/lib/auth/admin-session';
 import { ThemeToggle } from '@/components/sb/theme-toggle';
+import { BrandMark } from '@/components/sb/brand-mark';
 
 type NavRoute = { label: string; icon: LucideIcon; href: string };
 
@@ -82,9 +82,7 @@ export function Sidebar({
     >
       {/* Brand */}
       <div className="flex h-16 items-center gap-2.5 border-b border-sb-border px-5">
-        <span className="flex size-8 items-center justify-center rounded-sb-control bg-sb-primary text-sb-on-primary">
-          <Handshake aria-hidden className="size-[18px]" />
-        </span>
+        <BrandMark size={32} />
         <span className="flex flex-col leading-tight">
           <span className="text-sm font-bold text-sb-text">SkillBridge</span>
           <span className="text-xs text-sb-text-secondary">Admin console</span>

@@ -58,6 +58,7 @@ class _ClientOnboardingScreenState extends ConsumerState<ClientOnboardingScreen>
       final phone = PakPhone.normalize(_phone.text);
       if (name.isNotEmpty) data['displayName'] = name;
       if (phone != null) data['phoneNumber'] = phone;
+      if (phone != null && phone != u.phoneNumber) data['isPhoneVerified'] = false;
       if (_city != null) data['city'] = _city;
       if (_address.text.trim().isNotEmpty) data['address'] = _address.text.trim();
     }

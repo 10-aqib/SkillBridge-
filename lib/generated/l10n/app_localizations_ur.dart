@@ -614,14 +614,15 @@ class AppLocalizationsUr extends AppLocalizations {
   String get signupConfirmPasswordLabel => 'پاس ورڈ کی تصدیق';
 
   @override
-  String get signupAgree => 'میں شرائط و ضوابط سے متفق ہوں';
+  String get signupAgree =>
+      'میں شرائط و ضوابط اور رازداری کی پالیسی سے متفق ہوں';
 
   @override
   String get signupReadTerms => 'پڑھیں';
 
   @override
   String get signupAgreeRequired =>
-      'جاری رکھنے کے لیے شرائط و ضوابط قبول کریں۔';
+      'جاری رکھنے کے لیے شرائط و ضوابط اور رازداری کی پالیسی قبول کریں۔';
 
   @override
   String get signupButton => 'اکاؤنٹ بنائیں';
@@ -1268,7 +1269,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get verificationIntroBody =>
-      'تصدیق شدہ ورکرز کلائنٹس کو بتاتے ہیں کہ SkillBridge نے ان کی شناخت جانچی ہے۔';
+      'تصدیق شدہ پروفائلز دوسروں کو بتاتی ہیں کہ SkillBridge نے ان کی شناخت چیک کی ہے۔';
 
   @override
   String get verificationPendingTitle => 'جائزے کے مراحل میں';
@@ -1285,7 +1286,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get verificationVerifiedBody =>
-      'کلائنٹس آپ کی پروفائل پر تصدیق شدہ بیج دیکھتے ہیں۔';
+      'لوگ آپ کی پروفائل پر تصدیق شدہ بیج دیکھتے ہیں۔';
 
   @override
   String get verificationRejectedTitle => 'منظور نہیں ہوا';
@@ -3880,4 +3881,223 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get identityCancelled => 'تصدیق منسوخ کر دی گئی۔';
+
+  @override
+  String get privacyPolicy => 'رازداری کی پالیسی';
+
+  @override
+  String get legalAnd => 'اور';
+
+  @override
+  String get drawerGuest => 'مہمان';
+
+  @override
+  String get drawerSignInPrompt =>
+      'کام پوسٹ کرنے اور کاریگر رکھنے کے لیے سائن اِن کریں۔';
+
+  @override
+  String get drawerClose => 'مینو بند کریں';
+
+  @override
+  String get drawerSectionWork => 'آپ کا کام';
+
+  @override
+  String get drawerSectionAccount => 'اکاؤنٹ';
+
+  @override
+  String get drawerPostJob => 'کام پوسٹ کریں';
+
+  @override
+  String get drawerMyJobs => 'میرے کام';
+
+  @override
+  String get drawerContracts => 'معاہدے';
+
+  @override
+  String get drawerMessages => 'پیغامات';
+
+  @override
+  String get drawerNotifications => 'اطلاعات';
+
+  @override
+  String get drawerNearbyWorkers => 'قریبی کاریگر تلاش کریں';
+
+  @override
+  String get drawerProfile => 'میری پروفائل';
+
+  @override
+  String get drawerVerifyIdentity => 'شناخت کی تصدیق';
+
+  @override
+  String get drawerSettings => 'سیٹنگز';
+
+  @override
+  String get drawerShare => 'سکل برج شیئر کریں';
+
+  @override
+  String get drawerShareText =>
+      'سکل برج پر قابلِ اعتماد مقامی کاریگر تلاش کریں: الیکٹریشن، پلمبر، صفائی والے اور بہت کچھ۔';
+
+  @override
+  String get drawerAbout => 'سکل برج کے بارے میں';
+
+  @override
+  String get drawerAboutBody =>
+      'سکل برج پاکستان میں لوگوں کو ہنر مند مقامی کاریگروں سے جوڑتا ہے۔ کام پوسٹ کریں، تجاویز کا موازنہ کریں، رکھیں، بات کریں اور کام پر نظر رکھیں، سب ایک جگہ۔';
+
+  @override
+  String drawerVersion(String version) {
+    return 'ورژن $version';
+  }
+
+  @override
+  String get drawerSignIn => 'سائن اِن';
+
+  @override
+  String get drawerCreateAccount => 'اکاؤنٹ بنائیں';
+
+  @override
+  String get drawerSignOut => 'سائن آؤٹ';
+
+  @override
+  String get offlineNow => 'آپ آف لائن ہیں';
+
+  @override
+  String get phoneRequiredTitle => 'اپنا فون نمبر شامل کریں';
+
+  @override
+  String get phoneRequiredSubtitle =>
+      'ہم آپ کو 6 ہندسوں کا کوڈ بھیجیں گے تاکہ تصدیق ہو سکے کہ یہ نمبر آپ کا ہے۔';
+
+  @override
+  String get phoneRequiredHelp =>
+      'پاکستانی موبائل نمبر۔ صرف اُن لوگوں کو دکھایا جاتا ہے جن کے ساتھ آپ کام کرتے ہیں۔';
+
+  @override
+  String get phoneRequiredSend => 'کوڈ بھیجیں';
+
+  @override
+  String get phoneRequiredInvalid =>
+      'پاکستانی موبائل نمبر درج کریں، جیسے 300 1234567۔';
+
+  @override
+  String get phoneRequiredSignOut => 'سائن آؤٹ';
+
+  @override
+  String phoneRequiredSignedInAs(String email) {
+    return '$email کے طور پر سائن اِن';
+  }
+
+  @override
+  String get phoneInUse =>
+      'یہ نمبر پہلے ہی کسی اور SkillBridge اکاؤنٹ پر استعمال ہو رہا ہے۔';
+
+  @override
+  String get otpTooMany => 'بہت زیادہ کوششیں۔ تھوڑی دیر بعد دوبارہ کوشش کریں۔';
+
+  @override
+  String get otpExpired => 'اس کوڈ کی میعاد ختم ہو گئی ہے۔ نیا کوڈ منگوائیں۔';
+
+  @override
+  String get otpSendFailed =>
+      'کوڈ نہیں بھیجا جا سکا۔ نمبر چیک کر کے دوبارہ کوشش کریں۔';
+
+  @override
+  String get otpNotSetUp =>
+      'فون کی تصدیق ابھی دستیاب نہیں۔ بعد میں دوبارہ کوشش کریں۔';
+
+  @override
+  String get getVerifiedTitle => 'تصدیق کروائیں';
+
+  @override
+  String get getVerifiedHeaderTitle => 'تصدیق شدہ بیج حاصل کریں';
+
+  @override
+  String get getVerifiedIntro =>
+      'اپنے شناختی کارڈ اور فنگر پرنٹ سے اپنی شناخت کی تصدیق کریں۔ لوگ تصدیق شدہ پروفائلز پر زیادہ اعتماد کرتے ہیں۔';
+
+  @override
+  String get getVerifiedCardBody =>
+      'تصدیق شدہ بیج کے لیے اپنے شناختی کارڈ اور فنگر پرنٹ سے تصدیق کریں۔';
+
+  @override
+  String get getVerifiedReviewTitle => 'تصدیق زیرِ جائزہ ہے';
+
+  @override
+  String get getVerifiedReviewBody =>
+      'ہماری ٹیم آپ کا شناختی کارڈ چیک کر رہی ہے۔ مکمل ہونے پر ہم آپ کو بتائیں گے۔';
+
+  @override
+  String get getVerifiedDoneTitle => 'آپ کی تصدیق ہو گئی ہے';
+
+  @override
+  String get getVerifiedDoneBody =>
+      'آپ کی پروفائل پر تصدیق شدہ بیج نظر آتا ہے۔';
+
+  @override
+  String getVerifiedStepN(int number) {
+    return 'مرحلہ $number';
+  }
+
+  @override
+  String get getVerifiedStepCnic => 'شناختی کارڈ';
+
+  @override
+  String get getVerifiedStepCnicBody =>
+      'اپنا شناختی کارڈ نمبر درج کریں اور کارڈ کے دونوں طرف کی تصاویر شامل کریں۔ ہماری ٹیم عموماً 2 کاروباری دنوں میں انہیں چیک کرتی ہے۔';
+
+  @override
+  String get getVerifiedStepFingerprint => 'فنگر پرنٹ';
+
+  @override
+  String get getVerifiedStepFingerprintBody =>
+      'نادرا میں اپنے شناختی ریکارڈ سے اپنا فنگر پرنٹ ملائیں۔';
+
+  @override
+  String get getVerifiedFingerprintSoon =>
+      'نادرا سے فنگر پرنٹ کی تصدیق SkillBridge کو نادرا کی منظوری ملنے کے بعد یہاں شروع ہو گی۔ تب تک کچھ جمع نہیں کیا جاتا۔';
+
+  @override
+  String get getVerifiedComingSoon => 'جلد آ رہا ہے';
+
+  @override
+  String get getVerifiedStatusNotStarted => 'شروع نہیں ہوا';
+
+  @override
+  String get getVerifiedStatusInProgress => 'جاری ہے';
+
+  @override
+  String get getVerifiedStatusReview => 'زیرِ جائزہ';
+
+  @override
+  String get getVerifiedStatusDone => 'مکمل';
+
+  @override
+  String get getVerifiedStatusRejected => 'منظور نہیں ہوا';
+
+  @override
+  String get getVerifiedStart => 'شروع کریں';
+
+  @override
+  String get getVerifiedTryAgain => 'دوبارہ کوشش کریں';
+
+  @override
+  String get getVerifiedView => 'دیکھیں';
+
+  @override
+  String get getVerifiedPrivacy =>
+      'آپ کا شناختی کارڈ اور اس کی تصاویر نجی ہیں: صرف SkillBridge کی تصدیقی ٹیم انہیں دیکھتی ہے۔ فنگر پرنٹس کبھی محفوظ نہیں کیے جاتے۔';
+
+  @override
+  String get verifiedBadge => 'تصدیق شدہ';
+
+  @override
+  String get verifiedPopupTitle => 'آپ کی تصدیق ہو گئی!';
+
+  @override
+  String get verifiedPopupBody =>
+      'SkillBridge نے آپ کی شناخت چیک کر لی ہے۔ اب آپ کی پروفائل پر تصدیق شدہ بیج نظر آتا ہے۔';
+
+  @override
+  String get verifiedPopupOk => 'زبردست';
 }

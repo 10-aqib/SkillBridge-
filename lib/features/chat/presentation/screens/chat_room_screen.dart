@@ -241,7 +241,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         child: SbReadableWidth(
           maxWidth: 840,
           child: Column(children: [
-            if (!online) _Banner(message: l.chatOffline, tone: SbTone.warning),
+            if (!online)
+              Padding(
+                padding: EdgeInsets.fromLTRB(SbLayout.edge(context), SbSpace.s2, SbLayout.edge(context), SbSpace.s2),
+                child: SbOfflineNote(message: l.chatOffline),
+              ),
             Expanded(child: _messages(chat, me, otherName)),
             if (peer == ChatPeerStatus.suspended)
               _Banner(message: l.chatPeerSuspended, tone: SbTone.neutral, icon: Icons.block_outlined)

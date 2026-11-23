@@ -258,6 +258,12 @@ class SettingsView extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => context.push(RouteNames.termsAndConditionsPath),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: Text(l.privacyPolicy),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.push(RouteNames.privacyPolicyPath),
+                ),
               ]),
               group(l.settingsAccount, [
                 if (ref.watch(canChangePasswordProvider))

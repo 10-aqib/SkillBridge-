@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skill_bridge/core/providers/firebase_providers.dart';
 
-/// State of a worker's private verification submission.
+/// State of a person's private verification submission (workers and clients).
 class VerificationSubmission {
   const VerificationSubmission({
     required this.status,
@@ -58,6 +58,7 @@ class VerificationService {
     required String uid,
     required String cnic,
     required List<String> documentPaths,
+    bool isWorker = true,
   }) async {
     if (!cnicPattern.hasMatch(cnic)) {
       throw ArgumentError.value(cnic, 'cnic', 'must look like 12345-1234567-1');
@@ -73,11 +74,15 @@ class VerificationService {
       'submittedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Public, non-sensitive status so the profile can show "Under review".
-    batch.update(_firestore.collection('users').doc(uid), {
-      'workerProfile.verificationStatus': 'pending',
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    // Workers: public, non-sensitive status so their profile can show
+    // "Under review". Clients have no worker profile; their status is read
+    // from the private submission itself.
+    if (isWorker) {
+      batch.update(_firestore.collection('users').doc(uid), {
+        'workerProfile.verificationStatus': 'pending',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
     await batch.commit();
   }
 }

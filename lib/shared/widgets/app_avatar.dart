@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:skill_bridge/config/theme/app_colors.dart';
 import 'package:skill_bridge/config/theme/app_text_styles.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
 
 /// Guild Modernist Avatar Widget
 /// Always circular, with Skill-Green online indicator
@@ -40,16 +41,7 @@ class AppAvatar extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: imageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Center(
-                      child: SizedBox(
-                        width: size * 0.4,
-                        height: size * 0.4,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
+                    placeholder: (context, url) => SbSkeleton.circle(size: size),
                     errorWidget: (context, url, error) => _buildInitials(initials),
                   )
                 : _buildInitials(initials),
