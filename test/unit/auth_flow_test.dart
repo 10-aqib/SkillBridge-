@@ -17,6 +17,7 @@ import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dar
 import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 import '../helpers/test_app.dart';
+import 'package:skill_bridge/core/constants/app_constants.dart';
 
 // ── Firebase mocks (mocked unit tests — not a real Firebase integration) ──
 class MockAuth extends Mock implements FirebaseAuth {}
@@ -66,8 +67,9 @@ void main() {
   });
 
   group('navigation guards (resolveAuthRedirect)', () {
+    // The guards as they work with the phone step switched on.
     String? go(String location, {UserEntity? u, bool loading = false}) =>
-        resolveAuthRedirect(isLoading: loading, user: u, location: location);
+        resolveAuthRedirect(isLoading: loading, user: u, location: location, requirePhone: true);
 
     test('while auth loads, everything waits on splash', () {
       expect(go('/client/home', loading: true), RouteNames.splashPath);
@@ -131,6 +133,13 @@ void main() {
     });
 
     group('required phone number', () {
+      test('switched off for now (no SMS until billing is active): nobody is held on the phone step', () {
+        expect(AppConstants.requireVerifiedPhone, isFalse);
+        final c = user(phoneVerified: false);
+        expect(resolveAuthRedirect(isLoading: false, user: c, location: RouteNames.loginPath), RouteNames.clientHomePath);
+        expect(resolveAuthRedirect(isLoading: false, user: c, location: '/client/home'), isNull);
+      });
+
       test('after sign-up or Google sign-in, clients and workers add a verified phone first', () {
         final c = user(phoneVerified: false, onboarding: false);
         expect(go(RouteNames.loginPath, u: c), RouteNames.phoneRequiredPath);
