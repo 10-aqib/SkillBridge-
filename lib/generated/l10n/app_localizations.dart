@@ -7321,6 +7321,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Staff passwords can\'t be reset here. The project owner changes them.'**
   String get staffResetBlocked;
+
+  /// No description provided for @loginIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or username'**
+  String get loginIdLabel;
 }
 
 class _AppLocalizationsDelegate

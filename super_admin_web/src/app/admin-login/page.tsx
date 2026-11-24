@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/client';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { BrandLogo } from '@/components/sb/brand-mark';
+import { signInEmail } from '@/lib/auth/staff-login';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -49,7 +50,7 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, signInEmail(email), password);
       const idToken = await userCredential.user.getIdToken();
       await handleSession(idToken);
     } catch (err) {
@@ -59,7 +60,7 @@ export default function AdminLoginPage() {
       } else if (code === 'auth/network-request-failed') {
         setError('Unable to connect. Please check your internet connection and try again.');
       } else {
-        setError('Invalid email or password.');
+        setError('Invalid username or password.');
       }
       setIsLoading(false);
     }
@@ -112,15 +113,18 @@ export default function AdminLoginPage() {
           )}
 
           <form onSubmit={handleEmailLogin} className="space-y-5">
-              {/* Email */}
+              {/* Username (staff) or email */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-[11px] font-bold text-sb-text-secondary uppercase tracking-wider">
-                  EMAIL
+                  USERNAME
                 </label>
                 <input 
                   id="email" 
-                  type="email" 
-                  placeholder="admin@skillbridge.com" 
+                  type="text" 
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="skillbridge@admin" 
                   required 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

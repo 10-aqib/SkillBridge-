@@ -381,5 +381,14 @@ void main() {
       expect(resolveAuthRedirect(isLoading: false, user: m, location: RouteNames.loginPath), RouteNames.adminDashboardPath);
       expect(AppConstants.isStaffEmail('skillbridge@admin'), isTrue);
     });
+
+    test('the staff username becomes an internal address Firebase accepts; emails stay as typed', () {
+      expect(AppConstants.signInEmail(' SkillBridge@Admin '), 'skillbridge.admin@skill-bridge-c68c3.firebaseapp.com');
+      expect(AppConstants.signInEmail(' user@example.com '), 'user@example.com');
+      expect(AppConstants.staffEmailForUsername('user@example.com'), isNull);
+      // The internal address can't be reset either.
+      expect(AppConstants.isStaffEmail('skillbridge.admin@skill-bridge-c68c3.firebaseapp.com'), isTrue);
+      expect(AuthValidators(l).resetEmail('skillbridge.admin@skill-bridge-c68c3.firebaseapp.com'), l.staffResetBlocked);
+    });
   });
 }

@@ -105,7 +105,7 @@ void main() {
 
       expect(find.text(l.loginTitle), findsOneWidget);
       expect(find.text(l.loginSubtitle), findsOneWidget);
-      expect(find.text(l.email), findsOneWidget);
+      expect(find.text(l.loginIdLabel), findsOneWidget);
       expect(find.text(l.password), findsOneWidget);
       expect(find.text(l.loginForgotPassword), findsOneWidget);
       expect(find.text(l.loginButton), findsOneWidget);

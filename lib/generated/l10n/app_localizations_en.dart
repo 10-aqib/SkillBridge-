@@ -4114,4 +4114,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get staffResetBlocked =>
       'Staff passwords can\'t be reset here. The project owner changes them.';
+
+  @override
+  String get loginIdLabel => 'Email or username';
 }

@@ -332,8 +332,8 @@ class AuthValidators {
     return null;
   }
 
-  /// Sign-in: also accepts the staff address (no dot after the @).
-  String? loginEmail(String? v) => AppConstants.isStaffEmail(v) ? null : email(v);
+  /// Sign-in: an email, or a staff username such as `skillbridge@admin`.
+  String? loginEmail(String? v) => AppConstants.staffEmailForUsername(v) != null ? null : email(v);
 
   /// Password reset: never for a staff account.
   String? resetEmail(String? v) => AppConstants.isStaffEmail(v) ? l.staffResetBlocked : email(v);

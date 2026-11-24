@@ -2054,5 +2054,6 @@
   "phonePromptTitle": "Add your phone number",
   "phonePromptBody": "Confirm it with an SMS code so clients and workers can reach you.",
   "phonePromptAction": "Add",
-  "staffResetBlocked": "Staff passwords can't be reset here. The project owner changes them."
+  "staffResetBlocked": "Staff passwords can't be reset here. The project owner changes them.",
+  "loginIdLabel": "Email or username"
 }

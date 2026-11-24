@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/config/router/route_names.dart';
 import 'package:skill_bridge/core/extensions/context_extensions.dart';
-import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 

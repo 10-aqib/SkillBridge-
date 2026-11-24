@@ -7,6 +7,7 @@ import 'package:skill_bridge/features/auth/presentation/viewmodels/auth_viewmode
 import 'package:skill_bridge/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
+import 'package:skill_bridge/core/constants/app_constants.dart';
 
 /// Email/password and Google sign-in. Successful sign-in is routed by the
 /// router (role-aware); a Firebase account without a profile goes to role
@@ -42,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _submit() {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    ref.read(loginViewModelProvider.notifier).login(email: _email.text.trim(), password: _password.text);
+    ref.read(loginViewModelProvider.notifier).login(email: AppConstants.signInEmail(_email.text), password: _password.text);
   }
 
   @override
@@ -69,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             SbFailureBanner(failure: state.failure),
             SbTextField(
-              label: l.email,
+              label: l.loginIdLabel,
               hint: l.authEmailHint,
               controller: _email,
               keyboardType: TextInputType.emailAddress,

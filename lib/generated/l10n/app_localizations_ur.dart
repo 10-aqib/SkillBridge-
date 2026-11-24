@@ -4121,4 +4121,7 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get staffResetBlocked =>
       'عملے کے پاس ورڈ یہاں ری سیٹ نہیں ہو سکتے۔ انہیں پروجیکٹ کا مالک تبدیل کرتا ہے۔';
+
+  @override
+  String get loginIdLabel => 'ای میل یا یوزر نیم';
 }
