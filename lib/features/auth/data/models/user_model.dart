@@ -56,7 +56,10 @@ class UserModel extends UserEntity {
       displayName: data['displayName'] as String? ?? '',
       phoneNumber: data['phoneNumber'] as String? ?? '',
       photoUrl: data['photoUrl'] as String?,
-      role: data['role'] as String? ?? 'client',
+      // No stored role (an incomplete profile): '' sends the person to
+      // "choose your role" instead of pretending to be a client, which the
+      // security rules would refuse (e.g. posting a job).
+      role: data['role'] as String? ?? '',
       isEmailVerified: data['isEmailVerified'] as bool? ?? false,
       isPhoneVerified: data['isPhoneVerified'] as bool? ?? false,
       isCnicVerified: data['isCnicVerified'] as bool? ?? false,

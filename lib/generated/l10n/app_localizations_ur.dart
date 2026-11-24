@@ -4124,4 +4124,13 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get loginIdLabel => 'ای میل یا یوزر نیم';
+
+  @override
+  String get drawerFindJobs => 'کام تلاش کریں';
+
+  @override
+  String get drawerMyProposals => 'میری تجاویز';
+
+  @override
+  String get drawerSavedJobs => 'محفوظ کام';
 }

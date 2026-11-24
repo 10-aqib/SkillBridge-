@@ -16,16 +16,12 @@ import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/features/jobs/presentation/widgets/job_ui.dart';
+import 'package:skill_bridge/features/worker/presentation/widgets/worker_palette.dart';
+import 'package:skill_bridge/features/client/presentation/widgets/home_drawer.dart';
+import 'package:skill_bridge/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:skill_bridge/generated/l10n/app_localizations.dart';
 
 // ── Dark Premium Design Tokens ────────────────────────────────────────────────
-const _bg = Color(0xFF0B0F19);
-const _card = Color(0xFF131A27);
-const _surface2 = Color(0xFF192233);
-const _textPrimary = Color(0xFFF5F6FA);
-const _textSecondary = Color(0xFF929BAA);
-const _border = Color(0xFF252F40);
-const _accent = Color(0xFF4778E8);
-const _success = Color(0xFF22C58B);
 
 /// Minimal Premium Worker Dashboard — dark-forced, banking-app inspired.
 class WorkerHomeScreen extends ConsumerStatefulWidget {
@@ -99,7 +95,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
       case 'Unavailable':
         return const Color(0xFFEF5350);
       default:
-        return _success;
+        return WorkerPalette.of(context).success;
     }
   }
 
@@ -116,6 +112,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     final user = ref.watch(currentUserProvider);
     final jobsAsync = ref.watch(openJobsStreamProvider);
     final directRequestsAsync = ref.watch(workerDirectRequestsStreamProvider);
@@ -129,7 +126,10 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
     final hourlyRate = user?.workerProfile?.hourlyRate ?? 1500;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: p.bg,
+      // Same side menu as clients, with the worker's shortcuts and the
+      // light/dark/system appearance switch.
+      drawer: const HomeDrawer(),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -144,11 +144,20 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     // Top row: branding + bell + avatar
                     Row(
                       children: [
+                        // Menu (top left): opens the side menu.
+                        Builder(
+                          builder: (context) => IconButton(
+                            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+                            icon: Icon(Icons.menu_rounded, color: p.textPrimary),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
                         // SkillBridge logo text
                         Expanded(child: _SkillBridgeLogo()),
                         const SizedBox(width: 8),
                         // Notification bell
-                        _NotificationBell(),
+                        const _NotificationBell(),
                         const SizedBox(width: 10),
                         // Profile avatar
                         AppAvatar(
@@ -163,14 +172,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     Text(
                       'Welcome back,',
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: _textSecondary,
+                        color: p.textSecondary,
                         fontSize: 15,
                       ),
                     ),
                     Text(
                       '$firstName!',
                       style: AppTextStyles.displayHero.copyWith(
-                        color: _textPrimary,
+                        color: p.textPrimary,
                         fontSize: 36,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -180,7 +189,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     Text(
                       'Grow your skills. Build your career.',
                       style: AppTextStyles.bodyPrimary.copyWith(
-                        color: _textSecondary,
+                        color: p.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -197,9 +206,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: _card,
+                    color: p.card,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _border),
+                    border: Border.all(color: p.border),
                   ),
                   child: Row(
                     children: [
@@ -238,7 +247,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                   child: Text(
                                     _availability,
                                     style: AppTextStyles.bodyStrong.copyWith(
-                                      color: _textPrimary,
+                                      color: p.textPrimary,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -251,7 +260,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             Text(
                               _availabilityDescription,
                               style: AppTextStyles.labelCaption.copyWith(
-                                color: _textSecondary,
+                                color: p.textSecondary,
                                 fontSize: 12,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -264,10 +273,10 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       PopupMenuButton<String>(
                         enabled: !_savingAvailability,
                         onSelected: _updateAvailability,
-                        color: _card,
+                        color: p.card,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: _border),
+                          side: BorderSide(color: p.border),
                         ),
                         itemBuilder: (context) => [
                           _popupItem('Available'),
@@ -278,8 +287,8 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: _surface2,
-                            border: Border.all(color: _border),
+                            color: p.surface2,
+                            border: Border.all(color: p.border),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -288,15 +297,15 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                               Text(
                                 'Change',
                                 style: AppTextStyles.labelCaption.copyWith(
-                                  color: _textPrimary,
+                                  color: p.textPrimary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(width: 3),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
-                                color: _textPrimary,
+                                color: p.textPrimary,
                                 size: 15,
                               ),
                             ],
@@ -323,14 +332,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       Expanded(
                         child: _StatCard(
                           icon: Icons.star_rounded,
-                          iconColor: _accent,
+                          iconColor: p.accent,
                           label: 'Rating',
                           value: rating > 0
                               ? rating.toStringAsFixed(1)
                               : '—',
                           valueSuffix: ' / 5',
                           sub: '+0.2 this month',
-                          subColor: _success,
+                          subColor: p.success,
                           subIcon: Icons.arrow_upward_rounded,
                         ),
                       ),
@@ -339,11 +348,11 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       Expanded(
                         child: _StatCard(
                           icon: Icons.check_circle_rounded,
-                          iconColor: _success,
+                          iconColor: p.success,
                           label: 'Completed',
                           value: '$totalCompleted',
                           sub: '+2 this month',
-                          subColor: _success,
+                          subColor: p.success,
                           subIcon: Icons.arrow_upward_rounded,
                         ),
                       ),
@@ -352,7 +361,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       Expanded(
                         child: _StatCard(
                           icon: Icons.monetization_on_outlined,
-                          iconColor: _accent,
+                          iconColor: p.accent,
                           label: 'Rate',
                           value: 'Rs. ${hourlyRate.toStringAsFixed(0)}',
                           valueSuffix: ' / hr',
@@ -402,9 +411,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.access_time_rounded,
-                            color: _textPrimary,
+                            color: p.textPrimary,
                             size: 19,
                           ),
                           const SizedBox(width: 8),
@@ -412,7 +421,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             child: Text(
                               'Recent Activity',
                               style: AppTextStyles.heading3.copyWith(
-                                color: _textPrimary,
+                                color: p.textPrimary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                               ),
@@ -432,14 +441,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           Text(
                             'View All',
                             style: AppTextStyles.labelCaption.copyWith(
-                              color: _accent,
+                              color: p.accent,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: 3),
-                          const Icon(Icons.arrow_forward_rounded,
-                              color: _accent, size: 14),
+                          Icon(Icons.arrow_forward_rounded,
+                              color: p.accent, size: 14),
                         ],
                       ),
                     ),
@@ -467,9 +476,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: _card,
+                      color: p.card,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _border),
+                      border: Border.all(color: p.border),
                     ),
                     child: Column(
                       children: [
@@ -490,8 +499,8 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             ),
                           ),
                           if (i < shown.length - 1)
-                            const Divider(
-                                height: 1, color: _border, indent: 16),
+                            Divider(
+                                height: 1, color: p.border, indent: 16),
                         ],
                       ],
                     ),
@@ -514,7 +523,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       child: Text(
                         'Jobs Nearby You',
                         style: AppTextStyles.heading3.copyWith(
-                          color: _textPrimary,
+                          color: p.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                         ),
@@ -531,14 +540,14 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           Text(
                             'See All',
                             style: AppTextStyles.labelCaption.copyWith(
-                              color: _accent,
+                              color: p.accent,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: 3),
-                          const Icon(Icons.arrow_forward_rounded,
-                              color: _accent, size: 14),
+                          Icon(Icons.arrow_forward_rounded,
+                              color: p.accent, size: 14),
                         ],
                       ),
                     ),
@@ -630,9 +639,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: _card,
+                      color: p.card,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _border),
+                      border: Border.all(color: p.border),
                     ),
                     child: Column(
                       children: [
@@ -676,8 +685,8 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             );
                           }),
                           if (i < shown.length - 1)
-                            const Divider(
-                                height: 1, color: _border, indent: 16),
+                            Divider(
+                                height: 1, color: p.border, indent: 16),
                         ],
                       ],
                     ),
@@ -694,11 +703,12 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
   }
 
   PopupMenuItem<String> _popupItem(String val) {
+    final p = WorkerPalette.of(context);
     return PopupMenuItem<String>(
       value: val,
       child: Text(
         val,
-        style: AppTextStyles.bodyPrimary.copyWith(color: _textPrimary),
+        style: AppTextStyles.bodyPrimary.copyWith(color: p.textPrimary),
       ),
     );
   }
@@ -708,6 +718,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
 class _SkillBridgeLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerLeft,
@@ -716,19 +727,19 @@ class _SkillBridgeLogo extends StatelessWidget {
         children: [
           const SbLogoMark(size: 32, semanticLabel: null),
           const SizedBox(width: 8),
-          const Text(
+          Text(
             'Skill',
             style: TextStyle(
-              color: _textPrimary,
+              color: p.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 18,
               fontFamily: 'Sora',
             ),
           ),
-          const Text(
+          Text(
             'Bridge',
             style: TextStyle(
-              color: _accent,
+              color: p.accent,
               fontWeight: FontWeight.w700,
               fontSize: 18,
               fontFamily: 'Sora',
@@ -741,40 +752,57 @@ class _SkillBridgeLogo extends StatelessWidget {
 }
 
 // ── Notification Bell ─────────────────────────────────────────────────────────
-class _NotificationBell extends StatelessWidget {
+/// Opens the worker's notifications. The red dot shows only while there are
+/// unread ones (it used to be a picture: always red, and not tappable).
+class _NotificationBell extends ConsumerWidget {
+  const _NotificationBell();
+
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _border),
-          ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            color: _textSecondary,
-            size: 20,
-          ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = WorkerPalette.of(context);
+    final uid = ref.watch(currentUserProvider)?.uid;
+    final unread = uid == null
+        ? 0
+        : (ref.watch(userNotificationsStreamProvider(uid)).value ?? const [])
+            .where((n) => !n.isRead)
+            .length;
+    final title = AppLocalizations.of(context)?.notifications ?? 'Notifications';
+    return Semantics(
+      button: true,
+      label: unread > 0 ? '$title, $unread' : title,
+      excludeSemantics: true,
+      child: Material(
+        color: p.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: p.border),
         ),
-        // Red unread notification dot
-        Positioned(
-          top: 7,
-          right: 7,
-          child: Container(
-            width: 7,
-            height: 7,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEF5350),
-              shape: BoxShape.circle,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push(RouteNames.workerNotificationsPath),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.notifications_outlined, color: p.textSecondary, size: 20),
+                if (unread > 0)
+                  Positioned(
+                    top: 7,
+                    right: 7,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(color: p.danger, shape: BoxShape.circle),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -803,12 +831,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -819,11 +848,11 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.labelCaption.copyWith(
-              color: _textSecondary,
+              color: p.textSecondary,
               fontSize: 11,
             ),
           ),
-          const SizedBox(height: 3),
+          SizedBox(height: 3),
           // Value + optional suffix in single line
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -835,8 +864,8 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: _textPrimary,
+                  style: TextStyle(
+                    color: p.textPrimary,
                     fontFamily: 'JetBrainsMono',
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
@@ -845,8 +874,8 @@ class _StatCard extends StatelessWidget {
                 if (valueSuffix != null)
                   Text(
                     valueSuffix!,
-                    style: const TextStyle(
-                      color: _textSecondary,
+                    style: TextStyle(
+                      color: p.textSecondary,
                       fontFamily: 'JetBrainsMono',
                       fontWeight: FontWeight.w500,
                       fontSize: 11,
@@ -894,12 +923,13 @@ class _OpportunityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       child: Row(
         children: [
@@ -907,12 +937,12 @@ class _OpportunityBanner extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _surface2,
+              color: p.surface2,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.emoji_events_outlined,
-              color: _textSecondary,
+              color: p.textSecondary,
               size: 22,
             ),
           ),
@@ -925,7 +955,7 @@ class _OpportunityBanner extends StatelessWidget {
                 Text(
                   'No Earnings Yet',
                   style: AppTextStyles.bodyStrong.copyWith(
-                    color: _textPrimary,
+                    color: p.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -934,7 +964,7 @@ class _OpportunityBanner extends StatelessWidget {
                 Text(
                   'Complete your first job to start earning and unlock more opportunities.',
                   style: AppTextStyles.labelCaption.copyWith(
-                    color: _textSecondary,
+                    color: p.textSecondary,
                     fontSize: 10.5,
                     height: 1.3,
                   ),
@@ -946,7 +976,7 @@ class _OpportunityBanner extends StatelessWidget {
           TextButton(
             onPressed: onBrowse,
             style: TextButton.styleFrom(
-              backgroundColor: _accent,
+              backgroundColor: p.accent,
               foregroundColor: Colors.white,
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -997,6 +1027,7 @@ class _ActivityItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -1008,12 +1039,12 @@ class _ActivityItem extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _surface2,
+                color: p.surface2,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.work_outline_rounded,
-                color: _textSecondary,
+                color: p.textSecondary,
                 size: 18,
               ),
             ),
@@ -1028,7 +1059,7 @@ class _ActivityItem extends StatelessWidget {
                         child: Text(
                           title,
                           style: AppTextStyles.bodyStrong.copyWith(
-                            color: _textPrimary,
+                            color: p.textPrimary,
                             fontSize: 14,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -1060,7 +1091,7 @@ class _ActivityItem extends StatelessWidget {
                   Text(
                     subtitle,
                     style: AppTextStyles.labelCaption.copyWith(
-                      color: _textSecondary,
+                      color: p.textSecondary,
                       fontSize: 12,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -1071,8 +1102,8 @@ class _ActivityItem extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               Formatters.formatPkrCompact(budget),
-              style: const TextStyle(
-                color: _accent,
+              style: TextStyle(
+                color: p.accent,
                 fontFamily: 'JetBrainsMono',
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -1107,6 +1138,7 @@ class _NearbyJobItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -1121,7 +1153,7 @@ class _NearbyJobItem extends StatelessWidget {
                   child: Text(
                     title,
                     style: AppTextStyles.bodyStrong.copyWith(
-                      color: _textPrimary,
+                      color: p.textPrimary,
                       fontSize: 14,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -1156,13 +1188,13 @@ class _NearbyJobItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.12),
+                    color: p.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
                     category,
-                    style: const TextStyle(
-                      color: _accent,
+                    style: TextStyle(
+                      color: p.accent,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1170,14 +1202,14 @@ class _NearbyJobItem extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 // Location
-                const Icon(Icons.location_on_outlined,
-                    color: _textSecondary, size: 12),
+                Icon(Icons.location_on_outlined,
+                    color: p.textSecondary, size: 12),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(
                     locationText,
                     style: AppTextStyles.labelCaption.copyWith(
-                      color: _textSecondary,
+                      color: p.textSecondary,
                       fontSize: 11,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -1186,8 +1218,8 @@ class _NearbyJobItem extends StatelessWidget {
                 // Budget
                 Text(
                   '${Formatters.formatPkrCompact(budgetPkr)} · $budgetType',
-                  style: const TextStyle(
-                    color: _accent,
+                  style: TextStyle(
+                    color: p.accent,
                     fontFamily: 'JetBrainsMono',
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -1208,13 +1240,14 @@ class _ActivityLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       // Three activity rows: avatar, name, detail.
       child: const SbSkeletonGroup(
@@ -1254,13 +1287,14 @@ class _ActivityEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         children: [
@@ -1268,12 +1302,12 @@ class _ActivityEmpty extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _surface2,
+              color: p.surface2,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.work_outline_rounded,
-              color: _textSecondary,
+              color: p.textSecondary,
               size: 22,
             ),
           ),
@@ -1281,7 +1315,7 @@ class _ActivityEmpty extends StatelessWidget {
           Text(
             'No recent activity',
             style: AppTextStyles.bodyStrong.copyWith(
-              color: _textPrimary,
+              color: p.textPrimary,
               fontSize: 14,
             ),
           ),
@@ -1289,7 +1323,7 @@ class _ActivityEmpty extends StatelessWidget {
           Text(
             'Your latest updates will appear here.',
             style: AppTextStyles.labelCaption.copyWith(
-              color: _textSecondary,
+              color: p.textSecondary,
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
@@ -1318,22 +1352,23 @@ class _EmptySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         children: [
-          Icon(icon, color: _textSecondary, size: 28),
+          Icon(icon, color: p.textSecondary, size: 28),
           const SizedBox(height: 8),
           Text(
             message,
             style: AppTextStyles.bodyStrong.copyWith(
-              color: _textPrimary,
+              color: p.textPrimary,
               fontSize: 14,
             ),
           ),
@@ -1341,7 +1376,7 @@ class _EmptySection extends StatelessWidget {
           Text(
             sub,
             style: AppTextStyles.labelCaption.copyWith(
-              color: _textSecondary,
+              color: p.textSecondary,
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
@@ -1351,7 +1386,7 @@ class _EmptySection extends StatelessWidget {
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                backgroundColor: _accent,
+                backgroundColor: p.accent,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
@@ -1382,11 +1417,15 @@ class PremiumLineChartPainter extends CustomPainter {
   final Color gridColor;
   final Color dotColor;
 
+  /// Fill of the ring around each dot (the card colour behind the chart).
+  final Color holeColor;
+
   const PremiumLineChartPainter({
     required this.values,
-    this.lineColor = _accent,
-    this.gridColor = _border,
-    this.dotColor = _accent,
+    this.lineColor = const Color(0xFF4778E8),
+    this.gridColor = const Color(0xFF252F40),
+    this.dotColor = const Color(0xFF4778E8),
+    this.holeColor = const Color(0xFF131A27),
   });
 
   @override
@@ -1458,7 +1497,7 @@ class PremiumLineChartPainter extends CustomPainter {
       ..color = dotColor
       ..style = PaintingStyle.fill;
     final dotBorderPaint = Paint()
-      ..color = const Color(0xFF131A27)
+      ..color = holeColor
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < values.length; i++) {
@@ -1471,5 +1510,9 @@ class PremiumLineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PremiumLineChartPainter old) =>
-      old.values != values;
+      old.values != values ||
+      old.lineColor != lineColor ||
+      old.gridColor != gridColor ||
+      old.dotColor != dotColor ||
+      old.holeColor != holeColor;
 }

@@ -7327,6 +7327,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Email or username'**
   String get loginIdLabel;
+
+  /// No description provided for @drawerFindJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Find jobs'**
+  String get drawerFindJobs;
+
+  /// No description provided for @drawerMyProposals.
+  ///
+  /// In en, this message translates to:
+  /// **'My proposals'**
+  String get drawerMyProposals;
+
+  /// No description provided for @drawerSavedJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved jobs'**
+  String get drawerSavedJobs;
 }
 
 class _AppLocalizationsDelegate

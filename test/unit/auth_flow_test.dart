@@ -391,4 +391,12 @@ void main() {
       expect(AuthValidators(l).resetEmail('skillbridge.admin@skill-bridge-c68c3.firebaseapp.com'), l.staffResetBlocked);
     });
   });
+
+  test('a profile without a stored role is asked for one (not treated as a client)', () {
+    final m = UserModel.fromMap('u9', {'displayName': 'Sara', 'phoneNumber': '+923001234567', 'city': 'Lahore'});
+    expect(m.role, '');
+    expect(m.isClient, isFalse);
+    expect(resolveAuthRedirect(isLoading: false, user: m, location: RouteNames.loginPath), RouteNames.roleSelectionPath);
+    expect(resolveAuthRedirect(isLoading: false, user: m, location: '/client/home'), RouteNames.roleSelectionPath);
+  });
 }

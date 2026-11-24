@@ -4117,4 +4117,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginIdLabel => 'Email or username';
+
+  @override
+  String get drawerFindJobs => 'Find jobs';
+
+  @override
+  String get drawerMyProposals => 'My proposals';
+
+  @override
+  String get drawerSavedJobs => 'Saved jobs';
 }

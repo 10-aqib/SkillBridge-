@@ -14,8 +14,8 @@ import 'package:skill_bridge/shared/design_system/design_system.dart';
 import 'package:skill_bridge/shared/widgets/app_avatar.dart';
 import 'package:skill_bridge/shared/widgets/brand/sb_logo.dart';
 
-/// Client side menu: shortcuts to the client's work, account, appearance,
-/// and help & legal.
+/// Side menu for clients and workers: shortcuts to their work (different for
+/// each role), account, appearance (light/dark/system), and help & legal.
 class HomeDrawer extends ConsumerWidget {
   const HomeDrawer({super.key});
 
@@ -26,6 +26,8 @@ class HomeDrawer extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
     final user = ref.watch(currentUserProvider);
     final signedIn = user != null;
+    final worker = user?.isWorker ?? false;
+    final profilePath = worker ? RouteNames.workerProfilePath : RouteNames.clientProfilePath;
     final themeMode = ref.watch(themeModeProvider);
 
     /// Closes the menu, then runs [action] (navigation or a sheet).
@@ -52,7 +54,7 @@ class HomeDrawer extends ConsumerWidget {
           email: user?.email ?? '',
           photoUrl: user?.photoUrl,
           signedIn: signedIn,
-          onOpenProfile: signedIn ? close(() => context.go(RouteNames.clientProfilePath)) : null,
+          onOpenProfile: signedIn ? close(() => context.go(profilePath)) : null,
         ),
         Expanded(
           child: ListView(
@@ -71,7 +73,40 @@ class HomeDrawer extends ConsumerWidget {
                   onTap: close(() => context.push(RouteNames.signupPath)),
                 ),
               ],
-              if (signedIn) ...[
+              if (signedIn && worker) ...[
+                section(l.drawerSectionWork),
+                _DrawerTile(
+                  icon: Icons.search_rounded,
+                  title: l.drawerFindJobs,
+                  onTap: close(() => context.push(RouteNames.workerJobFeedPath)),
+                ),
+                _DrawerTile(
+                  icon: Icons.description_outlined,
+                  title: l.drawerMyProposals,
+                  onTap: close(() => context.go(RouteNames.workerProposalsPath)),
+                ),
+                _DrawerTile(
+                  icon: Icons.assignment_outlined,
+                  title: l.drawerContracts,
+                  onTap: close(() => context.go(RouteNames.workerContractsPath)),
+                ),
+                _DrawerTile(
+                  icon: Icons.bookmark_border_rounded,
+                  title: l.drawerSavedJobs,
+                  onTap: close(() => context.push(RouteNames.workerSavedJobsPath)),
+                ),
+                _DrawerTile(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  title: l.drawerMessages,
+                  onTap: close(() => context.go(RouteNames.workerChatsPath)),
+                ),
+                _DrawerTile(
+                  icon: Icons.notifications_none_rounded,
+                  title: l.drawerNotifications,
+                  onTap: close(() => context.push(RouteNames.workerNotificationsPath)),
+                ),
+              ],
+              if (signedIn && !worker) ...[
                 section(l.drawerSectionWork),
                 _DrawerTile(
                   icon: Icons.add_circle_outline_rounded,
@@ -103,11 +138,13 @@ class HomeDrawer extends ConsumerWidget {
                   title: l.drawerNearbyWorkers,
                   onTap: close(() => context.push(RouteNames.clientNearbyWorkersPath)),
                 ),
+              ],
+              if (signedIn) ...[
                 section(l.drawerSectionAccount),
                 _DrawerTile(
                   icon: Icons.person_outline_rounded,
                   title: l.drawerProfile,
-                  onTap: close(() => context.go(RouteNames.clientProfilePath)),
+                  onTap: close(() => context.go(profilePath)),
                 ),
                 _DrawerTile(
                   icon: Icons.verified_user_outlined,
@@ -117,7 +154,7 @@ class HomeDrawer extends ConsumerWidget {
                 _DrawerTile(
                   icon: Icons.settings_outlined,
                   title: l.drawerSettings,
-                  onTap: close(() => context.push(RouteNames.clientSettingsPath)),
+                  onTap: close(() => context.push(worker ? RouteNames.workerSettingsPath : RouteNames.clientSettingsPath)),
                 ),
               ],
               section(l.settingsAppearance),

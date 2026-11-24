@@ -3,15 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skill_bridge/features/chat/data/datasources/chat_remote_datasource.dart';
 import 'package:skill_bridge/core/utils/app_l10n.dart';
+import 'package:skill_bridge/features/worker/presentation/widgets/worker_palette.dart';
 
-// ── Dark Design Tokens ────────────────────────────────────────────────────────
-const _navBg = Color(0xFF131A27);
-const _navBorder = Color(0xFF252F40);
-const _accent = Color(0xFF4778E8);
-const _inactive = Color(0xFF929BAA);
-const _textActive = Color(0xFFF5F6FA);
 
-/// Minimal Premium Worker Bottom Navigation — dark forced.
+/// Worker bottom navigation, in the app's light/dark colours (WorkerPalette).
 class WorkerMainScreen extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -29,6 +24,7 @@ class WorkerMainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final p = WorkerPalette.of(context);
     final currentIndex = navigationShell.currentIndex;
     // Conversations with unread messages (kept by the server).
     final unreadChats = ref.watch(unreadChatsCountProvider);
@@ -66,9 +62,9 @@ class WorkerMainScreen extends ConsumerWidget {
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: _navBg,
-          border: const Border(
-            top: BorderSide(color: _navBorder, width: 1),
+          color: p.card,
+          border: Border(
+            top: BorderSide(color: p.border, width: 1),
           ),
         ),
         child: SafeArea(
@@ -124,9 +120,10 @@ class _NavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return InkWell(
       onTap: onTap,
-      splashColor: _accent.withValues(alpha: 0.08),
+      splashColor: p.accent.withValues(alpha: 0.08),
       highlightColor: Colors.transparent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +135,7 @@ class _NavButton extends StatelessWidget {
             height: isActive ? 3 : 0,
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
-              color: _accent,
+              color: p.accent,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -149,7 +146,7 @@ class _NavButton extends StatelessWidget {
             label: Text('${item.badge}'),
             child: Icon(
               isActive ? item.activeIcon : item.icon,
-              color: isActive ? _accent : _inactive,
+              color: isActive ? p.accent : p.textSecondary,
               size: 22,
             ),
           ),
@@ -158,7 +155,7 @@ class _NavButton extends StatelessWidget {
           Text(
             item.label,
             style: TextStyle(
-              color: isActive ? _textActive : _inactive,
+              color: isActive ? p.textPrimary : p.textSecondary,
               fontSize: 10,
               fontWeight:
                   isActive ? FontWeight.w700 : FontWeight.w400,

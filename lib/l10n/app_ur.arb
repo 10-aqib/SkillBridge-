@@ -1204,5 +1204,8 @@
   "phonePromptBody": "SMS کوڈ سے اس کی تصدیق کریں تاکہ کلائنٹس اور ورکرز آپ سے رابطہ کر سکیں۔",
   "phonePromptAction": "شامل کریں",
   "staffResetBlocked": "عملے کے پاس ورڈ یہاں ری سیٹ نہیں ہو سکتے۔ انہیں پروجیکٹ کا مالک تبدیل کرتا ہے۔",
-  "loginIdLabel": "ای میل یا یوزر نیم"
+  "loginIdLabel": "ای میل یا یوزر نیم",
+  "drawerFindJobs": "کام تلاش کریں",
+  "drawerMyProposals": "میری تجاویز",
+  "drawerSavedJobs": "محفوظ کام"
 }

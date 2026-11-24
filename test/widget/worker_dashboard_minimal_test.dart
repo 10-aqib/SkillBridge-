@@ -9,6 +9,13 @@ import 'package:skill_bridge/features/contracts/presentation/providers/contract_
 import 'package:skill_bridge/features/jobs/domain/entities/job_entity.dart';
 import 'package:skill_bridge/features/jobs/presentation/providers/job_providers.dart';
 import 'package:skill_bridge/features/worker/presentation/screens/worker_home_screen.dart';
+import 'package:skill_bridge/features/client/presentation/widgets/home_drawer.dart';
+import 'package:skill_bridge/shared/design_system/design_system.dart';
+import '../helpers/test_app.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skill_bridge/config/router/route_names.dart';
+import 'package:skill_bridge/features/notifications/data/models/notification_model.dart';
+import 'package:skill_bridge/features/notifications/presentation/providers/notification_providers.dart';
 
 void main() {
   final testWorker = UserModel(
@@ -128,6 +135,93 @@ void main() {
 
       // No overflow exceptions thrown
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Worker home follows light/dark and has the side menu', () {
+    Future<void> pumpThemed(WidgetTester tester, Brightness b) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(testApp(
+        brightness: b,
+        overrides: [
+          currentUserProvider.overrideWith((ref) => testWorker),
+          openJobsStreamProvider.overrideWith((ref) => Stream.value(const <JobEntity>[])),
+          workerDirectRequestsStreamProvider.overrideWith((ref) => Stream.value(const <JobEntity>[])),
+          userContractsStreamProvider.overrideWith((ref) => Stream.value(const <ContractEntity>[])),
+        ],
+        home: const WorkerHomeScreen(),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    for (final b in Brightness.values) {
+      testWidgets('background matches the app theme (${b.name})', (tester) async {
+        await pumpThemed(tester, b);
+        final ctx = tester.element(find.byType(WorkerHomeScreen));
+        final scaffold = tester.widget<Scaffold>(find.descendant(of: find.byType(WorkerHomeScreen), matching: find.byType(Scaffold)).first);
+        expect(scaffold.backgroundColor, ctx.sb.canvas);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('the menu button (top left) opens the worker side menu with the theme switch', (tester) async {
+      await pumpThemed(tester, Brightness.light);
+      final l = await englishStrings();
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeDrawer), findsOneWidget);
+      expect(find.text(l.drawerFindJobs), findsOneWidget);
+      expect(find.text(l.drawerMyProposals), findsOneWidget);
+      expect(find.text(l.drawerSavedJobs), findsOneWidget);
+      expect(find.text(l.drawerPostJob), findsNothing, reason: 'client-only shortcut');
+      final appearance = find.text(l.settingsAppearance.toUpperCase());
+      await tester.scrollUntilVisible(appearance, 200, scrollable: find.descendant(of: find.byType(HomeDrawer), matching: find.byType(Scrollable)).first);
+      expect(appearance, findsOneWidget);
+      expect(find.byType(SegmentedButton<ThemeMode>), findsOneWidget);
+    });
+  });
+
+  group('Worker notification bell', () {
+    Future<void> pumpWithRouter(WidgetTester tester, List<NotificationModel> notes) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.reset);
+      final router = GoRouter(routes: [
+        GoRoute(path: '/', builder: (_, _) => const WorkerHomeScreen()),
+        GoRoute(path: RouteNames.workerNotificationsPath, builder: (_, _) => const Scaffold(body: Text('NOTIFICATIONS'))),
+      ]);
+      addTearDown(router.dispose);
+      await tester.pumpWidget(testRouterApp(router: router, overrides: [
+        currentUserProvider.overrideWith((ref) => testWorker),
+        openJobsStreamProvider.overrideWith((ref) => Stream.value(const <JobEntity>[])),
+        workerDirectRequestsStreamProvider.overrideWith((ref) => Stream.value(const <JobEntity>[])),
+        userContractsStreamProvider.overrideWith((ref) => Stream.value(const <ContractEntity>[])),
+        userNotificationsStreamProvider(testWorker.uid).overrideWith((ref) => Stream.value(notes)),
+      ]));
+      await tester.pumpAndSettle();
+    }
+
+    NotificationModel note({required bool read}) => NotificationModel(
+          id: 'n${read ? 1 : 2}', userId: testWorker.uid, title: 'New proposal', body: 'Hi', createdAt: DateTime(2026), isRead: read);
+
+    testWidgets('tapping the bell opens the notifications', (tester) async {
+      await pumpWithRouter(tester, [note(read: true)]);
+      await tester.tap(find.bySemanticsLabel('Notifications'));
+      await tester.pumpAndSettle();
+      expect(find.text('NOTIFICATIONS'), findsOneWidget);
+    });
+
+    testWidgets('no red dot when everything is read', (tester) async {
+      await pumpWithRouter(tester, [note(read: true)]);
+      expect(find.bySemanticsLabel('Notifications'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^Notifications, \d')), findsNothing);
+    });
+
+    testWidgets('the red dot and count show while something is unread', (tester) async {
+      await pumpWithRouter(tester, [note(read: true), note(read: false)]);
+      expect(find.bySemanticsLabel('Notifications, 1'), findsOneWidget);
     });
   });
 }

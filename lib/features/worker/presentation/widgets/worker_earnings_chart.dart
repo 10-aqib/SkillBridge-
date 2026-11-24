@@ -8,15 +8,9 @@ import 'package:skill_bridge/features/contracts/presentation/providers/contract_
 import 'package:skill_bridge/core/utils/formatters.dart';
 import 'package:skill_bridge/features/worker/presentation/screens/worker_home_screen.dart';
 import 'package:skill_bridge/shared/design_system/design_system.dart';
+import 'package:skill_bridge/features/worker/presentation/widgets/worker_palette.dart';
 
 // ── Dark Design Tokens ────────────────────────────────────────────────────────
-const _card = Color(0xFF131A27);
-const _surface2 = Color(0xFF192233);
-const _textPrimary = Color(0xFFF5F6FA);
-const _textSecondary = Color(0xFF929BAA);
-const _border = Color(0xFF252F40);
-const _accent = Color(0xFF4778E8);
-const _success = Color(0xFF22C58B);
 
 /// Minimal Premium Earnings Widget — 4-week line chart.
 class WorkerEarningsChart extends ConsumerStatefulWidget {
@@ -35,6 +29,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     final contractsAsync = ref.watch(userContractsStreamProvider);
 
     return contractsAsync.when(
@@ -47,12 +42,12 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
         weeklyValues: null,
       ),
       error: (_, __) => _buildShell(
-        child: const SizedBox(
+        child: SizedBox(
           height: 100,
           child: Center(
             child: Text(
               'Could not load earnings',
-              style: TextStyle(color: _textSecondary, fontSize: 13),
+              style: TextStyle(color: p.textSecondary, fontSize: 13),
             ),
           ),
         ),
@@ -146,15 +141,16 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
     double? growthPct,
     List<double>? weeklyValues,
   }) {
+    final p = WorkerPalette.of(context);
     final hasData =
         totalEarnings != null && weeklyValues != null && totalEarnings > 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _card,
+        color: p.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,9 +162,9 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.bar_chart_rounded,
-                      color: _accent,
+                      color: p.accent,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -176,7 +172,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                       child: Text(
                         'Your Earnings',
                         style: AppTextStyles.bodyStrong.copyWith(
-                          color: _textPrimary,
+                          color: p.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
@@ -196,7 +192,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Total earnings + growth badge
           if (totalEarnings != null) ...[
@@ -206,8 +202,8 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                 Flexible(
                   child: Text(
                     Formatters.formatPkr(totalEarnings),
-                    style: const TextStyle(
-                      color: _textPrimary,
+                    style: TextStyle(
+                      color: p.textPrimary,
                       fontFamily: 'JetBrainsMono',
                       fontWeight: FontWeight.w800,
                       fontSize: 24,
@@ -222,7 +218,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                         horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
                       color: (growthPct >= 0
-                              ? _success
+                              ? p.success
                               : const Color(0xFFEF5350))
                           .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -235,7 +231,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                               ? Icons.arrow_upward_rounded
                               : Icons.arrow_downward_rounded,
                           color: growthPct >= 0
-                              ? _success
+                              ? p.success
                               : const Color(0xFFEF5350),
                           size: 11,
                         ),
@@ -244,7 +240,7 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
                           '${growthPct.abs().toStringAsFixed(0)}%',
                           style: TextStyle(
                             color: growthPct >= 0
-                                ? _success
+                                ? p.success
                                 : const Color(0xFFEF5350),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -274,19 +270,20 @@ class _WorkerEarningsChartState extends ConsumerState<WorkerEarningsChart> {
   }
 
   Widget _buildEmptyChartPlaceholder() {
+    final p = WorkerPalette.of(context);
     return SizedBox(
       height: 110,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.show_chart_rounded,
-                color: _textSecondary, size: 28),
+            Icon(Icons.show_chart_rounded,
+                color: p.textSecondary, size: 28),
             const SizedBox(height: 6),
             Text(
               'No earnings recorded yet',
               style: AppTextStyles.labelCaption.copyWith(
-                color: _textSecondary,
+                color: p.textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -311,13 +308,14 @@ class _PeriodDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     return PopupMenuButton<String>(
       initialValue: value,
       onSelected: onChanged,
-      color: const Color(0xFF131A27),
+      color: p.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: _border),
+        side: BorderSide(color: p.border),
       ),
       itemBuilder: (context) => options
           .map((opt) => PopupMenuItem(
@@ -325,7 +323,7 @@ class _PeriodDropdown extends StatelessWidget {
                 child: Text(
                   opt,
                   style: AppTextStyles.bodyPrimary.copyWith(
-                    color: _textPrimary,
+                    color: p.textPrimary,
                     fontSize: 13,
                   ),
                 ),
@@ -334,9 +332,9 @@ class _PeriodDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: _surface2,
+          color: p.surface2,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _border),
+          border: Border.all(color: p.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -344,14 +342,14 @@ class _PeriodDropdown extends StatelessWidget {
             Text(
               value,
               style: AppTextStyles.labelCaption.copyWith(
-                color: _textPrimary,
+                color: p.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: 3),
-            const Icon(Icons.keyboard_arrow_down_rounded,
-                color: _textSecondary, size: 16),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                color: p.textSecondary, size: 16),
           ],
         ),
       ),
@@ -367,6 +365,7 @@ class _LineChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = WorkerPalette.of(context);
     final maxVal = values.isEmpty ? 1.0 : values.reduce(math.max);
     final effectiveMax = maxVal == 0 ? 1.0 : maxVal;
 
@@ -387,29 +386,29 @@ class _LineChartWidget extends StatelessWidget {
                   children: [
                     Text(
                       _yLabel(effectiveMax),
-                      style: const TextStyle(
-                          color: _textSecondary,
+                      style: TextStyle(
+                          color: p.textSecondary,
                           fontSize: 9,
                           fontFamily: 'JetBrainsMono'),
                     ),
                     Text(
                       _yLabel(effectiveMax * 0.67),
-                      style: const TextStyle(
-                          color: _textSecondary,
+                      style: TextStyle(
+                          color: p.textSecondary,
                           fontSize: 9,
                           fontFamily: 'JetBrainsMono'),
                     ),
                     Text(
                       _yLabel(effectiveMax * 0.33),
-                      style: const TextStyle(
-                          color: _textSecondary,
+                      style: TextStyle(
+                          color: p.textSecondary,
                           fontSize: 9,
                           fontFamily: 'JetBrainsMono'),
                     ),
-                    const Text(
+                    Text(
                       '0',
                       style: TextStyle(
-                          color: _textSecondary,
+                          color: p.textSecondary,
                           fontSize: 9,
                           fontFamily: 'JetBrainsMono'),
                     ),
@@ -420,7 +419,13 @@ class _LineChartWidget extends StatelessWidget {
               // Canvas chart
               Expanded(
                 child: CustomPaint(
-                  painter: PremiumLineChartPainter(values: values),
+                  painter: PremiumLineChartPainter(
+                    values: values,
+                    lineColor: p.accent,
+                    gridColor: p.border,
+                    dotColor: p.accent,
+                    holeColor: p.card,
+                  ),
                 ),
               ),
             ],
@@ -438,8 +443,8 @@ class _LineChartWidget extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'Week ${i + 1}',
-                    style: const TextStyle(
-                      color: _textSecondary,
+                    style: TextStyle(
+                      color: p.textSecondary,
                       fontSize: 9,
                       fontFamily: 'JetBrainsMono',
                     ),
